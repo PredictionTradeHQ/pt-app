@@ -1,5 +1,17 @@
 import { NextResponse } from "next/server";
 
+interface CustomConfiguredMarket {
+  id: string;
+  title: string;
+  platform?: string;
+  outcome?: string;
+  url?: string;
+  category?: string;
+}
+
+const FEATURED_MARKETS_ENV_KEY = "FEATURED_MARKETS_JSON";
+const REQUIRED_MARKETS_COUNT = 10;
+
 export interface PolymarketMarket {
   id: string;
   question: string | null;
@@ -105,6 +117,72 @@ function transformMarket(market: PolymarketMarket): TransformedMarket {
     volume24hr: market.volume24hr || 0,
     assetIds,
     conditionId: market.conditionId || null,
+  };
+}
+
+function parseConfiguredMarkets(): CustomConfiguredMarket[] | null {
+  const raw = process.env[FEATURED_MARKETS_ENV_KEY];
+  if (!raw) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`${FEATURED_MARKETS_ENV_KEY} is not valid JSON`);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${FEATURED_MARKETS_ENV_KEY} must be an array`);
+  }
+
+  const markets = parsed.map((item, index) => {
+    const record = item as Record<string, unknown>;
+    const title = String(record.title ?? "").trim();
+
+    if (!title) {
+      throw new Error(`Market at index ${index} is missing title`);
+    }
+
+    return {
+      id: String(record.id ?? index + 1),
+      title,
+      platform: record.platform ? String(record.platform) : undefined,
+      outcome: record.outcome ? String(record.outcome) : undefined,
+      url: record.url ? String(record.url) : undefined,
+      category: record.category ? String(record.category).toLowerCase() : undefined,
+    };
+  });
+
+  if (markets.length !== REQUIRED_MARKETS_COUNT) {
+    throw new Error(`Expected ${REQUIRED_MARKETS_COUNT} markets, got ${markets.length}`);
+  }
+
+  return markets;
+}
+
+function customMarketToTransformedMarket(market: CustomConfiguredMarket): TransformedMarket {
+  const primaryOutcome = market.outcome ?? "Yes";
+  const secondaryOutcome = primaryOutcome.toLowerCase() === "yes" ? "No" : "Other";
+
+  return {
+    id: market.id,
+    question: market.title,
+    slug: null,
+    image: null,
+    icon: null,
+    description: market.platform ? `Source: ${market.platform}${market.url ? ` (${market.url})` : ""}` : null,
+    outcomes: [primaryOutcome, secondaryOutcome],
+    yesPrice: 0.5,
+    noPrice: 0.5,
+    volume: 0,
+    liquidity: 0,
+    endDate: null,
+    category: market.category || "world",
+    isNew: false,
+    featured: true,
+    volume24hr: 0,
+    assetIds: [],
+    conditionId: null,
   };
 }
 
@@ -258,6 +336,53 @@ export async function GET(request: Request) {
   const fetchTags = searchParams.get("tags") === "true";
 
   try {
+    const configuredMarkets = parseConfiguredMarkets();
+
+    if (configuredMarkets) {
+      let markets = configuredMarkets.map(customMarketToTransformedMarket);
+
+      if (marketId) {
+        const market = markets.find((m) => m.id === marketId);
+        if (!market) {
+          return NextResponse.json({ error: "Market not found" }, { status: 404 });
+        }
+        return NextResponse.json(market);
+      }
+
+      if (fetchTags) {
+        return NextResponse.json({
+          categories: CATEGORIES,
+          tags: [],
+        });
+      }
+
+      if (category && category !== "all") {
+        markets = markets.filter((m) => m.category === category.toLowerCase());
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        markets = markets.filter(
+          (m) =>
+            m.question?.toLowerCase().includes(searchLower) ||
+            m.description?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      const offsetNum = parseInt(offset, 10) || 0;
+      const limitNum = parseInt(limit, 10) || 10;
+      const paginatedMarkets = markets.slice(offsetNum, offsetNum + limitNum);
+
+      return NextResponse.json({
+        markets: paginatedMarkets,
+        categories: CATEGORIES,
+        categoriesFound: [...new Set(markets.map((m) => m.category).filter(Boolean))],
+        total: markets.length,
+        hasMore: offsetNum + limitNum < markets.length,
+        offset: offsetNum,
+      });
+    }
+
     // If requesting tags/categories
     if (fetchTags) {
       const tagsUrl = "https://gamma-api.polymarket.com/tags?_limit=50";

@@ -1,34 +1,112 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+interface CustomMarket {
+  id: string;
+  title: string;
+  platform?: string;
+  outcome?: string;
+  url?: string;
+  category?: string;
+}
+
+const FEATURED_MARKETS_ENV_KEY = "FEATURED_MARKETS_JSON";
+const REQUIRED_MARKETS_COUNT = 10;
+
+function parseConfiguredMarkets(): CustomMarket[] {
+  const rawMarkets = process.env[FEATURED_MARKETS_ENV_KEY];
+
+  if (!rawMarkets) {
+    throw new Error(`Missing ${FEATURED_MARKETS_ENV_KEY}`);
+  }
+
+  let parsed: unknown;
   try {
-    const response = await fetch('https://gamma-api.polymarket.com/markets?limit=50&closed=false', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    parsed = JSON.parse(rawMarkets);
+  } catch {
+    throw new Error(`${FEATURED_MARKETS_ENV_KEY} is not valid JSON`);
+  }
 
-    if (!response.ok) {
-      throw new Error(`Polymarket API error: ${response.statusText}`);
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${FEATURED_MARKETS_ENV_KEY} must be an array`);
+  }
+
+  const markets = parsed.map((item, index) => {
+    const record = item as Record<string, unknown>;
+    const title = String(record.title ?? "").trim();
+    if (!title) {
+      throw new Error(`Market at index ${index} is missing title`);
     }
 
-    const data = await response.json();
+    return {
+      id: String(record.id ?? index + 1),
+      title,
+      platform: record.platform ? String(record.platform) : undefined,
+      outcome: record.outcome ? String(record.outcome) : undefined,
+      url: record.url ? String(record.url) : undefined,
+      category: record.category ? String(record.category).toLowerCase() : undefined,
+    };
+  });
 
-    const markets = data.map((market) => ({
-      id: market.id,
-      question: market.question,
-      category: market.tags?.[0] || 'Other',
-      outcomes: market.outcomes || ['Yes', 'No'],
-      outcomePrices: market.outcomePrices || [0.5, 0.5],
-      volume: market.volume24h || market.volume || 0,
-      liquidity: market.liquidity || 0,
-      endDate: market.end_date_iso || '2025-12-31',
-    }));
+  if (markets.length !== REQUIRED_MARKETS_COUNT) {
+    throw new Error(`Expected ${REQUIRED_MARKETS_COUNT} markets, got ${markets.length}`);
+  }
 
-    return NextResponse.json(markets);
+  return markets;
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10) || 10);
+  const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10) || 0);
+  const category = searchParams.get("category")?.toLowerCase();
+  const search = searchParams.get("search")?.toLowerCase();
+
+  try {
+    let markets = parseConfiguredMarkets();
+
+    if (category && category !== "all") {
+      markets = markets.filter((market) => (market.category ?? "world") === category);
+    }
+
+    if (search) {
+      markets = markets.filter((market) =>
+        [market.title, market.platform, market.outcome, market.url]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(search)
+      );
+    }
+
+    const paginated = markets.slice(offset, offset + limit);
+
+    return NextResponse.json(
+      {
+        data: paginated,
+        meta: {
+          total: markets.length,
+          limit,
+          offset,
+          hasMore: offset + limit < markets.length,
+          source: "custom-config",
+          generatedAt: new Date().toISOString(),
+        },
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error) {
-    console.error('Error fetching Polymarket data:', error);
-    return NextResponse.json([], { status: 500 });
+    console.error("[markets api] Invalid market configuration:", error);
+    return NextResponse.json(
+      {
+        error: "Invalid market configuration",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
