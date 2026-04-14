@@ -33,7 +33,6 @@ import type { TransformedMarket } from "@/app/api/polymarket/route";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const STARTING_BALANCE = 10000;
-const STORAGE_PREFIX = "predictiontrade.demo.portfolio.v1";
 
 interface Position {
   id: string;
@@ -84,6 +83,7 @@ export default function DemoPage() {
   const [user, setUser] = useState<{ id: string; email?: string; display_name?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [portfolioHydrated, setPortfolioHydrated] = useState(false);
+  const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
 
   const [balance, setBalance] = useState(STARTING_BALANCE);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -100,7 +100,6 @@ export default function DemoPage() {
   });
 
   const markets = marketsData?.markets || [];
-  const storageKey = user ? `${STORAGE_PREFIX}.${user.id}` : null;
 
   useEffect(() => {
     const checkUser = async () => {
@@ -118,37 +117,70 @@ export default function DemoPage() {
   }, [supabase.auth]);
 
   useEffect(() => {
-    if (!storageKey) return;
+    if (!user) return;
 
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) {
-      setPortfolioHydrated(true);
-      return;
-    }
+    const loadPortfolio = async () => {
+      try {
+        const response = await fetch("/api/demo-portfolio");
+        const payload = await response.json();
 
-    try {
-      const parsed = JSON.parse(raw) as DemoPortfolio;
-      setBalance(Number(parsed.balance ?? STARTING_BALANCE));
-      setPositions(Array.isArray(parsed.positions) ? parsed.positions : []);
-      setActivity(Array.isArray(parsed.activity) ? parsed.activity : []);
-    } catch {
-      localStorage.removeItem(storageKey);
-    } finally {
-      setPortfolioHydrated(true);
-    }
-  }, [storageKey]);
+        if (!response.ok || !payload?.data) {
+          setPortfolioHydrated(true);
+          return;
+        }
+
+        const parsed = payload.data as DemoPortfolio;
+        setBalance(Number(parsed.balance ?? STARTING_BALANCE));
+        setPositions(Array.isArray(parsed.positions) ? parsed.positions : []);
+        setActivity(Array.isArray(parsed.activity) ? parsed.activity : []);
+      } catch (error) {
+        console.error("Failed to load persisted portfolio", error);
+      } finally {
+        setPortfolioHydrated(true);
+      }
+    };
+
+    loadPortfolio();
+  }, [user]);
 
   useEffect(() => {
-    if (!storageKey || !portfolioHydrated) return;
+    if (!user || !portfolioHydrated) return;
 
-    const payload: DemoPortfolio = {
-      balance,
-      positions,
-      activity,
-      startingBalance: STARTING_BALANCE,
+    const controller = new AbortController();
+    const timeout = setTimeout(async () => {
+      setIsSavingPortfolio(true);
+      try {
+        await fetch("/api/demo-portfolio", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            balance,
+            positions,
+            activity,
+            startingBalance: STARTING_BALANCE,
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to save portfolio", error);
+      } finally {
+        setIsSavingPortfolio(false);
+      }
+    }, 600);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
     };
-    localStorage.setItem(storageKey, JSON.stringify(payload));
-  }, [balance, positions, activity, storageKey, portfolioHydrated]);
+  }, [balance, positions, activity, user, portfolioHydrated]);
+
+  useEffect(() => {
+    if (!user) {
+      setPortfolioHydrated(true);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -415,6 +447,9 @@ export default function DemoPage() {
             <RefreshCw className="w-4 h-4" />
             Actualizar
           </Button>
+          {isSavingPortfolio && (
+            <span className="text-xs text-muted-foreground">Guardando cambios...</span>
+          )}
         </div>
 
         {/* Markets Tab */}
