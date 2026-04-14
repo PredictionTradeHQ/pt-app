@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,47 +23,75 @@ import {
   BarChart2,
   User,
   Loader2,
+  Clock3,
+  DollarSign,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import type { TransformedMarket } from "@/app/api/polymarket/route";
 
-// Fetcher for SWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const STARTING_BALANCE = 10000;
+const STORAGE_PREFIX = "predictiontrade.demo.portfolio.v1";
 
-// Position interface
 interface Position {
+  id: string;
+  marketId: string;
+  marketTitle: string;
+  outcome: "YES" | "NO";
+  amount: number;
+  entryPrice: number;
+  shares: number;
+  timestamp: string;
+}
+
+interface TradeActivity {
+  id: string;
   marketId: string;
   marketTitle: string;
   outcome: "YES" | "NO";
   amount: number;
   price: number;
   shares: number;
-  timestamp: Date;
-  currentPrice: number;
+  timestamp: string;
 }
 
-// Bet confirmation interface
-interface BetConfirmation {
+interface DemoPortfolio {
+  balance: number;
+  positions: Position[];
+  activity: TradeActivity[];
+  startingBalance: number;
+}
+
+interface BetTicket {
   market: TransformedMarket;
   outcome: "YES" | "NO";
   amount: number;
 }
 
+function formatDate(timestamp: string): string {
+  try {
+    return new Date(timestamp).toLocaleString();
+  } catch {
+    return timestamp;
+  }
+}
+
 export default function DemoPage() {
   const router = useRouter();
   const supabase = createClient();
-  const [user, setUser] = useState<{ email?: string; display_name?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email?: string; display_name?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [portfolioHydrated, setPortfolioHydrated] = useState(false);
 
-  // Portfolio state
-  const [balance, setBalance] = useState(10000);
+  const [balance, setBalance] = useState(STARTING_BALANCE);
   const [positions, setPositions] = useState<Position[]>([]);
-  const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
+  const [activity, setActivity] = useState<TradeActivity[]>([]);
+  const [betConfirmation, setBetConfirmation] = useState<BetTicket | null>(null);
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
-  const [activeTab, setActiveTab] = useState<"markets" | "positions">("markets");
+  const [activeTab, setActiveTab] = useState<"markets" | "positions" | "activity">("markets");
 
-  // Fetch markets from Polymarket API
   const { data: marketsData, error: marketsError, isLoading: marketsLoading, mutate } = useSWR<{
     markets: TransformedMarket[];
     total: number;
@@ -70,13 +100,14 @@ export default function DemoPage() {
   });
 
   const markets = marketsData?.markets || [];
+  const storageKey = user ? `${STORAGE_PREFIX}.${user.id}` : null;
 
-  // Check user session
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         setUser({
+          id: authUser.id,
           email: authUser.email,
           display_name: authUser.user_metadata?.display_name || authUser.email?.split("@")[0],
         });
@@ -86,39 +117,96 @@ export default function DemoPage() {
     checkUser();
   }, [supabase.auth]);
 
-  // Handle logout
+  useEffect(() => {
+    if (!storageKey) return;
+
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) {
+      setPortfolioHydrated(true);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as DemoPortfolio;
+      setBalance(Number(parsed.balance ?? STARTING_BALANCE));
+      setPositions(Array.isArray(parsed.positions) ? parsed.positions : []);
+      setActivity(Array.isArray(parsed.activity) ? parsed.activity : []);
+    } catch {
+      localStorage.removeItem(storageKey);
+    } finally {
+      setPortfolioHydrated(true);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!storageKey || !portfolioHydrated) return;
+
+    const payload: DemoPortfolio = {
+      balance,
+      positions,
+      activity,
+      startingBalance: STARTING_BALANCE,
+    };
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+  }, [balance, positions, activity, storageKey, portfolioHydrated]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
   };
 
-  // Handle quick bet
+  const resetDemoPortfolio = () => {
+    setBalance(STARTING_BALANCE);
+    setPositions([]);
+    setActivity([]);
+    setBetConfirmation(null);
+    setBetSuccess(null);
+  };
+
   const handleQuickBet = (market: TransformedMarket, outcome: "YES" | "NO") => {
     setBetConfirmation({ market, outcome, amount: 50 });
   };
 
-  // Confirm bet
+  const getCurrentMarketPrice = (position: Position): number => {
+    const market = markets.find((m) => m.id === position.marketId);
+    if (!market) return position.entryPrice;
+    return position.outcome === "YES" ? market.yesPrice : market.noPrice;
+  };
+
   const confirmBet = () => {
     if (!betConfirmation) return;
     const { market, outcome, amount } = betConfirmation;
     const price = outcome === "YES" ? market.yesPrice : market.noPrice;
     const shares = price > 0 ? amount / price : 0;
 
-    if (amount > balance) return;
+    if (amount > balance || amount <= 0) return;
 
     setBalance((prev) => prev - amount);
 
     const newPosition: Position = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       marketId: market.id,
       marketTitle: market.question || "Unknown Market",
       outcome,
       amount,
+      entryPrice: price,
+      shares,
+      timestamp: new Date().toISOString(),
+    };
+
+    const newActivity: TradeActivity = {
+      id: newPosition.id,
+      marketId: market.id,
+      marketTitle: newPosition.marketTitle,
+      outcome,
+      amount,
       price,
       shares,
-      timestamp: new Date(),
-      currentPrice: price,
+      timestamp: newPosition.timestamp,
     };
+
     setPositions((prev) => [newPosition, ...prev]);
+    setActivity((prev) => [newActivity, ...prev]);
 
     setBetConfirmation(null);
     setBetSuccess({ outcome, amount });
@@ -126,10 +214,19 @@ export default function DemoPage() {
     setActiveTab("positions");
   };
 
-  // Calculate portfolio value
-  const totalInvested = positions.reduce((sum, p) => sum + p.amount, 0);
-  const portfolioValue = balance + totalInvested;
-  const pnl = portfolioValue - 10000;
+  const positionsWithMetrics = positions.map((position) => {
+    const currentPrice = getCurrentMarketPrice(position);
+    const currentValue = position.shares * currentPrice;
+    const pnl = currentValue - position.amount;
+    return { ...position, currentPrice, currentValue, pnl };
+  });
+
+  const investedCapital = positions.reduce((sum, p) => sum + p.amount, 0);
+  const openPositionsValue = positionsWithMetrics.reduce((sum, p) => sum + p.currentValue, 0);
+  const portfolioValue = balance + openPositionsValue;
+  const totalPnl = portfolioValue - STARTING_BALANCE;
+  const totalReturnPct = (totalPnl / STARTING_BALANCE) * 100;
+  const unrealizedPnl = positionsWithMetrics.reduce((sum, p) => sum + p.pnl, 0);
 
   if (isLoading) {
     return (
@@ -149,8 +246,8 @@ export default function DemoPage() {
               <TrendingUp className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">PredictTrade Demo</h1>
-              <p className="text-xs text-muted-foreground">Polymarket Paper Trading</p>
+              <h1 className="font-bold text-lg">PredictTrade Demo Dashboard</h1>
+              <p className="text-xs text-muted-foreground">Portfolio persistente y paper trading en tiempo real</p>
             </div>
           </div>
 
@@ -187,7 +284,7 @@ export default function DemoPage() {
                   <Wallet className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Balance</p>
+                  <p className="text-xs text-muted-foreground">Cash disponible</p>
                   <p className="text-xl font-bold">${balance.toLocaleString()}</p>
                 </div>
               </div>
@@ -201,8 +298,8 @@ export default function DemoPage() {
                   <Target className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Invested</p>
-                  <p className="text-xl font-bold">${totalInvested.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Capital invertido</p>
+                  <p className="text-xl font-bold">${investedCapital.toLocaleString()}</p>
                 </div>
               </div>
             </CardContent>
@@ -213,18 +310,18 @@ export default function DemoPage() {
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-10 h-10 rounded-lg flex items-center justify-center",
-                  pnl >= 0 ? "bg-green-500/10" : "bg-red-500/10"
+                  totalPnl >= 0 ? "bg-green-500/10" : "bg-red-500/10"
                 )}>
-                  {pnl >= 0 ? (
+                  {totalPnl >= 0 ? (
                     <TrendingUp className="w-5 h-5 text-green-500" />
                   ) : (
                     <TrendingDown className="w-5 h-5 text-red-500" />
                   )}
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">P&L</p>
-                  <p className={cn("text-xl font-bold", pnl >= 0 ? "text-green-500" : "text-red-500")}>
-                    {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
+                  <p className="text-xs text-muted-foreground">P&L total</p>
+                  <p className={cn("text-xl font-bold", totalPnl >= 0 ? "text-green-500" : "text-red-500")}>
+                    {totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -238,13 +335,42 @@ export default function DemoPage() {
                   <Trophy className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Active Bets</p>
+                  <p className="text-xs text-muted-foreground">Posiciones abiertas</p>
                   <p className="text-xl font-bold">{positions.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Valor del portfolio</p>
+                <p className="text-lg font-bold">${portfolioValue.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">P&L no realizado</p>
+                <p className={cn("text-lg font-bold", unrealizedPnl >= 0 ? "text-green-500" : "text-red-500")}>
+                  {unrealizedPnl >= 0 ? "+" : ""}{unrealizedPnl.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Retorno total</p>
+                <p className={cn("text-lg font-bold", totalReturnPct >= 0 ? "text-green-500" : "text-red-500")}>
+                  {totalReturnPct >= 0 ? "+" : ""}{totalReturnPct.toFixed(2)}%
+                </p>
+              </div>
+              <div className="flex items-end justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={resetDemoPortfolio} className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Reiniciar demo
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Tabs */}
         <div className="flex items-center gap-2 mb-6">
@@ -255,7 +381,7 @@ export default function DemoPage() {
             className="gap-2"
           >
             <Activity className="w-4 h-4" />
-            Markets
+            Mercados
           </Button>
           <Button
             variant={activeTab === "positions" ? "default" : "outline"}
@@ -264,16 +390,30 @@ export default function DemoPage() {
             className="gap-2"
           >
             <BarChart2 className="w-4 h-4" />
-            My Positions
+            Posiciones
             {positions.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {positions.length}
               </Badge>
             )}
           </Button>
+          <Button
+            variant={activeTab === "activity" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTab("activity")}
+            className="gap-2"
+          >
+            <Clock3 className="w-4 h-4" />
+            Actividad
+            {activity.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {activity.length}
+              </Badge>
+            )}
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => mutate()} className="ml-auto gap-2">
             <RefreshCw className="w-4 h-4" />
-            Refresh
+            Actualizar
           </Button>
         </div>
 
@@ -287,9 +427,9 @@ export default function DemoPage() {
             ) : marketsError ? (
               <Card>
                 <CardContent className="py-10 text-center">
-                  <p className="text-muted-foreground">Failed to load markets. Please try again.</p>
+                  <p className="text-muted-foreground">No se pudieron cargar los mercados.</p>
                   <Button variant="outline" className="mt-4" onClick={() => mutate()}>
-                    Retry
+                    Reintentar
                   </Button>
                 </CardContent>
               </Card>
@@ -359,21 +499,20 @@ export default function DemoPage() {
               <Card>
                 <CardContent className="py-16 text-center">
                   <Trophy className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">No positions yet</h3>
+                  <h3 className="font-semibold mb-2">Aun no tienes posiciones</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Click &quot;Buy YES&quot; or &quot;Buy NO&quot; on any market to place your first bet
+                    Haz tu primera operacion para empezar a construir historial
                   </p>
                   <Button onClick={() => setActiveTab("markets")}>
-                    Browse Markets
+                    Ver mercados
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-3">
-                {positions.map((pos, i) => {
-                  const pnl = (pos.currentPrice - pos.price) * pos.shares;
+                {positionsWithMetrics.map((pos) => {
                   return (
-                    <Card key={i}>
+                    <Card key={pos.id}>
                       <CardContent className="py-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
@@ -383,24 +522,66 @@ export default function DemoPage() {
                                 {pos.outcome}
                               </Badge>
                               <span className="text-xs text-muted-foreground">
-                                @ {(pos.price * 100).toFixed(0)}c
+                                Entrada {(pos.entryPrice * 100).toFixed(0)}c
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Ahora {(pos.currentPrice * 100).toFixed(0)}c
                               </span>
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="font-bold">${pos.amount}</p>
+                            <p className="font-bold">${pos.currentValue.toFixed(2)}</p>
                             <p className={cn(
                               "text-xs font-medium",
-                              pnl >= 0 ? "text-green-500" : "text-red-500"
+                              pos.pnl >= 0 ? "text-green-500" : "text-red-500"
                             )}>
-                              {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)} P&L
+                              {pos.pnl >= 0 ? "+" : ""}{pos.pnl.toFixed(2)} P&L
                             </p>
+                            <p className="text-xs text-muted-foreground mt-1">{formatDate(pos.timestamp)}</p>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "activity" && (
+          <div>
+            {activity.length === 0 ? (
+              <Card>
+                <CardContent className="py-14 text-center">
+                  <Clock3 className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+                  <p className="text-muted-foreground">Todavia no hay actividad registrada.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {activity.map((trade) => (
+                  <Card key={trade.id}>
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium line-clamp-1">{trade.marketTitle}</p>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                            <Badge variant={trade.outcome === "YES" ? "default" : "secondary"}>
+                              {trade.outcome}
+                            </Badge>
+                            <span>{trade.shares.toFixed(2)} shares</span>
+                            <span>@ {(trade.price * 100).toFixed(0)}c</span>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-semibold">${trade.amount.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(trade.timestamp)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </div>
@@ -461,9 +642,32 @@ export default function DemoPage() {
                     ).toFixed(2)}
                   </span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Cash restante</span>
+                  <span className="font-semibold">${(balance - betConfirmation.amount).toFixed(2)}</span>
+                </div>
               </div>
 
-              {/* Amount selector */}
+              <div className="space-y-2">
+                <Label htmlFor="bet-amount">Monto de la operacion</Label>
+                <div className="relative">
+                  <DollarSign className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    id="bet-amount"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={betConfirmation.amount}
+                    onChange={(e) =>
+                      setBetConfirmation((prev) =>
+                        prev ? { ...prev, amount: Number(e.target.value || 0) } : null
+                      )
+                    }
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 {[25, 50, 100, 250].map((amt) => (
                   <button
@@ -489,7 +693,7 @@ export default function DemoPage() {
                 <Button
                   className="flex-1 gap-2"
                   onClick={confirmBet}
-                  disabled={betConfirmation.amount > balance}
+                  disabled={betConfirmation.amount > balance || betConfirmation.amount <= 0}
                 >
                   <ChevronRight className="w-4 h-4" />
                   Place Bet
