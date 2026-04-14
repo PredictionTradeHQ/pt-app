@@ -33,6 +33,7 @@ import type { TransformedMarket } from "@/app/api/polymarket/route";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const STARTING_BALANCE = 10000;
+const STORAGE_PREFIX = "predictiontrade.demo.portfolio.v2";
 
 interface Position {
   id: string;
@@ -84,6 +85,7 @@ export default function DemoPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [portfolioHydrated, setPortfolioHydrated] = useState(false);
   const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
+  const [persistenceMode, setPersistenceMode] = useState<"remote" | "local">("remote");
 
   const [balance, setBalance] = useState(STARTING_BALANCE);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -100,6 +102,7 @@ export default function DemoPage() {
   });
 
   const markets = marketsData?.markets || [];
+  const storageKey = user ? `${STORAGE_PREFIX}.${user.id}` : null;
 
   useEffect(() => {
     const checkUser = async () => {
@@ -125,7 +128,16 @@ export default function DemoPage() {
         const payload = await response.json();
 
         if (!response.ok || !payload?.data) {
-          setPortfolioHydrated(true);
+          if (storageKey) {
+            const raw = localStorage.getItem(storageKey);
+            if (raw) {
+              const parsed = JSON.parse(raw) as DemoPortfolio;
+              setBalance(Number(parsed.balance ?? STARTING_BALANCE));
+              setPositions(Array.isArray(parsed.positions) ? parsed.positions : []);
+              setActivity(Array.isArray(parsed.activity) ? parsed.activity : []);
+            }
+          }
+          setPersistenceMode("local");
           return;
         }
 
@@ -133,24 +145,47 @@ export default function DemoPage() {
         setBalance(Number(parsed.balance ?? STARTING_BALANCE));
         setPositions(Array.isArray(parsed.positions) ? parsed.positions : []);
         setActivity(Array.isArray(parsed.activity) ? parsed.activity : []);
+        setPersistenceMode("remote");
       } catch (error) {
         console.error("Failed to load persisted portfolio", error);
+        if (storageKey) {
+          const raw = localStorage.getItem(storageKey);
+          if (raw) {
+            const parsed = JSON.parse(raw) as DemoPortfolio;
+            setBalance(Number(parsed.balance ?? STARTING_BALANCE));
+            setPositions(Array.isArray(parsed.positions) ? parsed.positions : []);
+            setActivity(Array.isArray(parsed.activity) ? parsed.activity : []);
+          }
+        }
+        setPersistenceMode("local");
       } finally {
         setPortfolioHydrated(true);
       }
     };
 
     loadPortfolio();
-  }, [user]);
+  }, [user, storageKey]);
 
   useEffect(() => {
     if (!user || !portfolioHydrated) return;
+
+    if (persistenceMode === "local") {
+      if (!storageKey) return;
+      const payload: DemoPortfolio = {
+        balance,
+        positions,
+        activity,
+        startingBalance: STARTING_BALANCE,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      return;
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       setIsSavingPortfolio(true);
       try {
-        await fetch("/api/demo-portfolio", {
+        const response = await fetch("/api/demo-portfolio", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -163,8 +198,29 @@ export default function DemoPage() {
             startingBalance: STARTING_BALANCE,
           }),
         });
+
+        if (!response.ok && storageKey) {
+          setPersistenceMode("local");
+          const payload: DemoPortfolio = {
+            balance,
+            positions,
+            activity,
+            startingBalance: STARTING_BALANCE,
+          };
+          localStorage.setItem(storageKey, JSON.stringify(payload));
+        }
       } catch (error) {
         console.error("Failed to save portfolio", error);
+        if (storageKey) {
+          setPersistenceMode("local");
+          const payload: DemoPortfolio = {
+            balance,
+            positions,
+            activity,
+            startingBalance: STARTING_BALANCE,
+          };
+          localStorage.setItem(storageKey, JSON.stringify(payload));
+        }
       } finally {
         setIsSavingPortfolio(false);
       }
@@ -174,7 +230,7 @@ export default function DemoPage() {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [balance, positions, activity, user, portfolioHydrated]);
+  }, [balance, positions, activity, user, portfolioHydrated, persistenceMode, storageKey]);
 
   useEffect(() => {
     if (!user) {
@@ -449,6 +505,9 @@ export default function DemoPage() {
           </Button>
           {isSavingPortfolio && (
             <span className="text-xs text-muted-foreground">Guardando cambios...</span>
+          )}
+          {!isSavingPortfolio && persistenceMode === "local" && (
+            <span className="text-xs text-muted-foreground">Guardado local activo</span>
           )}
         </div>
 
