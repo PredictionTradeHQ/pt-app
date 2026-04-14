@@ -20,6 +20,11 @@ import {
   Wallet,
   Activity,
   DollarSign,
+  CheckCircle,
+  XCircle,
+  Trophy,
+  BarChart2,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MarketDetailModal } from "@/components/market-detail-modal";
@@ -404,6 +409,25 @@ interface RecentTrade {
   timestamp: Date;
 }
 
+// User position on a market
+interface UserPosition {
+  marketId: string;
+  marketTitle: string;
+  outcome: "YES" | "NO";
+  amount: number;
+  price: number; // price at time of bet (0-1)
+  shares: number;
+  timestamp: Date;
+  currentPrice: number; // for P&L calc
+}
+
+// Bet confirmation state
+interface BetConfirmation {
+  market: Market;
+  outcome: "YES" | "NO";
+  amount: number;
+}
+
 // Generate random trades for activity simulation
 const generateRandomTrades = (marketTitles: string[]): RecentTrade[] => {
   const users = ["Alex M.", "Sarah K.", "John D.", "Emily R.", "Mike P.", "Lisa T.", "David W.", "Anna S."];
@@ -439,8 +463,12 @@ export function MarketsApp() {
   const [balance, setBalance] = useState(10000);
   const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [userPositions, setUserPositions] = useState<{ yes: number; no: number }>({ yes: 0, no: 0 });
+  const [userBets, setUserBets] = useState<UserPosition[]>([]);
   const [totalBets, setTotalBets] = useState(0);
   const [selectedBetAmount, setSelectedBetAmount] = useState(50);
+  const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
+  const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
+  const [activeTab, setActiveTab] = useState<"activity" | "positions">("activity");
   
   // Real-time prices context
   const { 
@@ -550,18 +578,38 @@ export function MarketsApp() {
     return `${Math.floor(minutes / 60)}h ago`;
   };
 
-  // Handle quick bet from market card
+  // Show bet confirmation modal
   const handleQuickBet = (market: Market, outcome: "YES" | "NO", amount: number) => {
     if (amount > balance) return;
-    
+    setBetConfirmation({ market, outcome, amount });
+  };
+
+  // Confirm and execute a bet
+  const confirmBet = () => {
+    if (!betConfirmation) return;
+    const { market, outcome, amount } = betConfirmation;
+    const price = outcome === "YES" ? market.yesPrice : market.noPrice;
+    const shares = price > 0 ? amount / price : 0;
+
     setBalance(prev => prev - amount);
     setUserPositions(prev => ({
       ...prev,
       [outcome.toLowerCase()]: prev[outcome.toLowerCase() as "yes" | "no"] + amount,
     }));
     setTotalBets(prev => prev + 1);
-    
-    // Add user trade to recent activity
+
+    const newPosition: UserPosition = {
+      marketId: market.id,
+      marketTitle: market.title,
+      outcome,
+      amount,
+      price,
+      shares,
+      timestamp: new Date(),
+      currentPrice: price,
+    };
+    setUserBets(prev => [newPosition, ...prev]);
+
     const userTrade: RecentTrade = {
       id: Date.now(),
       user: "You",
@@ -571,6 +619,11 @@ export function MarketsApp() {
       timestamp: new Date(),
     };
     setRecentTrades(prev => [userTrade, ...prev.slice(0, 5)]);
+
+    setBetConfirmation(null);
+    setBetSuccess({ outcome, amount });
+    setTimeout(() => setBetSuccess(null), 3000);
+    setActiveTab("positions");
   };
 
 // Show loading state during hydration to prevent mismatch
@@ -725,6 +778,16 @@ export function MarketsApp() {
           
           {/* Trading Control Panel - Sidebar */}
           <div className="lg:w-80 shrink-0 space-y-4">
+            {/* Bet success toast */}
+            {betSuccess && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary animate-in fade-in slide-in-from-top-2">
+                <CheckCircle className="w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">
+                  Bet placed: ${betSuccess.amount} on <strong>{betSuccess.outcome}</strong>
+                </span>
+              </div>
+            )}
+
             {/* Portfolio Summary */}
             <div className="p-5 rounded-xl border border-border bg-card sticky top-24">
               <div className="flex items-center justify-between mb-4">
@@ -734,7 +797,7 @@ export function MarketsApp() {
                   Demo
                 </Badge>
               </div>
-              
+
               {/* Balance */}
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 mb-4">
                 <p className="text-xs text-muted-foreground mb-1">Available Balance</p>
@@ -743,75 +806,265 @@ export function MarketsApp() {
                   <span className="text-2xl font-bold text-primary">{balance.toLocaleString()}</span>
                 </div>
               </div>
-              
-              {/* Positions Summary */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="p-3 rounded-lg bg-muted/50 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <TrendingUp className="w-3 h-3 text-primary" />
-                    <p className="text-xs text-muted-foreground">YES Bets</p>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="text-[10px] text-muted-foreground mb-0.5">YES Wagered</p>
+                  <p className="font-bold text-primary text-sm">${userPositions.yes.toFixed(0)}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="text-[10px] text-muted-foreground mb-0.5">NO Wagered</p>
+                  <p className="font-bold text-destructive text-sm">${userPositions.no.toFixed(0)}</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="text-[10px] text-muted-foreground mb-0.5">Total</p>
+                  <p className="font-bold text-foreground text-sm">{totalBets}</p>
+                </div>
+              </div>
+
+              {/* Tabs: Activity | Positions */}
+              <div className="flex rounded-lg bg-muted/50 p-1 mb-3">
+                <button
+                  onClick={() => setActiveTab("activity")}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1",
+                    activeTab === "activity"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Activity className="w-3 h-3" />
+                  Activity
+                </button>
+                <button
+                  onClick={() => setActiveTab("positions")}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1",
+                    activeTab === "positions"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <BarChart2 className="w-3 h-3" />
+                  My Bets
+                  {userBets.length > 0 && (
+                    <span className="ml-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {userBets.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Activity tab */}
+              {activeTab === "activity" && (
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  <div className="flex items-center gap-1 mb-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="text-xs text-muted-foreground">Live market activity</span>
                   </div>
-                  <p className="font-bold text-primary">${userPositions.yes.toFixed(0)}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/50 text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <TrendingDown className="w-3 h-3 text-destructive" />
-                    <p className="text-xs text-muted-foreground">NO Bets</p>
-                  </div>
-                  <p className="font-bold text-destructive">${userPositions.no.toFixed(0)}</p>
-                </div>
-              </div>
-              
-              {/* Stats */}
-              <div className="flex items-center justify-between text-sm text-muted-foreground p-2 rounded bg-muted/30">
-                <span>Total Bets</span>
-                <span className="font-semibold text-foreground">{totalBets}</span>
-              </div>
-            </div>
-            
-            {/* Recent Activity */}
-            <div className="p-5 rounded-xl border border-border bg-card">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm">Live Activity</h3>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-xs text-muted-foreground">Live</span>
-                </div>
-              </div>
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {recentTrades.map((trade) => (
-                  <div
-                    key={trade.id}
-                    className={cn(
-                      "p-3 rounded-lg text-sm",
-                      trade.user === "You" ? "bg-primary/10 border border-primary/20" : "bg-muted/50"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={cn(
-                        "font-medium",
-                        trade.user === "You" ? "text-primary" : "text-foreground"
-                      )}>
-                        {trade.user}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={trade.outcome === "YES" ? "default" : "secondary"} className="text-xs px-1.5 py-0">
-                          {trade.outcome}
-                        </Badge>
-                        <span className="font-semibold">${trade.amount}</span>
+                  {recentTrades.map((trade) => (
+                    <div
+                      key={trade.id}
+                      className={cn(
+                        "p-3 rounded-lg text-sm",
+                        trade.user === "You"
+                          ? "bg-primary/10 border border-primary/20"
+                          : "bg-muted/50"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={cn(
+                          "font-medium text-xs",
+                          trade.user === "You" ? "text-primary" : "text-foreground"
+                        )}>
+                          {trade.user}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={cn(
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded",
+                            trade.outcome === "YES"
+                              ? "bg-primary/20 text-primary"
+                              : "bg-destructive/20 text-destructive"
+                          )}>
+                            {trade.outcome}
+                          </span>
+                          <span className="font-semibold text-xs">${trade.amount}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[160px]">{trade.market}</p>
+                        <span className="text-[10px] text-muted-foreground shrink-0">{formatTimeAgo(trade.timestamp)}</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground truncate max-w-[180px]">{trade.market}</p>
-                      <span className="text-xs text-muted-foreground">{formatTimeAgo(trade.timestamp)}</span>
+                  ))}
+                </div>
+              )}
+
+              {/* My Bets tab */}
+              {activeTab === "positions" && (
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {userBets.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Trophy className="w-8 h-8 text-muted-foreground/40 mb-2" />
+                      <p className="text-sm text-muted-foreground">No bets yet</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        Click Buy Yes or Buy No on any market card
+                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ) : (
+                    userBets.map((pos, i) => {
+                      const pnl = (pos.currentPrice - pos.price) * pos.shares;
+                      const pnlPct = pos.price > 0 ? ((pos.currentPrice - pos.price) / pos.price) * 100 : 0;
+                      return (
+                        <div key={i} className="p-3 rounded-lg border border-border bg-muted/30 text-sm">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-xs font-medium leading-snug line-clamp-2 flex-1">
+                              {pos.marketTitle}
+                            </p>
+                            <span className={cn(
+                              "text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0",
+                              pos.outcome === "YES"
+                                ? "bg-primary/20 text-primary"
+                                : "bg-destructive/20 text-destructive"
+                            )}>
+                              {pos.outcome}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-1 text-[10px] text-muted-foreground">
+                            <div>
+                              <p className="mb-0.5">Wagered</p>
+                              <p className="font-semibold text-foreground">${pos.amount}</p>
+                            </div>
+                            <div>
+                              <p className="mb-0.5">Shares</p>
+                              <p className="font-semibold text-foreground">{pos.shares.toFixed(1)}</p>
+                            </div>
+                            <div>
+                              <p className="mb-0.5">P&amp;L</p>
+                              <p className={cn(
+                                "font-semibold",
+                                pnl >= 0 ? "text-primary" : "text-destructive"
+                              )}>
+                                {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+                            <span className="text-[10px] text-muted-foreground">
+                              @ {(pos.price * 100).toFixed(0)}c
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatTimeAgo(pos.timestamp)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Bet Confirmation Modal */}
+      {betConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="font-bold text-lg mb-1">Confirm Bet</h3>
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+              {betConfirmation.market.title}
+            </p>
+
+            {/* Outcome */}
+            <div className={cn(
+              "flex items-center justify-center gap-2 p-4 rounded-xl mb-4 text-lg font-bold",
+              betConfirmation.outcome === "YES"
+                ? "bg-primary/10 text-primary border border-primary/30"
+                : "bg-destructive/10 text-destructive border border-destructive/30"
+            )}>
+              {betConfirmation.outcome === "YES"
+                ? <CheckCircle className="w-5 h-5" />
+                : <XCircle className="w-5 h-5" />}
+              {betConfirmation.outcome}
+            </div>
+
+            {/* Summary */}
+            <div className="space-y-2 mb-5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount</span>
+                <span className="font-semibold">${betConfirmation.amount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Price</span>
+                <span className="font-semibold">
+                  {betConfirmation.outcome === "YES"
+                    ? (betConfirmation.market.yesPrice * 100).toFixed(0)
+                    : (betConfirmation.market.noPrice * 100).toFixed(0)}c
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Potential payout</span>
+                <span className="font-semibold text-primary">
+                  ${(betConfirmation.outcome === "YES"
+                    ? betConfirmation.amount / betConfirmation.market.yesPrice
+                    : betConfirmation.amount / betConfirmation.market.noPrice
+                  ).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-border">
+                <span className="text-muted-foreground">Balance after</span>
+                <span className="font-semibold">${(balance - betConfirmation.amount).toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Amount selector */}
+            <div className="flex gap-2 mb-4">
+              {[25, 50, 100, 250].map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => setBetConfirmation(prev => prev ? { ...prev, amount: amt } : null)}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs rounded-lg font-medium transition-all",
+                    betConfirmation.amount === amt
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  ${amt}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setBetConfirmation(null)}
+                className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted/50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBet}
+                disabled={betConfirmation.amount > balance}
+                className={cn(
+                  "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+                  betConfirmation.amount > balance
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : betConfirmation.outcome === "YES"
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                )}
+              >
+                <ChevronRight className="w-4 h-4" />
+                Place Bet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <MarketDetailModal
         market={selectedMarket}
