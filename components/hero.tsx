@@ -2,19 +2,12 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, TrendingUp, Shield, Globe, Zap } from "lucide-react";
-import { useState } from "react";
-import { useDemoPortfolio } from "@/stores/demo-portfolio";
-import { DemoDashboard } from "./demo-dashboard";
+import { ArrowRight, TrendingUp, Shield, Globe, Zap, UserPlus, LogIn } from "lucide-react";
 
 // Paper Trading for Polymarket - Simulator Component
 export function Hero() {
-  const { isSimulating, startSimulation } = useDemoPortfolio();
   return (
-    <>
-      {isSimulating && <DemoDashboard />}
-      
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background grid effect */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
       
@@ -47,31 +40,41 @@ export function Hero() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Button 
-            size="lg" 
-            className="text-lg px-8 py-6 gap-2"
-            onClick={startSimulation}
-          >
-            <Zap className="w-5 h-5" />
-            Start Predicting (Demo)
-          </Button>
-          <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-            <Link href="/predict">
-              Start Trading Now
-              <ArrowRight className="w-5 h-5" />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+          <Button asChild size="lg" className="text-lg px-8 py-6 gap-2">
+            <Link href="/demo">
+              <Zap className="w-5 h-5" />
+              Start Predicting
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-            <Link href="#live-markets">
+            <Link href="/predict">
               Browse Markets
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </Button>
+        </div>
+
+        {/* Auth Buttons */}
+        <div className="flex items-center justify-center gap-3 mb-16">
+          <Button asChild variant="ghost" size="sm" className="gap-2">
+            <Link href="/auth/login">
+              <LogIn className="w-4 h-4" />
+              Sign in
+            </Link>
+          </Button>
+          <span className="text-muted-foreground">or</span>
+          <Button asChild variant="ghost" size="sm" className="gap-2">
+            <Link href="/auth/sign-up">
+              <UserPlus className="w-4 h-4" />
+              Create account
             </Link>
           </Button>
         </div>
         
         {/* Demo Notice */}
         <p className="text-sm text-muted-foreground mb-16">
-          No registration required. Start instantly with $10,000 virtual funds.
+          Create a free account to track your progress and save your portfolio.
         </p>
 
         {/* Feature pills */}
@@ -89,7 +92,7 @@ export function Hero() {
             <span>Paper Trading Mode</span>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
