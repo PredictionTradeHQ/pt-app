@@ -9,11 +9,11 @@ import React, {
   useEffect,
 } from "react";
 import {
-  usePolymarketWebSocket,
+  usePMSWebSocket,
   type PriceUpdate,
   type TradeUpdate,
   type WebSocketState,
-} from "@/hooks/use-polymarket-websocket";
+} from "@/hooks/use-pms-websocket";
 
 // Market price data with real-time updates
 export interface MarketPriceData {
@@ -207,8 +207,8 @@ export function RealtimePricesProvider({
     []
   );
 
-  // WebSocket connection
-  const connectionState = usePolymarketWebSocket({
+  // WebSocket connection - now using PMS API
+  const connectionState = usePMSWebSocket({
     assetIds: trackedAssetIds,
     onPriceUpdate: handlePriceUpdate,
     onTradeUpdate: handleTradeUpdate,

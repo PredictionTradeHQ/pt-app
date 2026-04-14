@@ -27,7 +27,7 @@ import { Sparkline, generateMockHistory } from "@/components/sparkline";
 import { useRealtimePrices } from "@/contexts/realtime-prices-context";
 import { RealtimeStatus } from "@/components/realtime-status";
 import { PricePulse, LiveIndicator } from "@/components/price-pulse";
-import type { TransformedMarket } from "@/app/api/polymarket/route";
+import type { TransformedMarket } from "@/lib/pms";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -464,7 +464,7 @@ export function MarketsApp() {
       if (activeCategory !== "all") params.set("category", activeCategory);
       if (debouncedSearch) params.set("search", debouncedSearch);
 
-      const res = await fetch("/api/polymarket?" + params.toString());
+      const res = await fetch("/api/pms?" + params.toString());
       if (!res.ok) throw new Error("HTTP " + res.status);
 
       const json = await res.json();
@@ -484,7 +484,7 @@ export function MarketsApp() {
       );
     } catch (err) {
       console.error("[MarketsApp] fetch error:", err);
-      setError("Could not load markets from Polymarket. Please try again.");
+      setError("Could not load markets. Please try again.");
     } finally {
       setLoading(false);
     }

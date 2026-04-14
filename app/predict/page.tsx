@@ -82,7 +82,7 @@ export default function PredictPage() {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch('/api/polymarket?limit=50&sortBy=volume_24hr');
+        const res = await fetch('/api/pms?limit=50&sortBy=volume24hr');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: unknown = await res.json();
         let list: TransformedMarket[] = [];
@@ -170,7 +170,7 @@ export default function PredictPage() {
           </div>
           <div>
             <h1 className="text-4xl font-bold mb-2">Prediction Trade</h1>
-            <p className="text-muted-foreground">Trade on real-world events powered by Polymarket</p>
+            <p className="text-muted-foreground">Trade on real-world events with prediction markets</p>
           </div>
           <div className="space-y-3">
             <Button onClick={handleDemoLogin} size="lg" className="w-full">
