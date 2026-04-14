@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, TrendingUp, Shield, Globe } from "lucide-react";
+import { ArrowRight, TrendingUp, Shield, Globe, Zap } from "lucide-react";
+import { useState } from "react";
+import { useDemoPortfolio } from "@/stores/demo-portfolio";
+import { DemoDashboard } from "./demo-dashboard";
 
 // Paper Trading for Polymarket - Simulator Component
 export function Hero() {
+  const { isSimulating, startSimulation } = useDemoPortfolio();
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <>
+      {isSimulating && <DemoDashboard />}
+      
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background grid effect */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]" />
       
@@ -41,7 +48,15 @@ export function Hero() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Button asChild size="lg" className="text-lg px-8 py-6 gap-2">
+          <Button 
+            size="lg" 
+            className="text-lg px-8 py-6 gap-2"
+            onClick={startSimulation}
+          >
+            <Zap className="w-5 h-5" />
+            Start Predicting (Demo)
+          </Button>
+          <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
             <Link href="/predict">
               Start Trading Now
               <ArrowRight className="w-5 h-5" />
@@ -74,7 +89,7 @@ export function Hero() {
             <span>Paper Trading Mode</span>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
