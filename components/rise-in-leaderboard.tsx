@@ -195,7 +195,7 @@ export function RiseInLeaderboard() {
   useEffect(() => {
     const fetchTopMarkets = async () => {
       try {
-        const res = await fetch("/api/polymarket?limit=8&sortBy=volume");
+        const res = await fetch("/api/pms?limit=8&sortBy=volume");
         const data = await res.json();
         const list: TransformedMarket[] = Array.isArray(data)
           ? data
