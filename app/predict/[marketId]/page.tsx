@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, DollarSign, Droplets, RefreshCw, AlertCircle, Wallet, TrendingUp, TrendingDown, Users, Activity } from "lucide-react";
 import { MarketHeader } from "@/components/market-header";
 import { ProbabilityChart } from "@/components/probability-chart";
-import { formatPrice, formatVolume, formatDate, PriceHistory, MarketDetail } from "@/lib/polymarket";
+import { formatPrice, formatVolume, formatDate, PriceHistory, MarketDetail } from "@/lib/pms";
 
 interface MarketPageProps {
   params: {
@@ -83,13 +83,13 @@ export default function MarketPage({ params }: MarketPageProps) {
 
     try {
       // Fetch market details
-      const marketRes = await fetch(`/api/polymarket?id=${params.marketId}`);
+      const marketRes = await fetch(`/api/pms?id=${params.marketId}`);
       if (!marketRes.ok) throw new Error("Failed to fetch market");
       const marketData: MarketDetail = await marketRes.json();
       setMarket(marketData);
 
       // Fetch price history
-      const historyRes = await fetch(`/api/polymarket/${params.marketId}/history`);
+      const historyRes = await fetch(`/api/pms/${params.marketId}/history`);
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         setPriceHistory(historyData.history || []);

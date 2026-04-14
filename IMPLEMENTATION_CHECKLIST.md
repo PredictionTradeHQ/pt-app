@@ -1,275 +1,153 @@
-# ✅ Implementation Checklist - WebSocket Real-Time Updates
+# Checklist de Implementación - Migración PMS
 
-## Core Infrastructure
+## ✅ Completado
 
-### WebSocket Connection
-- [x] `hooks/use-polymarket-websocket.ts` - Manages connection lifecycle
-  - [x] Auto-connect on component mount
-  - [x] Auto-reconnect with exponential backoff
-  - [x] Heartbeat (PING) every 10 seconds
-  - [x] Message parsing for different event types
-  - [x] Proper cleanup on unmount
+### 1. Librería Cliente PMS
+- [x] `lib/pms.ts` - Cliente HTTP completo con mapeo de datos
+- [x] Funciones de utilidad: `formatPrice()`, `formatVolume()`, `formatDate()`
+- [x] Tipos TypeScript específicos de PMS
+- [x] Manejo de errores robusto
 
-### State Management
-- [x] `contexts/realtime-prices-context.tsx` - Global price state
-  - [x] Register/unregister markets
-  - [x] Track asset ID → market ID mapping
-  - [x] Maintain price history (30 points)
-  - [x] Calculate updates per second
-  - [x] Manage connection state
-  - [x] Hook for component usage: `useRealtimePrices()`
+### 2. Hooks de React
+- [x] `hooks/use-pms-websocket.ts` - WebSocket con reconexión automática
+- [x] Estados de conexión: connecting, connected, error, disconnected
+- [x] Callbacks para: price updates, trade updates, book updates
+- [x] Límite de intentos de reconexión
 
-## Visual Components
+### 3. Rutas API de Next.js
+- [x] `app/api/pms/route.ts` - Listar mercados con filtros
+- [x] `app/api/pms/[marketId]/history/route.ts` - Historial de precios
+- [x] `app/api/pms/[marketId]/odds/route.ts` - Odds en tiempo real
+- [x] Caché con revalidación automática
+- [x] Manejo de errores con respuestas HTTP apropiadas
 
-### Connection Status
-- [x] `components/realtime-status.tsx`
-  - [x] Full status indicator with details
-  - [x] Compact inline version
-  - [x] Connection state display (Live/Connecting/Offline/Error)
-  - [x] Updates/sec metric
-  - [x] Markets tracked count
-  - [x] Tooltip with details
+### 4. Actualización de Componentes
+- [x] `components/markets-app.tsx` - Endpoint actualizado
+- [x] `components/live-markets-preview.tsx` - Parámetros actualizados
+- [x] `components/market-card.tsx` - Compatible con datos PMS
+- [x] `components/market-detail-modal.tsx` - Compatible con datos PMS
+- [x] `components/market-header.tsx` - Compatible con datos PMS
+- [x] `components/trading-panel.tsx` - Compatible con datos PMS
+- [x] `components/probability-chart.tsx` - Compatible con datos PMS
+- [x] `components/sparkline.tsx` - Compatible con datos PMS
+- [x] `app/predict/page.tsx` - Endpoint actualizado
+- [x] `app/predict/[marketId]/page.tsx` - Imports y endpoints actualizados
 
-### Price Animations
-- [x] `components/price-pulse.tsx`
-  - [x] `PricePulse` - Animated price component
-  - [x] `LiveIndicator` - Live streaming badge
-  - [x] `UpdatesPerSecond` - Activity metric display
-  - [x] `PriceChangeIndicator` - Directional price change
-  - [x] Smooth transitions and animations
+### 5. Context y Estado Global
+- [x] `contexts/realtime-prices-context.tsx` - Migrado a usePMSWebSocket
 
-### Statistics Dashboard
-- [x] `components/realtime-stats.tsx`
-  - [x] Full dashboard mode with cards
-  - [x] Compact inline mode for headers
-  - [x] Connection status stat
-  - [x] Updates per second stat
-  - [x] Tracked markets stat
-  - [x] Total updates stat
-  - [x] Most active markets list
-  - [x] Recent trades list
+### 6. Configuración
+- [x] `.env.local.example` - Template de variables de entorno
+- [x] Variables documentadas: PMS_API_KEY, PMS_BASE_URL, PMS_WS_URL
 
-## Integration Points
+### 7. Documentación
+- [x] `MIGRATION_PMS.md` - Guía completa de migración
+- [x] `types/pms.ts` - Tipos TypeScript documentados
+- [x] `IMPLEMENTATION_CHECKLIST.md` - Este archivo
 
-### App Layout
-- [x] `app/layout.tsx`
-  - [x] Import `RealtimePricesProvider`
-  - [x] Wrap entire app with provider
-  - [x] Enable global WebSocket functionality
+## 🔄 Próximos Pasos Manuales
 
-### Markets App Component
-- [x] `components/markets-app.tsx`
-  - [x] Import `useRealtimePrices` hook
-  - [x] Import `RealtimeStatus` component
-  - [x] Import `PricePulse` component
-  - [x] Register markets when loaded
-  - [x] Display `RealtimeStatus` in header
-  - [x] Pass real-time prices to `MarketCard`
-  - [x] Show "Live" badge when connected
-  - [x] Animate price updates
+### 1. Configuración del Proyecto
+- [ ] Obtener API Key de https://www.predictionmarkets.market/docs
+- [ ] Copiar `.env.local.example` a `.env.local`
+- [ ] Actualizar `PMS_API_KEY` con la clave real
+- [ ] Verificar URLs base en `.env.local` (si están customizadas)
 
-### Market Card Component
-- [x] `components/markets-app.tsx` - MarketCard function
-  - [x] Accept real-time price props
-  - [x] Accept `isLive` indicator prop
-  - [x] Use `PricePulse` for animated prices
-  - [x] Use `LiveIndicator` for live badge
-  - [x] Smooth bar animations
-  - [x] Tabular-nums for price display
-
-### API Route
-- [x] `app/api/polymarket/route.ts`
-  - [x] Add `assetIds` field to market response
-  - [x] Parse `clobTokenIds` from database
-  - [x] Include in `TransformedMarket` interface
-  - [x] Return as part of market data
-
-### Page Metadata
-- [x] `app/markets/page.tsx`
-  - [x] Update title to mention real-time
-  - [x] Update description for WebSocket
-  - [x] Add keywords for live pricing
-  - [x] Update OpenGraph metadata
-
-## Documentation
-
-### Technical Documentation
-- [x] `WEBSOCKET_IMPLEMENTATION.md`
-  - [x] Architecture overview
-  - [x] Component descriptions
-  - [x] How it works step-by-step
-  - [x] Configuration options
-  - [x] Performance considerations
-  - [x] Usage examples
-  - [x] Error handling
-  - [x] Testing guide
-  - [x] Future enhancements
-
-### Quick Start Guide
-- [x] `REALTIME_QUICKSTART.md`
-  - [x] Overview of changes
-  - [x] Visual indicators explained
-  - [x] Testing instructions
-  - [x] Performance expectations
-  - [x] Troubleshooting guide
-  - [x] Feature list
-  - [x] DevTools debugging tips
-
-### Summary Document
-- [x] `REALTIME_SUMMARY.md`
-  - [x] Implementation overview
-  - [x] Feature list
-  - [x] File structure
-  - [x] Step-by-step flow
-  - [x] Performance metrics
-  - [x] Testing instructions
-  - [x] Browser compatibility
-  - [x] Security notes
-  - [x] Troubleshooting
-  - [x] Future enhancements
-
-## Testing & Utilities
-
-### Test Script
-- [x] `scripts/test-websocket.mjs`
-  - [x] Standalone WebSocket test
-  - [x] Connection establishment
-  - [x] Message counting
-  - [x] Event type logging
-  - [x] Performance metrics (messages/sec)
-
-## Features Implemented
-
-### Real-Time Updates
-- [x] Market price updates every 1-2 seconds
-- [x] Best bid/ask tracking
-- [x] Last trade price updates
-- [x] Order book snapshots
-- [x] Aggregated price changes
-- [x] Price history for sparklines (30 points)
-
-### Connection Management
-- [x] Automatic WebSocket connection
-- [x] Auto-reconnection with backoff
-- [x] Heartbeat keepalive
-- [x] Proper error handling
-- [x] Resource cleanup
-
-### Visual Feedback
-- [x] Live indicator badge
-- [x] Animated price updates
-- [x] Color-coded changes (green/red)
-- [x] Connection status display
-- [x] Updates per second metric
-- [x] Markets tracked counter
-- [x] Activity indicator (pulsing dot)
-
-### Performance
-- [x] Batch asset subscriptions
-- [x] Limited price history
-- [x] Efficient re-renders
-- [x] Memory optimization
-- [x] CPU usage minimal
-- [x] Exponential backoff on reconnect
-
-## Browser Compatibility
-
-- [x] Chrome/Edge 16+
-- [x] Firefox 11+
-- [x] Safari 7+
-- [x] Opera 12.1+
-- [x] Mobile browsers
-- [x] HTTPS/WSS support
-
-## Security & Best Practices
-
-- [x] No auth credentials over WebSocket
-- [x] Public market data only
-- [x] No sensitive user data transmitted
-- [x] Rate limiting via backoff
-- [x] Batch message optimization
-- [x] Proper connection cleanup
-
-## Verification Steps
-
-To verify everything works:
-
-1. **Visual Check**
-   - [ ] Markets page loads
-   - [ ] "Live" status appears in header
-   - [ ] "Live" badge appears on market cards
-   - [ ] Prices animate when changing
-   - [ ] Updates/second metric shows > 0
-
-2. **DevTools Check**
-   - [ ] Network → WS tab shows connection
-   - [ ] URL: `wss://ws-subscriptions-clob.polymarket.com/ws/market`
-   - [ ] Messages flowing in/out
-   - [ ] Connection status: OPEN
-
-3. **Functionality Check**
-   - [ ] Prices update in real-time
-   - [ ] No page reload needed
-   - [ ] Connection survives tab blur/focus
-   - [ ] Graceful reconnection on drop
-   - [ ] No console errors
-
-4. **Performance Check**
-   - [ ] CPU usage remains low
-   - [ ] No memory leaks (check heap)
-   - [ ] Smooth animations
-   - [ ] No lag in page interaction
-
-## Known Limitations
-
-- ⚠️ Polymarket may rate-limit WebSocket connections
-- ⚠️ Price history limited to 30 points per market
-- ⚠️ May require real market asset IDs from API
-- ⚠️ Order execution not included (read-only)
-- ⚠️ User positions not tracked via WebSocket
-
-## Future Enhancement Opportunities
-
-- [ ] Order book visualization
-- [ ] Trade execution via WebSocket
-- [ ] Multi-currency support
-- [ ] Historical data export
-- [ ] Advanced analytics
-- [ ] Custom price alerts
-- [ ] Position tracking
-- [ ] Advanced charting
-- [ ] Volume profile
-- [ ] Open Interest tracking
-
-## Deployment Notes
-
-### Local Development
+### 2. Testing Local
 ```bash
-pnpm dev
-# Visit http://localhost:3000/markets
-# WebSocket should connect automatically
+# Verificar que la app inicia sin errores
+npm run dev
+
+# En otra terminal, probar endpoint
+curl "http://localhost:3000/api/pms?limit=5"
+
+# Verificar que los componentes cargan mercados
+# Navegar a http://localhost:3000/predict
 ```
 
-### Production (Vercel)
-- [ ] No special configuration needed
-- [ ] HTTPS/WSS works by default
-- [ ] Environment variables properly set
-- [ ] No API key required for public data
+### 3. Pruebas de Funcionalidad
+- [ ] Cargar página `/predict` - debe mostrar lista de mercados
+- [ ] Cargar página `/markets` - debe mostrar mercados vivos
+- [ ] Abrir detalle de mercado `/predict/[id]` - debe cargar gráfico
+- [ ] WebSocket debe conectar y mostrar actualizaciones en tiempo real
+- [ ] Intentar filtrar y buscar mercados
+- [ ] Verificar manejo de errores (simular API down)
 
-### Monitoring
-- [ ] Check WebSocket connection status
-- [ ] Monitor updates per second
-- [ ] Track connection drops/reconnects
-- [ ] Alert on high latency
+### 4. Validación de Datos
+- [ ] Verificar que los precios mostrados son 0-100 (porcentajes)
+- [ ] Verificar que volúmenes están formateados correctamente
+- [ ] Verificar que fechas son legibles
+- [ ] Verificar que el estado de los mercados (open/resolved) es correcto
 
-## Summary
+### 5. Performance
+- [ ] Monitorear Network tab en DevTools
+- [ ] Verificar que la caché funciona (requests repetidos retornan desde cache)
+- [ ] Verificar que WebSocket mantiene conexión activa
+- [ ] Verificar tiempo de carga inicial < 2s
 
-✅ **Complete Implementation**
-- WebSocket real-time price updates
-- Professional UI with animations
-- Automatic reconnection
-- Performance optimized
-- Fully documented
-- Production ready
+### 6. Limpieza (Opcional)
+- [ ] Eliminar archivos obsoletos de Polymarket si está seguro
+  - `lib/polymarket.ts`
+  - `hooks/use-polymarket-websocket.ts`
+  - `app/api/polymarket/*`
+- [ ] Eliminar importaciones obsoletas de todo el código
+- [ ] Ejecutar linter y formatter
 
-The app now provides a professional "live trading" experience with real-time market data! 🚀
+## 🐛 Troubleshooting
+
+### Error: "PMS_API_KEY is not set"
+**Solución:** Verificar que `.env.local` existe y contiene `PMS_API_KEY`
+
+### Error: "Failed to fetch markets"
+**Solución:** 
+- Verificar que PMS_API_KEY es válida
+- Revisar consola del navegador para detalles
+- Verificar que PMS_BASE_URL es correcto
+
+### WebSocket no se conecta
+**Solución:**
+- Verificar que PMS_WS_URL es correcto
+- Revisar Console > Network > WS para detalles
+- Verificar que los mercados tienen IDs válidos
+
+### Los precios no se actualizan en tiempo real
+**Solución:**
+- Verificar que WebSocket está en estado "connected"
+- Revisar que los mercados están en la lista de suscripción (assetIds)
+- Verificar que hay actividad de transacciones en los mercados
+
+## 📊 Comparativa: Polymarket vs PMS
+
+| Aspecto | Polymarket | PMS |
+|---------|-----------|-----|
+| Endpoint | `/api/polymarket` | `/api/pms` |
+| Auth | GAMMA_API | PMS_API_KEY |
+| WebSocket | `/polymarket-ws` | PMS_WS_URL |
+| Volumen 24h | `volume_24hr` | `volume24hr` |
+| Precios | 0-1 (decimal) | 0-1 (decimal) → 0-100 (%) |
+| Book de órdenes | Disponible | Disponible (odds) |
+| Histórico | Disponible | Disponible |
+
+## 📝 Notas Importantes
+
+1. **Mapeo de Precios**: Los precios de PMS vienen como decimales (0-1) pero se convierten a porcentajes (0-100) internamente en la app
+2. **Caché**: El endpoint `/api/pms` tiene caché de 60 segundos por defecto
+3. **WebSocket**: Reconexión automática hasta 5 intentos con backoff exponencial
+4. **Compatibilidad**: Todos los componentes existentes son compatibles sin cambios
+5. **Tipos**: Los nuevos tipos están en `types/pms.ts` para fácil importación
+
+## 🎯 Criterios de Éxito
+
+- [ ] App inicia sin errores
+- [ ] Endpoint `/api/pms` retorna mercados válidos
+- [ ] Componentes renderizan datos correctamente
+- [ ] WebSocket conecta y recibe actualizaciones
+- [ ] No hay errores en consola
+- [ ] Performance es aceptable (LCP < 2.5s)
+- [ ] Todas las pruebas de funcionalidad pasan
+
+---
+
+**Última actualización:** Abril 2026
+**Estado:** Migración completada - Pendiente testing
+**Responsable:** Refactorización PMS

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, Zap, Trophy, Star, Copy, Gift, Clock, Users, Medal } from "lucide-react";
-import type { TransformedMarket } from "@/app/api/polymarket/route";
+import type { TransformedMarket } from "@/lib/pms";
 
 // Static top traders leaderboard with realistic demo data
 const TOP_TRADERS = [
