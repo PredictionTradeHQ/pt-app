@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useSWR from "swr";
-import type { TransformedMarket } from "@/lib/pms";
+import type { TransformedMarket } from "@/app/api/polymarket/route";
 
 // Fetcher for SWR
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -61,11 +61,11 @@ export default function DemoPage() {
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
   const [activeTab, setActiveTab] = useState<"markets" | "positions">("markets");
 
-  // Fetch markets from API
+  // Fetch markets from Polymarket API
   const { data: marketsData, error: marketsError, isLoading: marketsLoading, mutate } = useSWR<{
     markets: TransformedMarket[];
     total: number;
-  }>("/api/pms?limit=20&sortBy=volume24hr", fetcher, {
+  }>("/api/polymarket?limit=24&sortBy=volume24hr", fetcher, {
     refreshInterval: 30000,
   });
 
@@ -110,7 +110,7 @@ export default function DemoPage() {
 
     const newPosition: Position = {
       marketId: market.id,
-      marketTitle: market.title,
+      marketTitle: market.question || "Unknown Market",
       outcome,
       amount,
       price,
@@ -150,7 +150,7 @@ export default function DemoPage() {
             </div>
             <div>
               <h1 className="font-bold text-lg">PredictTrade Demo</h1>
-              <p className="text-xs text-muted-foreground">Paper Trading Mode</p>
+              <p className="text-xs text-muted-foreground">Polymarket Paper Trading</p>
             </div>
           </div>
 
@@ -304,7 +304,7 @@ export default function DemoPage() {
                         </Badge>
                       </div>
                       <CardTitle className="text-sm font-medium leading-snug line-clamp-2 mt-2">
-                        {market.title}
+                        {market.question}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0 space-y-3">
@@ -323,7 +323,7 @@ export default function DemoPage() {
                       {/* Volume */}
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>24h Volume</span>
-                        <span className="font-medium">${(market.volume24h / 1000).toFixed(0)}K</span>
+                        <span className="font-medium">${((market.volume24hr || 0) / 1000).toFixed(0)}K</span>
                       </div>
 
                       {/* Buttons */}
@@ -419,7 +419,7 @@ export default function DemoPage() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2">
-                {betConfirmation.market.title}
+                {betConfirmation.market.question}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">

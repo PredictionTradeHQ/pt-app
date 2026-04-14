@@ -82,7 +82,7 @@ export default function PredictPage() {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch('/api/pms?limit=50&sortBy=volume24hr');
+        const res = await fetch('/api/polymarket?limit=50&sortBy=volume24hr');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: unknown = await res.json();
         let list: TransformedMarket[] = [];

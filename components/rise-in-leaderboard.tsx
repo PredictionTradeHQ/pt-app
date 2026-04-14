@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, Zap, Trophy, Star, Copy, Gift, Clock, Users, Medal } from "lucide-react";
-import type { TransformedMarket } from "@/lib/pms";
+import type { TransformedMarket } from "@/app/api/polymarket/route";
 
 // Static top traders leaderboard with realistic demo data
 const TOP_TRADERS = [
@@ -195,7 +195,7 @@ export function RiseInLeaderboard() {
   useEffect(() => {
     const fetchTopMarkets = async () => {
       try {
-        const res = await fetch("/api/pms?limit=8&sortBy=volume");
+        const res = await fetch("/api/polymarket?limit=8&sortBy=volume");
         const data = await res.json();
         const list: TransformedMarket[] = Array.isArray(data)
           ? data

@@ -175,7 +175,7 @@ export function LiveMarketsPreview() {
     async function fetchMarkets() {
       try {
         setLoading(true);
-        const res = await fetch("/api/pms?limit=12&sortBy=volume24hr");
+        const res = await fetch("/api/polymarket?limit=12&sortBy=volume24hr");
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
         
