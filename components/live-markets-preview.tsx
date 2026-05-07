@@ -90,7 +90,7 @@ function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
 
   return (
     <Link
-      href={`/predict?market=${market.id}`}
+      href={`/markets`}
       className="group block p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-card/80 transition-all"
     >
       {/* Header */}
@@ -172,34 +172,35 @@ export function LiveMarketsPreview() {
   const [activeCategory, setActiveCategory] = useState("all");
 
   useEffect(() => {
-    async function fetchMarkets() {
+    async function fetchMarkets(isRefresh = false) {
       try {
-        setLoading(true);
-        const res = await fetch("/api/polymarket?limit=12&sortBy=volume24hr");
+        if (!isRefresh) setLoading(true);
+        const res = await fetch(`/api/polymarket?limit=12&sortBy=volume24hr&_t=${Date.now()}`, {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
-        
+
         const raw: TransformedMarket[] = Array.isArray(json)
           ? json
           : Array.isArray(json.markets)
             ? json.markets
             : [];
 
-        // Add mock price history to each market
-        const marketsWithHistory: MarketWithHistory[] = raw.map(m => ({
+        setMarkets(raw.map(m => ({
           ...m,
           priceHistory: generateMockHistory(m.yesPrice, 20),
-        }));
-
-        setMarkets(marketsWithHistory);
+        })));
       } catch (err) {
         console.error("Error fetching markets:", err);
       } finally {
-        setLoading(false);
+        if (!isRefresh) setLoading(false);
       }
     }
 
     fetchMarkets();
+    const interval = setInterval(() => fetchMarkets(true), 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Filter markets based on search and category
@@ -234,8 +235,8 @@ export function LiveMarketsPreview() {
             </p>
           </div>
           <Button asChild className="gap-2 w-fit">
-            <Link href="/predict">
-              Start Trading
+            <Link href="/markets">
+              Browse All Markets
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>

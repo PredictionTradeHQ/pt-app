@@ -33,6 +33,7 @@ import { useRealtimePrices } from "@/contexts/realtime-prices-context";
 import { RealtimeStatus } from "@/components/realtime-status";
 import { PricePulse, LiveIndicator } from "@/components/price-pulse";
 import type { TransformedMarket } from "@/app/api/polymarket/route";
+import { useLanguage } from "@/contexts/language-context";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -176,6 +177,7 @@ function MarketCard({
   realtimeNoPrice,
   realtimePriceHistory,
   isLive,
+  labels,
 }: { 
   market: Market; 
   onClick: () => void;
@@ -187,6 +189,16 @@ function MarketCard({
   realtimeNoPrice?: number;
   realtimePriceHistory?: number[];
   isLive?: boolean;
+  labels: {
+    yes: string;
+    no: string;
+    buyYes: string;
+    buyNo: string;
+    probability: string;
+    live: string;
+    hot: string;
+    newest: string;
+  };
 }) {
   const quickBetAmount = selectedAmount || 50;
   
@@ -223,17 +235,17 @@ function MarketCard({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
               </span>
-              Live
+              {labels.live}
             </Badge>
           )}
           {market.trending && (
             <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 border-0 gap-1 text-xs shrink-0">
-              <Flame className="w-3 h-3" />Hot
+              <Flame className="w-3 h-3" />{labels.hot}
             </Badge>
           )}
           {market.isNew && !isLive && (
             <Badge variant="secondary" className="bg-primary/10 text-primary border-0 gap-1 text-xs shrink-0">
-              <Zap className="w-3 h-3" />New
+              <Zap className="w-3 h-3" />{labels.newest}
             </Badge>
           )}
         </div>
@@ -272,17 +284,17 @@ function MarketCard({
               {(yesPrice * 100).toFixed(0)}%
             </PricePulse>
           </div>
-          <div className="text-[10px] text-muted-foreground">probability</div>
+          <div className="text-[10px] text-muted-foreground">{labels.probability}</div>
         </div>
       </div>
 
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs mb-1.5">
           <span className="text-primary font-medium tabular-nums">
-            Yes <PricePulse price={yesPrice * 100} showPulse={isLive}>{(yesPrice * 100).toFixed(0)}</PricePulse>c
+            {labels.yes} <PricePulse price={yesPrice * 100} showPulse={isLive}>{(yesPrice * 100).toFixed(0)}</PricePulse>c
           </span>
           <span className="text-destructive font-medium tabular-nums">
-            No <PricePulse price={noPrice * 100} showPulse={isLive}>{(noPrice * 100).toFixed(0)}</PricePulse>c
+            {labels.no} <PricePulse price={noPrice * 100} showPulse={isLive}>{(noPrice * 100).toFixed(0)}</PricePulse>c
           </span>
         </div>
         <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
@@ -338,7 +350,7 @@ function MarketCard({
             }
           }}
         >
-          Buy Yes
+          {labels.buyYes}
         </button>
         <button
           className={cn(
@@ -356,7 +368,7 @@ function MarketCard({
             }
           }}
         >
-          Buy No
+          {labels.buyNo}
         </button>
       </div>
 
@@ -378,15 +390,15 @@ function MarketCard({
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "politics", label: "Politics" },
-  { id: "sports", label: "Sports" },
-  { id: "crypto", label: "Crypto" },
-  { id: "entertainment", label: "Pop Culture" },
-  { id: "business", label: "Business" },
-  { id: "tech", label: "Tech" },
-  { id: "science", label: "Science" },
-  { id: "world", label: "World" },
+  { id: "all", labelKey: "allCategory" },
+  { id: "politics", labelKey: "politicsCategory" },
+  { id: "sports", labelKey: "sportsCategory" },
+  { id: "crypto", labelKey: "cryptoCategory" },
+  { id: "entertainment", labelKey: "popCultureCategory" },
+  { id: "business", labelKey: "businessCategory" },
+  { id: "tech", labelKey: "techCategory" },
+  { id: "science", labelKey: "scienceCategory" },
+  { id: "world", labelKey: "worldCategory" },
 ];
 
 const SORT_OPTIONS = [
@@ -448,6 +460,8 @@ const generateRandomTrades = (marketTitles: string[]): RecentTrade[] => {
 };
 
 export function MarketsApp() {
+  const { t, language } = useLanguage();
+  const viewerLabel = language === "es" ? "Tu" : "You";
   const [mounted, setMounted] = useState(false);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
@@ -460,7 +474,7 @@ export function MarketsApp() {
   const [lastUpdated, setLastUpdated] = useState("");
   
   // Trading panel state
-  const [balance, setBalance] = useState(10000);
+  const [balance, setBalance] = useState(100000);
   const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [userPositions, setUserPositions] = useState<{ yes: number; no: number }>({ yes: 0, no: 0 });
   const [userBets, setUserBets] = useState<UserPosition[]>([]);
@@ -492,7 +506,7 @@ export function MarketsApp() {
       if (activeCategory !== "all") params.set("category", activeCategory);
       if (debouncedSearch) params.set("search", debouncedSearch);
 
-      const res = await fetch("/api/polymarket?" + params.toString());
+      const res = await fetch("/api/polymarket?" + params.toString() + `&_t=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
 
       const json = await res.json();
@@ -512,7 +526,7 @@ export function MarketsApp() {
       );
     } catch (err) {
       console.error("[MarketsApp] fetch error:", err);
-      setError("Could not load markets. Please try again.");
+      setError(t("noMarketsFound"));
     } finally {
       setLoading(false);
     }
@@ -612,7 +626,7 @@ export function MarketsApp() {
 
     const userTrade: RecentTrade = {
       id: Date.now(),
-      user: "You",
+      user: viewerLabel,
       market: market.title.slice(0, 40) + (market.title.length > 40 ? "..." : ""),
       outcome,
       amount,
@@ -658,7 +672,7 @@ export function MarketsApp() {
               <span className="font-bold text-primary">${balance.toLocaleString()}</span>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/">Home</Link>
+              <Link href="/">{t("home")}</Link>
             </Button>
           </div>
         </div>
@@ -671,15 +685,15 @@ export function MarketsApp() {
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                <span className="text-sm text-muted-foreground">Powered by Polymarket</span>
+                <span className="text-sm text-muted-foreground">{t("poweredBy")}</span>
                 <RealtimeStatus 
                   connectionState={connectionState}
                   updatesPerSecond={updatesPerSecond}
                 />
               </div>
-              <h1 className="text-3xl font-bold mb-1">Prediction Markets</h1>
+              <h1 className="text-3xl font-bold mb-1">{t("predictionMarkets")}</h1>
               <p className="text-muted-foreground text-sm">
-                {loading ? "Loading markets..." : markets.length + " active markets"}
+                {loading ? t("loadingMarkets") : markets.length + " " + t("activeMarkets")}
               </p>
             </div>
 
@@ -687,7 +701,7 @@ export function MarketsApp() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search markets..."
+                  placeholder={t("searchMarkets")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 w-64"
@@ -699,7 +713,9 @@ export function MarketsApp() {
                 className="bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.value === "volume" ? "Volume" : o.value === "volume24hr" ? "24h Volume" : o.value === "liquidity" ? "Liquidity" : o.value === "newest" ? "Newest" : "Ending Soon"}
+                  </option>
                 ))}
               </select>
               <Button
@@ -727,7 +743,7 @@ export function MarketsApp() {
                     : "bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
-                {cat.label}
+                {t(cat.labelKey)}
               </button>
             ))}
           </div>
@@ -742,7 +758,7 @@ export function MarketsApp() {
             {error ? (
               <div className="text-center py-20">
                 <p className="text-destructive mb-4">{error}</p>
-                <Button onClick={fetchMarkets} variant="outline">Try Again</Button>
+                <Button onClick={fetchMarkets} variant="outline">{t("tryAgain")}</Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -751,7 +767,7 @@ export function MarketsApp() {
                   : markets.length === 0
                     ? (
                       <div className="col-span-full text-center py-20 text-muted-foreground">
-                        No markets found. Try a different category or search.
+                        {t("noMarketsFound")}
                       </div>
                     )
 : markets.map((market) => {
@@ -769,6 +785,16 @@ export function MarketsApp() {
       realtimeNoPrice={rtPrice?.noPrice}
       realtimePriceHistory={rtPrice?.priceHistory}
       isLive={!!rtPrice}
+      labels={{
+        yes: t("yes"),
+        no: t("no"),
+        buyYes: t("buyYes"),
+        buyNo: t("buyNo"),
+        probability: t("chance"),
+        live: "Live",
+        hot: "Hot",
+        newest: language === "es" ? "Nuevo" : "New",
+      }}
     />
   );
 })}
@@ -783,7 +809,7 @@ export function MarketsApp() {
               <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary animate-in fade-in slide-in-from-top-2">
                 <CheckCircle className="w-5 h-5 shrink-0" />
                 <span className="text-sm font-medium">
-                  Bet placed: ${betSuccess.amount} on <strong>{betSuccess.outcome}</strong>
+                  {t("betPlaced")} ${betSuccess.amount} {t("onOutcome")} <strong>{betSuccess.outcome === "YES" ? t("yes") : t("no")}</strong>
                 </span>
               </div>
             )}
@@ -791,7 +817,7 @@ export function MarketsApp() {
             {/* Portfolio Summary */}
             <div className="p-5 rounded-xl border border-border bg-card sticky top-24">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">Your Portfolio</h3>
+                <h3 className="font-semibold">{t("yourPortfolio")}</h3>
                 <Badge variant="outline" className="gap-1">
                   <Activity className="w-3 h-3" />
                   Demo
@@ -800,7 +826,7 @@ export function MarketsApp() {
 
               {/* Balance */}
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 mb-4">
-                <p className="text-xs text-muted-foreground mb-1">Available Balance</p>
+                <p className="text-xs text-muted-foreground mb-1">{t("availableBalance")}</p>
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-primary" />
                   <span className="text-2xl font-bold text-primary">{balance.toLocaleString()}</span>
@@ -810,11 +836,11 @@ export function MarketsApp() {
               {/* Stats row */}
               <div className="grid grid-cols-3 gap-2 mb-4">
                 <div className="p-2 rounded-lg bg-muted/50 text-center">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">YES Wagered</p>
+                  <p className="text-[10px] text-muted-foreground mb-0.5">{t("yesWagered")}</p>
                   <p className="font-bold text-primary text-sm">${userPositions.yes.toFixed(0)}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-muted/50 text-center">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">NO Wagered</p>
+                  <p className="text-[10px] text-muted-foreground mb-0.5">{t("noWagered")}</p>
                   <p className="font-bold text-destructive text-sm">${userPositions.no.toFixed(0)}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-muted/50 text-center">
@@ -835,7 +861,7 @@ export function MarketsApp() {
                   )}
                 >
                   <Activity className="w-3 h-3" />
-                  Activity
+                  {t("activity")}
                 </button>
                 <button
                   onClick={() => setActiveTab("positions")}
@@ -847,7 +873,7 @@ export function MarketsApp() {
                   )}
                 >
                   <BarChart2 className="w-3 h-3" />
-                  My Bets
+                  {t("myBets")}
                   {userBets.length > 0 && (
                     <span className="ml-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                       {userBets.length}
@@ -861,14 +887,14 @@ export function MarketsApp() {
                 <div className="space-y-2 max-h-72 overflow-y-auto">
                   <div className="flex items-center gap-1 mb-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs text-muted-foreground">Live market activity</span>
+                    <span className="text-xs text-muted-foreground">{t("liveMarketActivity")}</span>
                   </div>
                   {recentTrades.map((trade) => (
                     <div
                       key={trade.id}
                       className={cn(
                         "p-3 rounded-lg text-sm",
-                        trade.user === "You"
+                        trade.user === viewerLabel
                           ? "bg-primary/10 border border-primary/20"
                           : "bg-muted/50"
                       )}
@@ -876,7 +902,7 @@ export function MarketsApp() {
                       <div className="flex items-center justify-between mb-1">
                         <span className={cn(
                           "font-medium text-xs",
-                          trade.user === "You" ? "text-primary" : "text-foreground"
+                          trade.user === viewerLabel ? "text-primary" : "text-foreground"
                         )}>
                           {trade.user}
                         </span>
@@ -907,9 +933,9 @@ export function MarketsApp() {
                   {userBets.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <Trophy className="w-8 h-8 text-muted-foreground/40 mb-2" />
-                      <p className="text-sm text-muted-foreground">No bets yet</p>
+                      <p className="text-sm text-muted-foreground">{t("noBetsYet")}</p>
                       <p className="text-xs text-muted-foreground/60 mt-1">
-                        Click Buy Yes or Buy No on any market card
+                        {t("noBetsHelp")}
                       </p>
                     </div>
                   ) : (
@@ -933,7 +959,7 @@ export function MarketsApp() {
                           </div>
                           <div className="grid grid-cols-3 gap-1 text-[10px] text-muted-foreground">
                             <div>
-                              <p className="mb-0.5">Wagered</p>
+                              <p className="mb-0.5">{t("wagered")}</p>
                               <p className="font-semibold text-foreground">${pos.amount}</p>
                             </div>
                             <div>
@@ -973,7 +999,7 @@ export function MarketsApp() {
       {betConfirmation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="font-bold text-lg mb-1">Confirm Bet</h3>
+            <h3 className="font-bold text-lg mb-1">{t("confirmBet")}</h3>
             <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
               {betConfirmation.market.title}
             </p>
@@ -994,11 +1020,11 @@ export function MarketsApp() {
             {/* Summary */}
             <div className="space-y-2 mb-5 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount</span>
+                <span className="text-muted-foreground">{t("amount")}</span>
                 <span className="font-semibold">${betConfirmation.amount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Price</span>
+                <span className="text-muted-foreground">{t("price")}</span>
                 <span className="font-semibold">
                   {betConfirmation.outcome === "YES"
                     ? (betConfirmation.market.yesPrice * 100).toFixed(0)
@@ -1006,7 +1032,7 @@ export function MarketsApp() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Potential payout</span>
+                <span className="text-muted-foreground">{t("potentialPayout")}</span>
                 <span className="font-semibold text-primary">
                   ${(betConfirmation.outcome === "YES"
                     ? betConfirmation.amount / betConfirmation.market.yesPrice
@@ -1015,7 +1041,7 @@ export function MarketsApp() {
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-border">
-                <span className="text-muted-foreground">Balance after</span>
+                <span className="text-muted-foreground">{t("balanceAfter")}</span>
                 <span className="font-semibold">${(balance - betConfirmation.amount).toLocaleString()}</span>
               </div>
             </div>

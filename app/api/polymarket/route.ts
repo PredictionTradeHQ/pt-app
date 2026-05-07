@@ -388,7 +388,7 @@ export async function GET(request: Request) {
       const tagsUrl = "https://gamma-api.polymarket.com/tags?_limit=50";
       const tagsRes = await fetch(tagsUrl, {
         headers: { Accept: "application/json" },
-        next: { revalidate: 300 },
+        cache: "no-store",
       });
       
       if (tagsRes.ok) {
@@ -406,7 +406,7 @@ export async function GET(request: Request) {
       const url = `https://gamma-api.polymarket.com/markets/${marketId}`;
       const response = await fetch(url, {
         headers: { Accept: "application/json" },
-        next: { revalidate: 30 },
+        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -455,7 +455,7 @@ export async function GET(request: Request) {
 
     const response = await fetch(url.toString(), {
       headers: { Accept: "application/json" },
-      next: { revalidate: 60 },
+      cache: "no-store",
     });
 
     if (!response.ok) {

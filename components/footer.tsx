@@ -1,30 +1,36 @@
-const footerLinks = {
-  product: [
-    { name: "Markets", href: "#" },
-    { name: "How It Works", href: "#" },
-    { name: "Fees", href: "#" },
-    { name: "API", href: "#" },
-  ],
-  resources: [
-    { name: "Help Center", href: "#" },
-    { name: "Documentation", href: "#" },
-    { name: "Blog", href: "#" },
-    { name: "Tutorials", href: "#" },
-  ],
-  legal: [
-    { name: "Terms of Service", href: "#" },
-    { name: "Privacy Policy", href: "#" },
-    { name: "Risk Disclosure", href: "#" },
-  ],
-  company: [
-    { name: "About Us", href: "#" },
-    { name: "Careers", href: "#" },
-    { name: "Press", href: "#" },
-    { name: "Contact", href: "#" },
-  ],
-};
+"use client";
+
+import { useLanguage } from "@/contexts/language-context";
 
 export function Footer() {
+  const { t } = useLanguage();
+
+  const footerLinks = {
+    product: [
+      { name: t("navMarkets"), href: "/markets" },
+      { name: t("navHowItWorks"), href: "/#how-it-works" },
+      { name: "Fees", href: "#" },
+      { name: "API", href: "#" },
+    ],
+    resources: [
+      { name: t("helpCenter"), href: "#" },
+      { name: t("documentation"), href: "#" },
+      { name: t("blog"), href: "#" },
+      { name: t("tutorials"), href: "#" },
+    ],
+    legal: [
+      { name: t("terms"), href: "#" },
+      { name: t("privacy"), href: "#" },
+      { name: t("riskDisclosure"), href: "#" },
+    ],
+    company: [
+      { name: t("about"), href: "#" },
+      { name: t("careers"), href: "#" },
+      { name: t("press"), href: "#" },
+      { name: t("contact"), href: "#" },
+    ],
+  };
+
   return (
     <footer className="border-t border-border py-16">
       <div className="container mx-auto px-4">
@@ -36,13 +42,13 @@ export function Footer() {
               <span className="font-bold text-xl">Prediction Trade</span>
             </a>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Free prediction market simulator with real Polymarket data.
+              {t("footerBrandDesc")}
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold mb-4">Product</h4>
+            <h4 className="font-semibold mb-4">{t("product")}</h4>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.name}>
@@ -58,7 +64,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Resources</h4>
+            <h4 className="font-semibold mb-4">{t("resources")}</h4>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
@@ -74,7 +80,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
+            <h4 className="font-semibold mb-4">{t("legal")}</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.name}>
@@ -90,7 +96,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
+            <h4 className="font-semibold mb-4">{t("company")}</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -115,15 +121,15 @@ export function Footer() {
               </svg>
             </div>
             <div>
-              <h4 className="font-semibold text-sm mb-1">Powered by Polymarket</h4>
+              <h4 className="font-semibold text-sm mb-1">{t("attrTitle")}</h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                All market data comes from{" "}
+                {t("attrTextPrefix")}{" "}
                 <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
                   Polymarket
                 </a>
-                , the leading decentralized prediction market. Ready to trade with real funds?{" "}
+                {t("attrTextMiddle")}{" "}
                 <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
-                  Visit Polymarket directly
+                  {t("attrTextLink2")}
                 </a>.
               </p>
             </div>
@@ -134,11 +140,11 @@ export function Footer() {
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2026 Prediction Trade. All rights reserved.
+              © 2026 Prediction Trade. {t("allRightsReserved")}
             </p>
             <span className="hidden md:inline text-muted-foreground">·</span>
             <p className="text-xs text-muted-foreground">
-              Data powered by <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Polymarket</a>
+              {t("dataPoweredBy")} <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Polymarket</a>
             </p>
           </div>
           <div className="flex items-center gap-4">

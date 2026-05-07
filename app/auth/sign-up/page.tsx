@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TrendingUp, Mail, Lock, User, ArrowRight, Loader2, Check } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,13 +28,13 @@ export default function SignUpPage() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("passwordsDontMatch"));
       setIsLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t("passwordTooShort"));
       setIsLoading(false);
       return;
     }
@@ -53,7 +55,7 @@ export default function SignUpPage() {
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : t("authUnexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -78,23 +80,23 @@ export default function SignUpPage() {
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Create account</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t("createAccountTitle")}</CardTitle>
             <CardDescription>
-              Start practicing with $10,000 in virtual funds
+              {t("signUpDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="displayName" className="text-sm font-medium">
-                  Display Name <span className="text-muted-foreground">(optional)</span>
+                  {t("displayName")} <span className="text-muted-foreground">({t("optional")})</span>
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="displayName"
                     type="text"
-                    placeholder="Your nickname"
+                    placeholder={t("yourNickname")}
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="pl-10"
@@ -122,14 +124,14 @@ export default function SignUpPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {t("password")}
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Min. 6 characters"
+                    placeholder={t("min6Chars")}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -140,14 +142,14 @@ export default function SignUpPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                  Confirm Password
+                  {t("confirmPassword")}
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Repeat your password"
+                    placeholder={t("repeatPassword")}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -169,11 +171,11 @@ export default function SignUpPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating account...
+                    {t("creatingAccount")}
                   </>
                 ) : (
                   <>
-                    Create account
+                    {t("createAccount")}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -182,13 +184,13 @@ export default function SignUpPage() {
 
             {/* Benefits */}
             <div className="mt-6 p-4 rounded-lg bg-muted/50 space-y-2">
-              <p className="text-xs font-medium text-foreground">What you get:</p>
+              <p className="text-xs font-medium text-foreground">{t("whatYouGet")}</p>
               <ul className="space-y-1">
                 {[
-                  "$10,000 virtual trading balance",
-                  "Real-time prediction market data",
-                  "Practice trading without risk",
-                  "Track your performance"
+                  t("benefitBalance"),
+                  t("benefitRealtime"),
+                  t("benefitPractice"),
+                  t("benefitTrack")
                 ].map((benefit, i) => (
                   <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Check className="w-3 h-3 text-primary shrink-0" />
@@ -199,26 +201,25 @@ export default function SignUpPage() {
             </div>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t("alreadyHaveAccount")}{" "}
               <Link
                 href="/auth/login"
                 className="text-primary font-medium hover:underline underline-offset-4"
               >
-                Sign in
+                {t("signIn")}
               </Link>
             </div>
 
             <div className="mt-4 pt-4 border-t border-border">
               <Link href="/" className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Back to home
+                {t("backToHome")}
               </Link>
             </div>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          By creating an account, you agree to practice trading with virtual funds only.
-          No real money is involved.
+          {t("createAccountNotice")}
         </p>
       </div>
     </div>

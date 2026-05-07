@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, Shield, Globe, Zap, UserPlus, LogIn } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 // Paper Trading for Polymarket - Simulator Component
 export function Hero() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background grid effect */}
@@ -23,20 +26,20 @@ export function Hero() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm mb-8 hover:bg-primary/20 transition-colors group"
         >
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-sm font-medium text-primary">Powered by Polymarket API</span>
-          <span className="text-sm text-muted-foreground">Live Data</span>
+          <span className="text-sm font-medium text-primary">{t("poweredByPolymarketApi")}</span>
+          <span className="text-sm text-muted-foreground">{t("liveData")}</span>
         </a>
 
         {/* Main heading */}
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 text-balance">
-          <span className="text-foreground">Paper Trading</span>
+          <span className="text-foreground">{t("heroTitleLine1")}</span>
           <br />
-          <span className="text-primary">for Polymarket</span>
+          <span className="text-primary">{t("heroTitleLine2")}</span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10 text-balance leading-relaxed">
-          Learn to trade prediction markets without risking real money. Practice with live Polymarket data and master the odds before going live.
+          {t("heroSubtitle")}
         </p>
 
         {/* CTA Buttons */}
@@ -44,12 +47,12 @@ export function Hero() {
           <Button asChild size="lg" className="text-lg px-8 py-6 gap-2">
             <Link href="/demo">
               <Zap className="w-5 h-5" />
-              Start Predicting
+              {t("startPredicting")}
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-            <Link href="/predict">
-              Browse Markets
+            <Link href="/markets">
+              {t("browseMarkets")}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </Button>
@@ -60,36 +63,36 @@ export function Hero() {
           <Button asChild variant="ghost" size="sm" className="gap-2">
             <Link href="/auth/login">
               <LogIn className="w-4 h-4" />
-              Sign in
+              {t("signIn")}
             </Link>
           </Button>
-          <span className="text-muted-foreground">or</span>
+          <span className="text-muted-foreground">{t("or")}</span>
           <Button asChild variant="ghost" size="sm" className="gap-2">
             <Link href="/auth/sign-up">
               <UserPlus className="w-4 h-4" />
-              Create account
+              {t("createAccount")}
             </Link>
           </Button>
         </div>
         
         {/* Demo Notice */}
         <p className="text-sm text-muted-foreground mb-16">
-          Create a free account to track your progress and save your portfolio.
+          {t("accountHint")}
         </p>
 
         {/* Feature pills */}
         <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Shield className="w-5 h-5 text-primary" />
-            <span>Zero Financial Risk</span>
+            <span>{t("zeroRisk")}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Globe className="w-5 h-5 text-primary" />
-            <span>Real Polymarket Prices</span>
+            <span>{t("realPrices")}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <TrendingUp className="w-5 h-5 text-primary" />
-            <span>Paper Trading Mode</span>
+            <span>{t("paperMode")}</span>
           </div>
         </div>
       </div>

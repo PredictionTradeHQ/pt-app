@@ -6,11 +6,20 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Allow local/dev usage without Supabase configured.
+  // Without these vars, creating the client throws and breaks all routes.
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse
+  }
+
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -42,8 +51,8 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (
-    // if the user is not logged in and tries to access /demo, redirect to the login page
     (request.nextUrl.pathname.startsWith('/demo') ||
+     request.nextUrl.pathname.startsWith('/dashboard') ||
      request.nextUrl.pathname.startsWith('/protected')) &&
     !user
   ) {

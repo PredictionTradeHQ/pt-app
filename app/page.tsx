@@ -20,19 +20,19 @@ export default function Home() {
         <section id="leaderboard">
           <RiseInLeaderboard />
         </section>
-        <section id="como-funciona">
+        <section id="how-it-works">
           <HowItWorks />
         </section>
-        <section id="mercados">
+        <section id="markets">
           <Markets />
         </section>
-        <section id="ventajas">
+        <section id="advantages">
           <WhyUs />
         </section>
-        <section id="comunidad">
+        <section id="community">
           <Community />
         </section>
-        <section id="contacto">
+        <section id="contact">
           <Contact />
         </section>
       </main>

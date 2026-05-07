@@ -248,7 +248,7 @@ export function RiseInLeaderboard() {
 
           <div className="flex items-center gap-3">
             <Button variant="outline" className="gap-2 w-fit" asChild>
-              <a href="/predict">
+              <a href="/markets">
                 View All Markets
                 <ArrowRight className="w-4 h-4" />
               </a>
@@ -455,12 +455,12 @@ export function RiseInLeaderboard() {
             <div>
               <p className="font-semibold text-sm">Ready to paper trade?</p>
               <p className="text-muted-foreground text-sm">
-                Start with $10,000 virtual and climb the leaderboard.
+                Start with $100,000 virtual and climb the leaderboard.
               </p>
             </div>
           </div>
           <Button asChild className="shrink-0">
-            <a href="/predict">Start Paper Trading</a>
+            <a href="/demo">Start Paper Trading</a>
           </Button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { RealtimePricesProvider } from '@/contexts/realtime-prices-context'
+import { LanguageProvider } from '@/contexts/language-context'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     default: 'Prediction Trade - Free Polymarket Simulator & Paper Trading Platform',
     template: '%s | Prediction Trade',
   },
-  description: 'Practice prediction market trading risk-free with our Polymarket simulator. Paper trade with $10,000 virtual funds using live market data. Learn trading strategies before investing real money.',
+  description: 'Practice prediction market trading risk-free with our Polymarket simulator. Paper trade with $100,000 virtual funds using live market data. Learn trading strategies before investing real money.',
   keywords: [
     'Polymarket simulator',
     'paper trading prediction markets',
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     url: 'https://predictiontrade.online',
     siteName: 'Prediction Trade',
     title: 'Prediction Trade - Free Polymarket Simulator & Paper Trading',
-    description: 'Practice prediction market trading risk-free. Paper trade with $10,000 virtual funds using live Polymarket data.',
+    description: 'Practice prediction market trading risk-free. Paper trade with $100,000 virtual funds using live Polymarket data.',
     images: [
       {
         url: '/images/logo.png',
@@ -90,9 +91,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <RealtimePricesProvider>
-          {children}
-        </RealtimePricesProvider>
+        <LanguageProvider>
+          <RealtimePricesProvider>
+            {children}
+          </RealtimePricesProvider>
+        </LanguageProvider>
         <Analytics />
       </body>
     </html>

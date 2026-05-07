@@ -14,7 +14,7 @@ export function MarketHeader({ market }: MarketHeaderProps) {
   return (
     <div className="mb-8 border-b border-border pb-6">
       {/* Back button */}
-      <Link href="/predict">
+      <Link href="/markets">
         <Button variant="ghost" size="sm" className="gap-2 mb-4">
           <ArrowLeft className="w-4 h-4" />
           Back to Markets

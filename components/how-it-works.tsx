@@ -4,8 +4,8 @@ const steps = [
   {
     icon: Play,
     step: "01",
-    title: "Get $10,000 Virtual",
-    description: "Start instantly with $10,000 in paper trading funds. No wallet needed, no deposits, no risk.",
+    title: "Get $100,000 Virtual",
+    description: "Start instantly with $100,000 in paper trading funds. No wallet needed, no deposits, no risk.",
   },
   {
     icon: Target,
@@ -67,7 +67,7 @@ export function HowItWorks() {
         <div className="mt-16 p-8 rounded-2xl border border-border bg-card/30 backdrop-blur-sm">
           <div className="grid md:grid-cols-3 gap-8 text-center">
             <div>
-              <p className="text-3xl font-bold text-primary mb-2">$10,000</p>
+              <p className="text-3xl font-bold text-primary mb-2">$100,000</p>
               <p className="text-muted-foreground">Starting Balance</p>
             </div>
             <div>

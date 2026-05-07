@@ -32,7 +32,7 @@ import useSWR from "swr";
 import type { TransformedMarket } from "@/app/api/polymarket/route";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
-const STARTING_BALANCE = 10000;
+const STARTING_BALANCE = 100000;
 const STORAGE_PREFIX = "predictiontrade.demo.portfolio.v2";
 
 interface Position {
@@ -330,12 +330,10 @@ export default function DemoPage() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src="/images/logo.png" alt="Prediction Trade" className="w-8 h-8" />
             <div>
-              <h1 className="font-bold text-lg">PredictTrade Demo Dashboard</h1>
-              <p className="text-xs text-muted-foreground">Portfolio persistente y paper trading en tiempo real</p>
+              <h1 className="font-bold text-lg">Prediction Trade</h1>
+              <p className="text-xs text-muted-foreground">Demo Trading — Paper trading en tiempo real</p>
             </div>
           </div>
 

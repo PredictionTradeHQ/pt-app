@@ -1,8 +1,13 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Mail, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function SignUpSuccessPage() {
+  const { t } = useLanguage();
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background p-6">
       {/* Background gradient */}
@@ -25,23 +30,23 @@ export default function SignUpSuccessPage() {
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t("checkYourEmail")}</CardTitle>
             <CardDescription>
-              We sent you a confirmation link
+              {t("sentConfirmationLink")}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <div className="p-4 rounded-lg bg-muted/50 flex items-center gap-3">
               <Mail className="w-5 h-5 text-muted-foreground shrink-0" />
               <p className="text-sm text-muted-foreground text-left">
-                Click the link in your email to verify your account and start trading with virtual funds.
+                {t("verifyEmailHelp")}
               </p>
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Didn&apos;t receive an email? Check your spam folder or{" "}
+              {t("didntReceiveEmail")}{" "}
               <Link href="/auth/sign-up" className="text-primary hover:underline underline-offset-4">
-                try again
+                {t("tryAgain")}
               </Link>
             </p>
 
@@ -50,7 +55,7 @@ export default function SignUpSuccessPage() {
                 href="/auth/login" 
                 className="text-sm text-primary font-medium hover:underline underline-offset-4"
               >
-                Back to login
+                {t("backToLogin")}
               </Link>
             </div>
           </CardContent>

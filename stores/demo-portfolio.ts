@@ -34,7 +34,7 @@ export interface DemoPortfolioStore {
   getPnLPercentage: () => number;
 }
 
-const INITIAL_BALANCE = 10000;
+const INITIAL_BALANCE = 100000;
 
 export const useDemoPortfolio = create<DemoPortfolioStore>((set, get) => ({
   isSimulating: false,

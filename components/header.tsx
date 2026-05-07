@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap, User, LogOut } from "lucide-react";
+import { Menu, X, Zap, User, LogOut, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/contexts/language-context";
+import { LanguageToggle } from "@/components/language-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,19 +16,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navLinks = [
-  { name: "Markets", href: "/markets" },
-  { name: "Academy", href: "/academy" },
-  { name: "How It Works", href: "/#how-it-works" },
-  { name: "Community", href: "/#community" },
-];
-
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<{ email?: string; display_name?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
+  const { t, language } = useLanguage();
+  const isEs = language === "es";
+
+  const navLinks = [
+    { name: t("navMarkets"), href: "/markets" },
+    { name: t("navAcademy"), href: "/academy" },
+    { name: isEs ? "⚡ Juego" : "⚡ Play", href: "/play" },
+    { name: t("navHowItWorks"), href: "/#how-it-works" },
+    { name: t("navCommunity"), href: "/#community" },
+  ];
 
   useEffect(() => {
     const checkUser = async () => {
@@ -79,7 +84,7 @@ export function Header() {
               className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
             >
               <Zap className="w-3 h-3 text-primary" />
-              <span className="text-xs font-medium text-primary">Powered by Polymarket</span>
+              <span className="text-xs font-medium text-primary">{t("poweredByPolymarket")}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             </a>
           </div>
@@ -99,12 +104,13 @@ export function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
+            <LanguageToggle />
             {isLoading ? (
               <div className="w-20 h-8 bg-muted animate-pulse rounded-md" />
             ) : user ? (
               <div className="flex items-center gap-3">
                 <Button asChild size="sm">
-                  <Link href="/demo">Demo Trading</Link>
+                  <Link href="/demo">{t("demoTrading")}</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -120,14 +126,20 @@ export function Header() {
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="cursor-pointer gap-2 flex items-center">
+                        <LayoutDashboard className="w-4 h-4" />
+                        {isEs ? "Mi Dashboard" : "My Dashboard"}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/demo" className="cursor-pointer">
-                        Demo Trading
+                        {t("demoTrading")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
                       <LogOut className="w-4 h-4 mr-2" />
-                      Sign out
+                      {t("signOut")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -135,10 +147,10 @@ export function Header() {
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/auth/login">Log In</Link>
+                  <Link href="/auth/login">{t("logIn")}</Link>
                 </Button>
                 <Button asChild size="sm">
-                  <Link href="/auth/sign-up">Get Started</Link>
+                  <Link href="/auth/sign-up">{t("getStarted")}</Link>
                 </Button>
               </>
             )}
@@ -148,7 +160,7 @@ export function Header() {
           <button
             className="md:hidden p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileMenuOpen ? t("closeMenu") : t("openMenu")}
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -162,6 +174,9 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <nav className="flex flex-col gap-4">
+              <div className="pb-2">
+                <LanguageToggle />
+              </div>
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
@@ -179,26 +194,32 @@ export function Header() {
                       <p className="font-medium">{user.display_name}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
+                    <Button asChild variant="outline" className="justify-start gap-2">
+                      <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                        <LayoutDashboard className="w-4 h-4" />
+                        {isEs ? "Mi Dashboard" : "My Dashboard"}
+                      </Link>
+                    </Button>
                     <Button asChild className="justify-start">
                       <Link href="/demo" onClick={() => setMobileMenuOpen(false)}>
-                        Demo Trading
+                        {t("demoTrading")}
                       </Link>
                     </Button>
                     <Button variant="ghost" className="justify-start text-destructive" onClick={handleLogout}>
                       <LogOut className="w-4 h-4 mr-2" />
-                      Sign out
+                      {t("signOut")}
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button asChild variant="ghost" className="justify-start">
                       <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
-                        Log In
+                        {t("logIn")}
                       </Link>
                     </Button>
                     <Button asChild className="justify-start">
                       <Link href="/auth/sign-up" onClick={() => setMobileMenuOpen(false)}>
-                        Get Started
+                        {t("getStarted")}
                       </Link>
                     </Button>
                   </>

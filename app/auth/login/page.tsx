@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TrendingUp, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +31,10 @@ export default function LoginPage() {
         password,
       });
       if (error) throw error;
-      router.push("/demo");
+      const params = new URLSearchParams(window.location.search);
+      router.push(params.get("next") ?? "/dashboard");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : t("authUnexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -56,9 +59,9 @@ export default function LoginPage() {
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t("welcomeBack")}</CardTitle>
             <CardDescription>
-              Sign in to access the prediction markets demo
+              {t("loginDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -83,14 +86,14 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {t("password")}
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t("enterPassword")}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -109,11 +112,11 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Signing in...
+                    {t("signingIn")}
                   </>
                 ) : (
                   <>
-                    Sign in
+                    {t("signIn")}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -121,26 +124,25 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
+              {t("dontHaveAccount")}{" "}
               <Link
                 href="/auth/sign-up"
                 className="text-primary font-medium hover:underline underline-offset-4"
               >
-                Create account
+                {t("createAccount")}
               </Link>
             </div>
 
             <div className="mt-4 pt-4 border-t border-border">
               <Link href="/" className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Back to home
+                {t("backToHome")}
               </Link>
             </div>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          By signing in, you agree to practice trading with virtual funds only.
-          No real money is involved.
+          {t("virtualFundsNotice")}
         </p>
       </div>
     </div>

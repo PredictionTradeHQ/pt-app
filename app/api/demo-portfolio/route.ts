@@ -67,7 +67,7 @@ export async function PUT(request: Request) {
       balance: Number(payload.balance ?? 0),
       positions: Array.isArray(payload.positions) ? payload.positions : [],
       activity: Array.isArray(payload.activity) ? payload.activity : [],
-      startingBalance: Number(payload.startingBalance ?? 10000),
+      startingBalance: Number(payload.startingBalance ?? 100000),
     }
 
     const { error } = await supabase.from('demo_portfolios').upsert(

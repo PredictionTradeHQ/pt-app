@@ -7,14 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { TrendingUp, Mail, Lock, User, ArrowRight, Loader2, Check } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function AuthPanelPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = useMemo(() => searchParams.get("next") || "/demo", [searchParams]);
+  const { t } = useLanguage();
+  const redirectTo =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("next") || "/demo"
+      : "/demo";
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -40,7 +44,7 @@ export default function AuthPanelPage() {
       if (loginError) throw loginError;
       router.push(redirectTo);
     } catch (authError: unknown) {
-      setError(authError instanceof Error ? authError.message : "No se pudo iniciar sesion");
+      setError(authError instanceof Error ? authError.message : t("authUnexpectedError"));
     } finally {
       setIsLoadingLogin(false);
     }
@@ -53,13 +57,13 @@ export default function AuthPanelPage() {
     setError(null);
 
     if (signUpPassword !== confirmPassword) {
-      setError("Las contrasenas no coinciden");
+      setError(t("passwordsDontMatch"));
       setIsLoadingSignUp(false);
       return;
     }
 
     if (signUpPassword.length < 6) {
-      setError("La contrasena debe tener al menos 6 caracteres");
+      setError(t("passwordTooShort"));
       setIsLoadingSignUp(false);
       return;
     }
@@ -80,7 +84,7 @@ export default function AuthPanelPage() {
       if (signUpError) throw signUpError;
       router.push("/auth/sign-up-success");
     } catch (authError: unknown) {
-      setError(authError instanceof Error ? authError.message : "No se pudo crear la cuenta");
+      setError(authError instanceof Error ? authError.message : t("authUnexpectedError"));
     } finally {
       setIsLoadingSignUp(false);
     }
@@ -103,14 +107,14 @@ export default function AuthPanelPage() {
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl font-bold">Panel de acceso a la demo</CardTitle>
-            <CardDescription>Crea tu cuenta o inicia sesion para usar el simulador</CardDescription>
+            <CardTitle className="text-2xl font-bold">{t("authPanelTitle")}</CardTitle>
+            <CardDescription>{t("authPanelDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Iniciar sesion</TabsTrigger>
-                <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
+                <TabsTrigger value="login">{t("loginTab")}</TabsTrigger>
+                <TabsTrigger value="signup">{t("signupTab")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="mt-4">
@@ -132,14 +136,14 @@ export default function AuthPanelPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Contrasena</Label>
+                    <Label htmlFor="login-password">{t("password")}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="login-password"
                         type="password"
                         required
-                        placeholder="Tu contrasena"
+                        placeholder={t("enterPassword")}
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         className="pl-10"
@@ -151,11 +155,11 @@ export default function AuthPanelPage() {
                     {isLoadingLogin ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Iniciando sesion...
+                        {t("signingIn")}
                       </>
                     ) : (
                       <>
-                        Entrar a la demo
+                        {t("goDemo")}
                         <ArrowRight className="h-4 w-4" />
                       </>
                     )}
@@ -166,13 +170,13 @@ export default function AuthPanelPage() {
               <TabsContent value="signup" className="mt-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nombre para mostrar</Label>
+                    <Label htmlFor="signup-name">{t("displayName")}</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="signup-name"
                         type="text"
-                        placeholder="Tu apodo"
+                        placeholder={t("yourNickname")}
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         className="pl-10"
@@ -197,14 +201,14 @@ export default function AuthPanelPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Contrasena</Label>
+                    <Label htmlFor="signup-password">{t("password")}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="signup-password"
                         type="password"
                         required
-                        placeholder="Min. 6 caracteres"
+                        placeholder={t("min6Chars")}
                         value={signUpPassword}
                         onChange={(e) => setSignUpPassword(e.target.value)}
                         className="pl-10"
@@ -213,14 +217,14 @@ export default function AuthPanelPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirmar contrasena</Label>
+                    <Label htmlFor="signup-confirm">{t("confirmPassword")}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         id="signup-confirm"
                         type="password"
                         required
-                        placeholder="Repite tu contrasena"
+                        placeholder={t("repeatPassword")}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="pl-10 pr-10"
@@ -235,11 +239,11 @@ export default function AuthPanelPage() {
                     {isLoadingSignUp ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Creando cuenta...
+                        {t("creatingAccount")}
                       </>
                     ) : (
                       <>
-                        Crear cuenta
+                        {t("createAccount")}
                         <ArrowRight className="h-4 w-4" />
                       </>
                     )}
@@ -256,7 +260,7 @@ export default function AuthPanelPage() {
 
             <div className="mt-6 border-t border-border pt-4 text-center">
               <Link href="/" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                Volver al inicio
+                {t("backToHome")}
               </Link>
             </div>
           </CardContent>
