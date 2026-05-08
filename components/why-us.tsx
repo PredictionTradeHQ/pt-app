@@ -1,55 +1,74 @@
-import { Zap, Target, Users, BarChart3, BookOpen, Sparkles } from "lucide-react";
+"use client";
 
-const features = [
-  {
-    icon: BookOpen,
-    title: "Learn Risk-Free",
-    description: "Practice with virtual funds. Make mistakes, learn strategies, all without losing real money.",
-  },
-  {
-    icon: Zap,
-    title: "Real Market Data",
-    description: "Live prices and volumes from Polymarket. Train with real-world market conditions.",
-  },
-  {
-    icon: BarChart3,
-    title: "Track Your Accuracy",
-    description: "See your prediction history and win rate. Identify what works before going live.",
-  },
-  {
-    icon: Sparkles,
-    title: "Intuitive Interface",
-    description: "Clean and easy-to-use design. Perfect for beginners learning prediction markets.",
-  },
-  {
-    icon: Users,
-    title: "Active Community",
-    description: "Join thousands of learners who share analysis and prediction strategies.",
-  },
-  {
-    icon: Target,
-    title: "Ready for Real Trading?",
-    description: "When you feel confident, transition to Polymarket to trade with real funds.",
-  },
-];
+import { Zap, Target, Users, BarChart3, BookOpen, Sparkles } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export function WhyUs() {
+  const { language } = useLanguage();
+  const isEs = language === "es";
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: isEs ? "Aprende sin riesgo" : "Learn Risk-Free",
+      description: isEs
+        ? "Practica con fondos virtuales. Comete errores, aprende estrategias, todo sin perder dinero real."
+        : "Practice with virtual funds. Make mistakes, learn strategies, all without losing real money.",
+    },
+    {
+      icon: Zap,
+      title: isEs ? "Datos reales del mercado" : "Real Market Data",
+      description: isEs
+        ? "Precios y volúmenes en vivo de Polymarket. Entrénate con condiciones reales de mercado."
+        : "Live prices and volumes from Polymarket. Train with real-world market conditions.",
+    },
+    {
+      icon: BarChart3,
+      title: isEs ? "Sigue tu precisión" : "Track Your Accuracy",
+      description: isEs
+        ? "Consulta tu historial de predicciones y tu tasa de aciertos. Identifica qué funciona antes de operar en real."
+        : "See your prediction history and win rate. Identify what works before going live.",
+    },
+    {
+      icon: Sparkles,
+      title: isEs ? "Interfaz intuitiva" : "Intuitive Interface",
+      description: isEs
+        ? "Diseño limpio y fácil de usar. Perfecto para principiantes que aprenden mercados de predicción."
+        : "Clean and easy-to-use design. Perfect for beginners learning prediction markets.",
+    },
+    {
+      icon: Users,
+      title: isEs ? "Comunidad activa" : "Active Community",
+      description: isEs
+        ? "Únete a miles de aprendices que comparten análisis y estrategias de predicción."
+        : "Join thousands of learners who share analysis and prediction strategies.",
+    },
+    {
+      icon: Target,
+      title: isEs ? "¿Listo para operar de verdad?" : "Ready for Real Trading?",
+      description: isEs
+        ? "Cuando te sientas seguro, da el salto a Polymarket y opera con fondos reales."
+        : "When you feel confident, transition to Polymarket to trade with real funds.",
+    },
+  ];
+
   return (
     <section id="why-us" className="py-24 border-t border-border">
       <div className="container mx-auto px-4">
-        {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">Why Practice Here</p>
+          <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
+            {isEs ? "Por qué practicar aquí" : "Why Practice Here"}
+          </p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-            The Smartest Way to Learn
+            {isEs ? "La forma más inteligente de aprender" : "The Smartest Way to Learn"}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Most traders lose money when they start. Our simulator lets you develop 
-            your prediction skills with real data before risking actual capital.
+            {isEs
+              ? "La mayoría de traders pierde dinero al empezar. Nuestro simulador te permite desarrollar tus habilidades de predicción con datos reales antes de arriesgar capital."
+              : "Most traders lose money when they start. Our simulator lets you develop your prediction skills with real data before risking actual capital."}
           </p>
         </div>
 
-        {/* Features grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => (
             <div
@@ -65,11 +84,14 @@ export function WhyUs() {
           ))}
         </div>
 
-        {/* Data source banner */}
         <div className="mt-16 p-8 rounded-2xl border border-primary/20 bg-primary/5 backdrop-blur-sm text-center">
-          <p className="text-sm text-muted-foreground mb-2">Data powered by</p>
+          <p className="text-sm text-muted-foreground mb-2">
+            {isEs ? "Datos provistos por" : "Data powered by"}
+          </p>
           <p className="text-2xl font-bold text-foreground">
-            Polymarket &bull; Real-Time Prices &bull; Live Market Updates
+            {isEs
+              ? "Polymarket • Precios en tiempo real • Actualizaciones en vivo"
+              : "Polymarket • Real-Time Prices • Live Market Updates"}
           </p>
         </div>
       </div>

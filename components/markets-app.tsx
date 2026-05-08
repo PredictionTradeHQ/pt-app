@@ -87,7 +87,7 @@ function toMarket(m: TransformedMarket, i: number): Market {
   const change = parseFloat((((m.yesPrice - 0.5) * 20) + (i % 3 === 0 ? 1.5 : -0.8)).toFixed(1));
   return {
     id: m.id,
-    title: m.question || "Untitled Market",
+    title: m.question || "—",
     category: m.category || "General",
     volume: formatVolume(m.volume),
     liquidity: formatVolume(m.liquidity),
@@ -808,7 +808,25 @@ export function MarketsApp() {
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.value === "volume" ? "Volume" : o.value === "volume24hr" ? "24h Volume" : o.value === "liquidity" ? "Liquidity" : o.value === "newest" ? "Newest" : "Ending Soon"}
+                    {language === "es"
+                      ? o.value === "volume"
+                        ? "Volumen"
+                        : o.value === "volume24hr"
+                        ? "Volumen 24h"
+                        : o.value === "liquidity"
+                        ? "Liquidez"
+                        : o.value === "newest"
+                        ? "Más recientes"
+                        : "Finalizan pronto"
+                      : o.value === "volume"
+                      ? "Volume"
+                      : o.value === "volume24hr"
+                      ? "24h Volume"
+                      : o.value === "liquidity"
+                      ? "Liquidity"
+                      : o.value === "newest"
+                      ? "Newest"
+                      : "Ending Soon"}
                   </option>
                 ))}
               </select>

@@ -25,6 +25,7 @@ import {
   Earth,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface TransformedMarket {
   id: string;
@@ -49,16 +50,16 @@ interface MarketWithHistory extends TransformedMarket {
   priceHistory: number[];
 }
 
-const CATEGORIES = [
-  { id: "all", label: "All", icon: Globe },
-  { id: "politics", label: "Politics", icon: Vote },
-  { id: "crypto", label: "Crypto", icon: Bitcoin },
-  { id: "sports", label: "Sports", icon: Trophy },
-  { id: "business", label: "Business", icon: LineChartIcon },
-  { id: "tech", label: "Tech", icon: Cpu },
-  { id: "entertainment", label: "Pop Culture", icon: Clapperboard },
-  { id: "science", label: "Science", icon: FlaskConical },
-  { id: "world", label: "World", icon: Earth },
+const CATEGORY_DEFS = [
+  { id: "all", labelEn: "All", labelEs: "Todas", icon: Globe },
+  { id: "politics", labelEn: "Politics", labelEs: "Política", icon: Vote },
+  { id: "crypto", labelEn: "Crypto", labelEs: "Cripto", icon: Bitcoin },
+  { id: "sports", labelEn: "Sports", labelEs: "Deportes", icon: Trophy },
+  { id: "business", labelEn: "Business", labelEs: "Negocios", icon: LineChartIcon },
+  { id: "tech", labelEn: "Tech", labelEs: "Tecnología", icon: Cpu },
+  { id: "entertainment", labelEn: "Pop Culture", labelEs: "Cultura pop", icon: Clapperboard },
+  { id: "science", labelEn: "Science", labelEs: "Ciencia", icon: FlaskConical },
+  { id: "world", labelEn: "World", labelEs: "Mundo", icon: Earth },
 ];
 
 function formatVolume(n: number): string {
@@ -67,20 +68,20 @@ function formatVolume(n: number): string {
   return "$" + n.toFixed(0);
 }
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "TBD";
+function formatDate(dateStr: string | null, isEs: boolean): string {
+  if (!dateStr) return isEs ? "Por definir" : "TBD";
   const d = new Date(dateStr);
   const now = new Date();
   const days = Math.floor((d.getTime() - now.getTime()) / 86400000);
-  if (days < 0) return "Ended";
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
+  if (days < 0) return isEs ? "Finalizado" : "Ended";
+  if (days === 0) return isEs ? "Hoy" : "Today";
+  if (days === 1) return isEs ? "Mañana" : "Tomorrow";
   if (days < 30) return days + "d";
-  if (days < 365) return Math.floor(days / 30) + "mo";
-  return Math.floor(days / 365) + "y";
+  if (days < 365) return Math.floor(days / 30) + (isEs ? "m" : "mo");
+  return Math.floor(days / 365) + (isEs ? "a" : "y");
 }
 
-function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
+function MarketCardWithSparkline({ market, isEs }: { market: MarketWithHistory; isEs: boolean }) {
   const change = useMemo(() => {
     if (market.priceHistory.length < 2) return 0;
     const first = market.priceHistory[0];
@@ -97,11 +98,11 @@ function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="text-xs capitalize shrink-0">
-            {market.category || "General"}
+            {market.category || (isEs ? "General" : "General")}
           </Badge>
           {market.volume24hr > 50000 && (
             <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 border-0 gap-1 text-xs shrink-0">
-              <Flame className="w-3 h-3" />Hot
+              <Flame className="w-3 h-3" />{isEs ? "Hot" : "Hot"}
             </Badge>
           )}
         </div>
@@ -116,7 +117,7 @@ function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
 
       {/* Title */}
       <h3 className="font-semibold text-sm leading-snug mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-        {market.question || "Untitled Market"}
+        {market.question || (isEs ? "Mercado sin título" : "Untitled Market")}
       </h3>
 
       {/* Sparkline Chart */}
@@ -131,7 +132,9 @@ function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
           <div className="text-lg font-bold text-primary">
             {(market.yesPrice * 100).toFixed(0)}%
           </div>
-          <div className="text-[10px] text-muted-foreground">Yes probability</div>
+          <div className="text-[10px] text-muted-foreground">
+            {isEs ? "Probabilidad SÍ" : "Yes probability"}
+          </div>
         </div>
       </div>
 
@@ -157,7 +160,7 @@ function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
         </span>
         <span className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          {formatDate(market.endDate)}
+          {formatDate(market.endDate, isEs)}
         </span>
         <span className="font-medium text-foreground">{formatVolume(market.volume)}</span>
       </div>
@@ -166,10 +169,18 @@ function MarketCardWithSparkline({ market }: { market: MarketWithHistory }) {
 }
 
 export function LiveMarketsPreview() {
+  const { language } = useLanguage();
+  const isEs = language === "es";
   const [markets, setMarkets] = useState<MarketWithHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+
+  const CATEGORIES = CATEGORY_DEFS.map((c) => ({
+    id: c.id,
+    label: isEs ? c.labelEs : c.labelEn,
+    icon: c.icon,
+  }));
 
   useEffect(() => {
     async function fetchMarkets(isRefresh = false) {
@@ -225,18 +236,22 @@ export function LiveMarketsPreview() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <p className="text-primary text-sm font-medium tracking-wider uppercase">Live Data</p>
+              <p className="text-primary text-sm font-medium tracking-wider uppercase">
+                {isEs ? "Datos en vivo" : "Live Data"}
+              </p>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-balance">
-              Top Markets
+              {isEs ? "Mercados destacados" : "Top Markets"}
             </h2>
             <p className="text-muted-foreground mt-2">
-              Real-time prediction market data. Click any market to start trading.
+              {isEs
+                ? "Datos de mercados de predicción en tiempo real. Haz clic en cualquier mercado para empezar a operar."
+                : "Real-time prediction market data. Click any market to start trading."}
             </p>
           </div>
           <Button asChild className="gap-2 w-fit">
             <Link href="/markets">
-              Browse All Markets
+              {isEs ? "Ver todos los mercados" : "Browse All Markets"}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
@@ -249,7 +264,7 @@ export function LiveMarketsPreview() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search markets..."
+              placeholder={isEs ? "Buscar mercados..." : "Search markets..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 bg-card border-border"
@@ -304,19 +319,23 @@ export function LiveMarketsPreview() {
           </div>
         ) : filteredMarkets.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No markets found matching your criteria.</p>
-            <Button 
-              variant="link" 
+            <p className="text-muted-foreground">
+              {isEs
+                ? "No se encontraron mercados con esos criterios."
+                : "No markets found matching your criteria."}
+            </p>
+            <Button
+              variant="link"
               onClick={() => { setSearch(""); setActiveCategory("all"); }}
               className="mt-2"
             >
-              Clear filters
+              {isEs ? "Limpiar filtros" : "Clear filters"}
             </Button>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredMarkets.slice(0, 8).map((market) => (
-              <MarketCardWithSparkline key={market.id} market={market} />
+              <MarketCardWithSparkline key={market.id} market={market} isEs={isEs} />
             ))}
           </div>
         )}
@@ -326,7 +345,9 @@ export function LiveMarketsPreview() {
           <div className="text-center mt-8">
             <Button asChild variant="outline" className="gap-2">
               <Link href="/markets">
-                View All {filteredMarkets.length} Markets
+                {isEs
+                  ? `Ver los ${filteredMarkets.length} mercados`
+                  : `View All ${filteredMarkets.length} Markets`}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
