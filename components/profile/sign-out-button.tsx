@@ -2,20 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 
 export function ProfileSignOutButton() {
-  const router = useRouter();
+  const { signOut } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleSignOut = async () => {
     setLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    await signOut();
   };
 
   return (

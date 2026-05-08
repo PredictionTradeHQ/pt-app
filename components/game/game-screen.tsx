@@ -10,7 +10,7 @@ import { ResultModal } from "./result-modal";
 import { Leaderboard } from "./leaderboard";
 import { useGameStore, GameMode } from "@/stores/game";
 import { useLanguage } from "@/contexts/language-context";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/contexts/auth-context";
 
 const MODES: { value: GameMode; label: string }[] = [
   { value: "30s",  label: "30s" },
@@ -24,8 +24,7 @@ export function GameScreen() {
   const { language } = useLanguage();
   const isEs = language === "es";
 
-  const [authUser, setAuthUser] = useState<{ id: string; email?: string; display_name?: string } | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const { user: authUser, isLoading: authLoading, supabase } = useAuth();
   const [statsLoaded, setStatsLoaded] = useState(false);
 
   const {
@@ -38,42 +37,14 @@ export function GameScreen() {
   const priceRef = useRef<NodeJS.Timeout | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load auth user
+  // Reset stats flag if user changes
   useEffect(() => {
-    const supabase = createClient();
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setAuthUser({
-          id: user.id,
-          email: user.email,
-          display_name: user.user_metadata?.display_name || user.email?.split("@")[0],
-        });
-      }
-      setAuthLoading(false);
-    };
-    load();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session?.user) {
-        setAuthUser({
-          id: session.user.id,
-          email: session.user.email,
-          display_name: session.user.user_metadata?.display_name || session.user.email?.split("@")[0],
-        });
-      } else {
-        setAuthUser(null);
-        setStatsLoaded(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (!authUser) setStatsLoaded(false);
+  }, [authUser]);
 
   // Load user's persistent stats from Supabase
   useEffect(() => {
     if (!authUser || statsLoaded) return;
-    const supabase = createClient();
     const fetchStats = async () => {
       try {
         const { data } = await supabase
@@ -93,14 +64,13 @@ export function GameScreen() {
       setStatsLoaded(true);
     };
     fetchStats();
-  }, [authUser, statsLoaded, loadUserStats]);
+  }, [authUser, statsLoaded, loadUserStats, supabase]);
 
   // Save result to Supabase when game ends
   useEffect(() => {
     if (phase !== "result" || !result || !authUser) return;
     const save = async () => {
       try {
-        const supabase = createClient();
         const { error } = await supabase.from("game_results").insert([{
           user_id: authUser.id,
           profit: result.profit,

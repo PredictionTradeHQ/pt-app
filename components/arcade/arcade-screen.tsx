@@ -11,7 +11,7 @@ import {
 import { Sparkline } from "./sparkline";
 import { ResultOverlay } from "./result-overlay";
 import { RankedBadge } from "./ranked-badge";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 
 const MODE_CFG: Record<GameMode, { icon: any; labelEn: string; labelEs: string; descEn: string; descEs: string; color: string }> = {
@@ -24,7 +24,7 @@ export function ArcadeScreen() {
   const { language } = useLanguage();
   const isEs = language === "es";
   const tickRef = useRef<NodeJS.Timeout | null>(null);
-  const [authUser, setAuthUser] = useState<{ id: string; display_name?: string } | null>(null);
+  const { user: authUser, supabase } = useAuth();
   const [prevPx, setPrevPx] = useState(50);
   const [flash, setFlash] = useState<"up" | "down" | null>(null);
 
@@ -35,17 +35,10 @@ export function ArcadeScreen() {
     selectMode, startRound, placeMove, tick, resetToReady,
   } = useArcadeStore();
 
-  // Auth
-  useEffect(() => {
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      if (user) setAuthUser({ id: user.id, display_name: user.user_metadata?.display_name ?? user.email?.split("@")[0] });
-    });
-  }, []);
-
   // Save result to Supabase
   useEffect(() => {
     if (phase !== "result" || !result || !authUser) return;
-    createClient().from("game_results").insert([{
+    supabase.from("game_results").insert([{
       user_id: authUser.id,
       profit: result.profitPct / 100,
       profit_pct: result.profitPct,
@@ -55,7 +48,7 @@ export function ArcadeScreen() {
       duration: "30s",
       won: result.won,
     }]);
-  }, [phase, result, authUser]);
+  }, [phase, result, authUser, supabase]);
 
   // Price flash
   useEffect(() => {
