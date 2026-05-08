@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap, User, LogOut, LayoutDashboard, Activity } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -19,15 +21,21 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isLoading, signOut } = useAuth();
   const { t, language } = useLanguage();
+  const pathname = usePathname();
   const isEs = language === "es";
 
-  const navLinks = [
+  const baseLinks = [
     { name: t("navMarkets"), href: "/markets" },
+    { name: isEs ? "Juego" : "Game", href: "/play" },
     { name: t("navAcademy"), href: "/academy" },
-    { name: isEs ? "⚡ Juego" : "⚡ Play", href: "/play" },
     { name: isEs ? "Ranking" : "Leaderboard", href: "/leaderboard" },
-    { name: t("navCommunity"), href: "/#community" },
   ];
+  const navLinks = user
+    ? [...baseLinks, { name: isEs ? "Panel" : "Dashboard", href: "/dashboard" }]
+    : baseLinks;
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname?.startsWith(href);
 
   const handleLogout = async () => {
     await signOut();
@@ -57,14 +65,22 @@ export function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className={cn(
+                  "text-sm transition-colors relative",
+                  isActive(link.href)
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
               >
                 {link.name}
+                {isActive(link.href) && (
+                  <span className="absolute -bottom-[22px] left-0 right-0 h-[2px] bg-primary" />
+                )}
               </Link>
             ))}
           </nav>
@@ -160,7 +176,12 @@ export function Header() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                  className={cn(
+                    "transition-colors py-2",
+                    isActive(link.href)
+                      ? "text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.name}
