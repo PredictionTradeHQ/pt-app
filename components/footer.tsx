@@ -9,32 +9,25 @@ export function Footer() {
     product: [
       { name: t("navMarkets"), href: "/markets" },
       { name: t("navHowItWorks"), href: "/#how-it-works" },
-      { name: "Fees", href: "#" },
-      { name: "API", href: "#" },
+      { name: "Demo Trading", href: "/demo" },
+      { name: "Academy", href: "/academy" },
     ],
     resources: [
-      { name: t("helpCenter"), href: "#" },
-      { name: t("documentation"), href: "#" },
-      { name: t("blog"), href: "#" },
-      { name: t("tutorials"), href: "#" },
+      { name: t("helpCenter"), href: "/#community" },
+      { name: t("tutorials"), href: "/academy" },
+      { name: t("contact"), href: "/#community" },
     ],
     legal: [
       { name: t("terms"), href: "#" },
       { name: t("privacy"), href: "#" },
       { name: t("riskDisclosure"), href: "#" },
     ],
-    company: [
-      { name: t("about"), href: "#" },
-      { name: t("careers"), href: "#" },
-      { name: t("press"), href: "#" },
-      { name: t("contact"), href: "#" },
-    ],
   };
 
   return (
     <footer className="border-t border-border py-16">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <a href="/" className="flex items-center gap-2 mb-4">
@@ -95,21 +88,6 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold mb-4">{t("company")}</h4>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Polymarket Attribution */}
