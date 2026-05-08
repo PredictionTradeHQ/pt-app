@@ -36,15 +36,7 @@ export default async function ActivityPage() {
 
   return (
     <AppShell>
-      <main className="container mx-auto px-4 md:px-8 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Activity</h1>
-          <p className="text-muted-foreground">
-            Your full history across the platform.
-          </p>
-        </div>
-        <ActivityClient games={games} trades={trades} />
-      </main>
+      <ActivityClient games={games} trades={trades} />
     </AppShell>
   );
 }

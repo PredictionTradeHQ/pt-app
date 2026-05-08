@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Zap, TrendingUp, Activity as ActivityIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 type GameResult = {
   id: string;
@@ -31,6 +32,8 @@ export function ActivityClient({
   games: GameResult[];
   trades: Trade[];
 }) {
+  const { language } = useLanguage();
+  const isEs = language === "es";
   const [tab, setTab] = useState<"all" | "games" | "trades">("all");
 
   const allItems = [
@@ -60,14 +63,24 @@ export function ActivityClient({
       : allItems.filter((i) => i.kind === "trade");
 
   return (
-    <div>
-      <div className="flex gap-2 mb-6">
+    <main className="container mx-auto px-4 md:px-8 py-8 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          {isEs ? "Actividad" : "Activity"}
+        </h1>
+        <p className="text-muted-foreground">
+          {isEs
+            ? "Tu historial completo en la plataforma."
+            : "Your full history across the platform."}
+        </p>
+      </div>
+      <div className="flex gap-2 mb-6 flex-wrap">
         <Button
           variant={tab === "all" ? "default" : "outline"}
           size="sm"
           onClick={() => setTab("all")}
         >
-          All ({allItems.length})
+          {isEs ? "Todo" : "All"} ({allItems.length})
         </Button>
         <Button
           variant={tab === "games" ? "default" : "outline"}
@@ -76,7 +89,7 @@ export function ActivityClient({
           className="gap-2"
         >
           <Zap className="w-4 h-4" />
-          Games ({games.length})
+          {isEs ? "Partidas" : "Games"} ({games.length})
         </Button>
         <Button
           variant={tab === "trades" ? "default" : "outline"}
@@ -85,7 +98,7 @@ export function ActivityClient({
           className="gap-2"
         >
           <TrendingUp className="w-4 h-4" />
-          Trades ({trades.length})
+          {isEs ? "Operaciones" : "Trades"} ({trades.length})
         </Button>
       </div>
 
@@ -94,7 +107,9 @@ export function ActivityClient({
           <CardContent className="pt-6 text-center">
             <ActivityIcon className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
-              No activity yet. Start trading or play a game to build your history.
+              {isEs
+                ? "Aún sin actividad. Empieza a operar o juega una partida para construir tu historial."
+                : "No activity yet. Start trading or play a game to build your history."}
             </p>
           </CardContent>
         </Card>
@@ -103,22 +118,24 @@ export function ActivityClient({
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {filtered.map((item, i) => (
-                <ActivityRow key={`${item.kind}-${i}`} item={item} />
+                <ActivityRow key={`${item.kind}-${i}`} item={item} isEs={isEs} />
               ))}
             </div>
           </CardContent>
         </Card>
       )}
-    </div>
+    </main>
   );
 }
 
 function ActivityRow({
   item,
+  isEs,
 }: {
   item:
     | { kind: "game"; timestamp: string; data: GameResult }
     | { kind: "trade"; timestamp: string; data: Trade };
+  isEs: boolean;
 }) {
   const date = new Date(item.timestamp);
   const dateStr = date.toLocaleDateString(undefined, {
@@ -149,11 +166,11 @@ function ActivityRow({
                 g.won ? "text-green-500" : "text-muted-foreground"
               )}
             >
-              {g.won ? "WIN" : "LOSS"}
+              {g.won ? (isEs ? "GANÓ" : "WIN") : isEs ? "PERDIÓ" : "LOSS"}
             </span>
           </p>
           <p className="text-xs text-muted-foreground">
-            {g.position ? `Position: ${g.position} · ` : ""}
+            {g.position ? `${isEs ? "Posición" : "Position"}: ${g.position} · ` : ""}
             {dateStr} · {timeStr}
           </p>
         </div>
@@ -181,13 +198,11 @@ function ActivityRow({
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold truncate">
-          {t.type === "sell" ? "Sold" : "Bought"}{" "}
-          <span className="text-muted-foreground">
-            {t.outcome ?? "—"}
-          </span>
+          {t.type === "sell" ? (isEs ? "Vendiste" : "Sold") : isEs ? "Compraste" : "Bought"}{" "}
+          <span className="text-muted-foreground">{t.outcome ?? "—"}</span>
         </p>
         <p className="text-xs text-muted-foreground truncate">
-          {t.market ?? "Market"} · {dateStr} · {timeStr}
+          {t.market ?? (isEs ? "Mercado" : "Market")} · {dateStr} · {timeStr}
         </p>
       </div>
       <div className="text-right">

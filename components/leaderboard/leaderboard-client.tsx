@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, TrendingUp, Flame, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 type LeaderboardEntry = {
   id: string;
@@ -17,20 +18,22 @@ type LeaderboardEntry = {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-const periods = [
-  { value: "all", label: "All time" },
-  { value: "weekly", label: "This week" },
-  { value: "daily", label: "Today" },
-];
-
-const sorts = [
-  { value: "profit", label: "Top profit", icon: TrendingUp },
-  { value: "streak", label: "Best streak", icon: Flame },
-];
-
 export function LeaderboardClient() {
+  const { language } = useLanguage();
+  const isEs = language === "es";
   const [period, setPeriod] = useState("all");
   const [sort, setSort] = useState("profit");
+
+  const periods = [
+    { value: "all", label: isEs ? "Histórico" : "All time" },
+    { value: "weekly", label: isEs ? "Esta semana" : "This week" },
+    { value: "daily", label: isEs ? "Hoy" : "Today" },
+  ];
+
+  const sorts = [
+    { value: "profit", label: isEs ? "Mejor rendimiento" : "Top profit", icon: TrendingUp },
+    { value: "streak", label: isEs ? "Mejor racha" : "Best streak", icon: Flame },
+  ];
 
   const { data, isLoading, error } = useSWR<LeaderboardEntry[]>(
     `/api/game/leaderboard?sort=${sort}&period=${period}`,
@@ -77,7 +80,9 @@ export function LeaderboardClient() {
       {error && !isLoading && (
         <Card>
           <CardContent className="pt-6 text-center text-sm text-muted-foreground">
-            Could not load leaderboard. Please try again later.
+            {isEs
+              ? "No se pudo cargar el ranking. Inténtalo de nuevo más tarde."
+              : "Could not load leaderboard. Please try again later."}
           </CardContent>
         </Card>
       )}
@@ -87,7 +92,9 @@ export function LeaderboardClient() {
           <CardContent className="pt-6 text-center">
             <Trophy className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
-              No traders yet for this period. Be the first to climb the ranks.
+              {isEs
+                ? "Aún no hay traders en este periodo. Sé el primero en escalar el ranking."
+                : "No traders yet for this period. Be the first to climb the ranks."}
             </p>
           </CardContent>
         </Card>
@@ -98,7 +105,7 @@ export function LeaderboardClient() {
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {entries.map((entry, i) => (
-                <LeaderboardRow key={entry.id} entry={entry} rank={i + 1} sort={sort} />
+                <LeaderboardRow key={entry.id} entry={entry} rank={i + 1} sort={sort} isEs={isEs} />
               ))}
             </div>
           </CardContent>
@@ -112,10 +119,12 @@ function LeaderboardRow({
   entry,
   rank,
   sort,
+  isEs,
 }: {
   entry: LeaderboardEntry;
   rank: number;
   sort: string;
+  isEs: boolean;
 }) {
   const isTop3 = rank <= 3;
   const profitPct = (entry.profit * 100).toFixed(2);
@@ -137,7 +146,14 @@ function LeaderboardRow({
       <div className="flex-1 min-w-0">
         <p className="font-semibold truncate">{entry.display_name}</p>
         <p className="text-xs text-muted-foreground">
-          {entry.games_played} {entry.games_played === 1 ? "game" : "games"}
+          {entry.games_played}{" "}
+          {isEs
+            ? entry.games_played === 1
+              ? "partida"
+              : "partidas"
+            : entry.games_played === 1
+            ? "game"
+            : "games"}
         </p>
       </div>
 
@@ -171,7 +187,7 @@ function LeaderboardRow({
             </p>
             <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
               <Flame className="w-3 h-3" />
-              {entry.best_streak} streak
+              {entry.best_streak} {isEs ? "racha" : "streak"}
             </p>
           </div>
         )}
