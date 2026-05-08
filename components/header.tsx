@@ -29,7 +29,7 @@ export function Header() {
     { name: t("navMarkets"), href: "/markets" },
     { name: t("navAcademy"), href: "/academy" },
     { name: isEs ? "⚡ Juego" : "⚡ Play", href: "/play" },
-    { name: t("navHowItWorks"), href: "/#how-it-works" },
+    { name: isEs ? "Ranking" : "Leaderboard", href: "/leaderboard" },
     { name: t("navCommunity"), href: "/#community" },
   ];
 
