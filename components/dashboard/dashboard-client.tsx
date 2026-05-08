@@ -161,7 +161,7 @@ export function DashboardClient() {
           {/* Right: quick actions */}
           <div className="flex gap-3">
             <Button asChild size="sm" className="gap-2 h-9 font-semibold" style={{ background: "#00c8ff", color: "#000" }}>
-              <Link href="/demo"><BarChart2 className="w-4 h-4" />{isEs ? "Trade" : "Trade"}</Link>
+              <Link href="/markets"><BarChart2 className="w-4 h-4" />{isEs ? "Trade" : "Trade"}</Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="gap-2 h-9" style={{ borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}>
               <Link href="/play"><Zap className="w-4 h-4" />{isEs ? "Jugar" : "Play"}</Link>
@@ -358,7 +358,7 @@ export function DashboardClient() {
             <BarChart2 className="w-4 h-4" style={{ color: "#00c8ff" }} />
             <span className="text-sm font-bold text-white">{isEs ? "Demo Trading Portfolio" : "Demo Trading Portfolio"}</span>
             <Button asChild variant="ghost" size="sm" className="ml-auto h-7 text-xs gap-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-              <Link href="/demo">{isEs ? "Abrir terminal →" : "Open terminal →"}</Link>
+              <Link href="/markets">{isEs ? "Abrir terminal →" : "Open terminal →"}</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -401,7 +401,7 @@ export function DashboardClient() {
       <div className="flex flex-wrap gap-3 justify-center pt-2">
         {[
           { href: "/play",    label: "⚡ " + (isEs ? "Juego"    : "Play Game"),   bg: "#1a1f2e" },
-          { href: "/demo",    label: "📊 " + (isEs ? "Trading"  : "Demo Trade"),  bg: "#1a1f2e" },
+          { href: "/markets",    label: "📊 " + (isEs ? "Trading"  : "Demo Trade"),  bg: "#1a1f2e" },
           { href: "/academy", label: "📚 " + (isEs ? "Academia" : "Academy"),     bg: "#1a1f2e" },
           { href: "/markets", label: "🌍 " + (isEs ? "Mercados" : "Markets"),     bg: "#1a1f2e" },
         ].map((l) => (

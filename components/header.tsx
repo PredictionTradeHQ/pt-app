@@ -77,7 +77,7 @@ export function Header() {
             ) : user ? (
               <div className="flex items-center gap-3">
                 <Button asChild size="sm">
-                  <Link href="/demo">{t("demoTrading")}</Link>
+                  <Link href="/markets">{t("demoTrading")}</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -99,7 +99,7 @@ export function Header() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/demo" className="cursor-pointer">
+                      <Link href="/markets" className="cursor-pointer">
                         {t("demoTrading")}
                       </Link>
                     </DropdownMenuItem>
@@ -180,7 +180,7 @@ export function Header() {
                       </Link>
                     </Button>
                     <Button asChild className="justify-start">
-                      <Link href="/demo" onClick={() => setMobileMenuOpen(false)}>
+                      <Link href="/markets" onClick={() => setMobileMenuOpen(false)}>
                         {t("demoTrading")}
                       </Link>
                     </Button>

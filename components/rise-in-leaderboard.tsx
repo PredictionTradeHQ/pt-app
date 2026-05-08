@@ -460,7 +460,7 @@ export function RiseInLeaderboard() {
             </div>
           </div>
           <Button asChild className="shrink-0">
-            <a href="/demo">Start Paper Trading</a>
+            <a href="/markets">Start Paper Trading</a>
           </Button>
         </div>
       </div>

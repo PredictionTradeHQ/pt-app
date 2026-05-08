@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { MarketDetailModal } from "@/components/market-detail-modal";
 import { Sparkline, generateMockHistory } from "@/components/sparkline";
 import { useRealtimePrices } from "@/contexts/realtime-prices-context";
+import { useAuth } from "@/contexts/auth-context";
 import { RealtimeStatus } from "@/components/realtime-status";
 import { PricePulse, LiveIndicator } from "@/components/price-pulse";
 import type { TransformedMarket } from "@/app/api/polymarket/route";
@@ -473,8 +474,12 @@ export function MarketsApp() {
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [lastUpdated, setLastUpdated] = useState("");
   
-  // Trading panel state
+  // Auth (drives whether trading state is persisted)
+  const { user: authUser } = useAuth();
+
+  // Trading panel state (hydrated from API for logged-in users)
   const [balance, setBalance] = useState(100000);
+  const [hydrated, setHydrated] = useState(false);
   const [recentTrades, setRecentTrades] = useState<RecentTrade[]>([]);
   const [userPositions, setUserPositions] = useState<{ yes: number; no: number }>({ yes: 0, no: 0 });
   const [userBets, setUserBets] = useState<UserPosition[]>([]);
@@ -483,6 +488,91 @@ export function MarketsApp() {
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
   const [activeTab, setActiveTab] = useState<"activity" | "positions">("activity");
+
+  // Hydrate persistent balance + positions when user is logged in
+  useEffect(() => {
+    if (!authUser) {
+      setHydrated(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [walletRes, portfolioRes] = await Promise.all([
+          fetch("/api/wallet", { cache: "no-store" }),
+          fetch("/api/demo-portfolio", { cache: "no-store" }),
+        ]);
+        if (cancelled) return;
+        if (walletRes.ok) {
+          const w = await walletRes.json();
+          if (typeof w.balance === "number") setBalance(w.balance);
+        }
+        if (portfolioRes.ok) {
+          const p = await portfolioRes.json();
+          if (p?.data) {
+            if (typeof p.data.balance === "number") setBalance(p.data.balance);
+            if (Array.isArray(p.data.positions)) {
+              const positions = p.data.positions as UserPosition[];
+              setUserBets(positions);
+              setTotalBets(positions.length);
+              const tally = positions.reduce(
+                (acc, b) => {
+                  const k = String(b.outcome).toLowerCase() as "yes" | "no";
+                  acc[k] = (acc[k] ?? 0) + (typeof b.amount === "number" ? b.amount : 0);
+                  return acc;
+                },
+                { yes: 0, no: 0 }
+              );
+              setUserPositions(tally);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[MarketsApp] hydrate failed:", e);
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser]);
+
+  // Persist updated portfolio (best-effort, only when logged in)
+  const persistPortfolio = useCallback(
+    async (next: {
+      balance: number;
+      positions: UserPosition[];
+      activityEntry?: { type: string; market: string; outcome: string; amount: number; price: number; timestamp: number };
+    }) => {
+      if (!authUser) return;
+      try {
+        await fetch("/api/wallet", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ balance: next.balance }),
+        });
+        const existing = await fetch("/api/demo-portfolio", { cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+        const prevActivity = Array.isArray(existing?.data?.activity) ? existing.data.activity : [];
+        const newActivity = next.activityEntry ? [next.activityEntry, ...prevActivity].slice(0, 100) : prevActivity;
+        await fetch("/api/demo-portfolio", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            balance: next.balance,
+            positions: next.positions,
+            activity: newActivity,
+            startingBalance: 100000,
+          }),
+        });
+      } catch (e) {
+        console.warn("[MarketsApp] persist failed:", e);
+      }
+    },
+    [authUser]
+  );
   
   // Real-time prices context
   const { 
@@ -605,13 +695,7 @@ export function MarketsApp() {
     const price = outcome === "YES" ? market.yesPrice : market.noPrice;
     const shares = price > 0 ? amount / price : 0;
 
-    setBalance(prev => prev - amount);
-    setUserPositions(prev => ({
-      ...prev,
-      [outcome.toLowerCase()]: prev[outcome.toLowerCase() as "yes" | "no"] + amount,
-    }));
-    setTotalBets(prev => prev + 1);
-
+    const newBalance = balance - amount;
     const newPosition: UserPosition = {
       marketId: market.id,
       marketTitle: market.title,
@@ -622,7 +706,15 @@ export function MarketsApp() {
       timestamp: new Date(),
       currentPrice: price,
     };
-    setUserBets(prev => [newPosition, ...prev]);
+    const newBets = [newPosition, ...userBets];
+
+    setBalance(newBalance);
+    setUserPositions(prev => ({
+      ...prev,
+      [outcome.toLowerCase()]: prev[outcome.toLowerCase() as "yes" | "no"] + amount,
+    }));
+    setTotalBets(prev => prev + 1);
+    setUserBets(newBets);
 
     const userTrade: RecentTrade = {
       id: Date.now(),
@@ -638,6 +730,19 @@ export function MarketsApp() {
     setBetSuccess({ outcome, amount });
     setTimeout(() => setBetSuccess(null), 3000);
     setActiveTab("positions");
+
+    void persistPortfolio({
+      balance: newBalance,
+      positions: newBets,
+      activityEntry: {
+        type: "buy",
+        market: market.title,
+        outcome,
+        amount,
+        price,
+        timestamp: Date.now(),
+      },
+    });
   };
 
 // Show loading state during hydration to prevent mismatch

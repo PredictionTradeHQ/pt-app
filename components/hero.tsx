@@ -45,7 +45,7 @@ export function Hero() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
           <Button asChild size="lg" className="text-lg px-8 py-6 gap-2">
-            <Link href="/demo">
+            <Link href="/markets">
               <Zap className="w-5 h-5" />
               {t("startPredicting")}
             </Link>
