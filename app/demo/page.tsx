@@ -1,8 +1,8 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,9 +79,7 @@ function formatDate(timestamp: string): string {
 
 export default function DemoPage() {
   const router = useRouter();
-  const supabase = createClient();
-  const [user, setUser] = useState<{ id: string; email?: string; display_name?: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoading } = useAuth();
   const [portfolioHydrated, setPortfolioHydrated] = useState(false);
   const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
   const [persistenceMode, setPersistenceMode] = useState<"remote" | "local">("remote");
@@ -104,19 +102,10 @@ export default function DemoPage() {
   const storageKey = user ? `${STORAGE_PREFIX}.${user.id}` : null;
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setUser({
-          id: authUser.id,
-          email: authUser.email,
-          display_name: authUser.user_metadata?.display_name || authUser.email?.split("@")[0],
-        });
-      }
-      setIsLoading(false);
-    };
-    checkUser();
-  }, [supabase.auth]);
+    if (!isLoading && !user) {
+      router.push("/auth/login?next=/demo");
+    }
+  }, [isLoading, user, router]);
 
   useEffect(() => {
     if (!user) return;

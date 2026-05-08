@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap, User, LogOut, LayoutDashboard, Activity } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/contexts/auth-context";
 import { LanguageToggle } from "@/components/language-toggle";
 import {
   DropdownMenu,
@@ -18,10 +17,7 @@ import {
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<{ email?: string; display_name?: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const supabase = createClient();
+  const { user, isLoading, signOut } = useAuth();
   const { t, language } = useLanguage();
   const isEs = language === "es";
 
@@ -33,37 +29,8 @@ export function Header() {
     { name: t("navCommunity"), href: "/#community" },
   ];
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setUser({
-          email: authUser.email,
-          display_name: authUser.user_metadata?.display_name || authUser.email?.split("@")[0],
-        });
-      }
-      setIsLoading(false);
-    };
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser({
-          email: session.user.email,
-          display_name: session.user.user_metadata?.display_name || session.user.email?.split("@")[0],
-        });
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
-
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    router.push("/");
+    await signOut();
   };
 
   return (
