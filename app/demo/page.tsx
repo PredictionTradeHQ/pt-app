@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Header } from "@/components/header";
 import {
   TrendingUp,
   TrendingDown,
-  LogOut,
   Wallet,
   Target,
   Trophy,
@@ -21,7 +21,6 @@ import {
   X,
   CheckCircle,
   BarChart2,
-  User,
   Loader2,
   Clock3,
   DollarSign,
@@ -238,11 +237,6 @@ export default function DemoPage() {
     }
   }, [user]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
-
   const resetDemoPortfolio = () => {
     setBalance(STARTING_BALANCE);
     setPositions([]);
@@ -326,29 +320,7 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/images/logo.png" alt="Prediction Trade" className="w-8 h-8" />
-            <div>
-              <h1 className="font-bold text-lg">Prediction Trade</h1>
-              <p className="text-xs text-muted-foreground">Demo Trading — Paper trading en tiempo real</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 text-sm">
-              <User className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{user?.display_name || user?.email}</span>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign out</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Success toast */}
       {betSuccess && (
@@ -360,7 +332,7 @@ export default function DemoPage() {
         </div>
       )}
 
-      <main className="container py-6">
+      <main className="container pt-24 pb-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card>
