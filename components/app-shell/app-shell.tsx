@@ -14,6 +14,7 @@ import {
   LogOut,
   Activity,
   HelpCircle,
+  Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const NAV: NavItem[] = [
 const SECONDARY: NavItem[] = [
   { href: "/activity", labelEn: "Activity", labelEs: "Actividad", icon: Activity },
   { href: "/help", labelEn: "Help", labelEs: "Ayuda", icon: HelpCircle },
+  { href: "/", labelEn: "Landing page", labelEs: "Página principal", icon: Home },
 ];
 
 export function AppShell({
@@ -62,8 +64,10 @@ export function AppShell({
     }
   }, [requireAuth, isLoading, user, pathname, router]);
 
-  const isActive = (href: string) =>
-    href === pathname || pathname?.startsWith(href + "/");
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return href === pathname || pathname?.startsWith(href + "/");
+  };
 
   if (requireAuth && (isLoading || !user)) {
     return (
