@@ -13,9 +13,9 @@ export function Footer() {
       { name: "Academy", href: "/academy" },
     ],
     resources: [
-      { name: t("helpCenter"), href: "/#community" },
+      { name: t("helpCenter"), href: "/help" },
       { name: t("tutorials"), href: "/academy" },
-      { name: t("contact"), href: "/#community" },
+      { name: t("contact"), href: "/help" },
     ],
     legal: [
       { name: t("terms"), href: "#" },
