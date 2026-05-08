@@ -136,6 +136,12 @@ export function Header() {
                         {t("demoTrading")}
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="cursor-pointer gap-2 flex items-center">
+                        <User className="w-4 h-4" />
+                        {isEs ? "Perfil" : "Profile"}
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
                       <LogOut className="w-4 h-4 mr-2" />
