@@ -84,7 +84,7 @@ export function AppShell({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-60 flex-col border-r border-border bg-card/30 backdrop-blur-sm z-40">
         <div className="px-5 py-5 border-b border-border">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Image src="/images/logo.png" alt="Prediction Trade" width={32} height={32} className="w-8 h-8" />
             <span className="font-bold text-lg">Prediction Trade</span>
           </Link>
@@ -161,7 +161,7 @@ export function AppShell({
       {/* Mobile Top Bar */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
         <div className="flex items-center justify-between h-14 px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Image src="/images/logo.png" alt="Prediction Trade" width={28} height={28} className="w-7 h-7" />
             <span className="font-bold">Prediction Trade</span>
           </Link>
