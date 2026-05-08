@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, Zap, User, LogOut, LayoutDashboard, Activity } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -134,6 +134,12 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link href="/demo" className="cursor-pointer">
                         {t("demoTrading")}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/activity" className="cursor-pointer gap-2 flex items-center">
+                        <Activity className="w-4 h-4" />
+                        {isEs ? "Actividad" : "Activity"}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

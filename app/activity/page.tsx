@@ -1,0 +1,53 @@
+import { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { ActivityClient } from "@/components/activity/activity-client";
+
+export const metadata: Metadata = {
+  title: "Activity — PredictionTrade",
+  description: "Your full trading and game history on PredictionTrade.",
+};
+
+export default async function ActivityPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?next=/activity");
+  }
+
+  const [gamesRes, demoRes] = await Promise.all([
+    supabase
+      .from("game_results")
+      .select("id, profit_pct, position, won, duration, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("demo_portfolios")
+      .select("activity")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
+
+  const games = gamesRes.data ?? [];
+  const trades = (demoRes.data?.activity as any[] | null) ?? [];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Activity</h1>
+          <p className="text-muted-foreground">
+            Your full history across the platform.
+          </p>
+        </div>
+        <ActivityClient games={games} trades={trades} />
+      </main>
+      <Footer />
+    </div>
+  );
+}
