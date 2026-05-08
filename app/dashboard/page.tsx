@@ -1,13 +1,12 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { DashboardClient } from "@/components/dashboard/dashboard-client";
+import { AppShell } from "@/components/app-shell/app-shell";
+import { DashboardHome } from "@/components/dashboard/dashboard-home";
 
 export const metadata: Metadata = {
   title: "Dashboard — PredictionTrade",
-  description: "Your unified activity dashboard: game stats, demo trading, and academy progress.",
+  description: "Your personal trading dashboard.",
 };
 
 export default async function DashboardPage() {
@@ -19,12 +18,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-16">
-        <DashboardClient />
-      </main>
-      <Footer />
-    </div>
+    <AppShell>
+      <DashboardHome />
+    </AppShell>
   );
 }

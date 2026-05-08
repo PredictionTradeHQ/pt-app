@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AppShell } from "@/components/app-shell/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,9 +88,8 @@ const quickStart = [
 
 export default function HelpPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
+    <AppShell requireAuth={false}>
+      <main className="container mx-auto px-4 md:px-8 py-8 max-w-4xl">
         <div className="text-center mb-12">
           <div className="inline-flex w-16 h-16 rounded-2xl bg-primary/10 items-center justify-center mb-4">
             <HelpCircle className="w-8 h-8 text-primary" />
@@ -177,7 +175,6 @@ export default function HelpPage() {
           </Card>
         </section>
       </main>
-      <Footer />
-    </div>
+    </AppShell>
   );
 }

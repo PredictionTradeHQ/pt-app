@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AppShell } from "@/components/app-shell/app-shell";
 import { ActivityClient } from "@/components/activity/activity-client";
 
 export const metadata: Metadata = {
@@ -36,9 +35,8 @@ export default async function ActivityPage() {
   const trades = (demoRes.data?.activity as any[] | null) ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
+    <AppShell>
+      <main className="container mx-auto px-4 md:px-8 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Activity</h1>
           <p className="text-muted-foreground">
@@ -47,7 +45,6 @@ export default async function ActivityPage() {
         </div>
         <ActivityClient games={games} trades={trades} />
       </main>
-      <Footer />
-    </div>
+    </AppShell>
   );
 }

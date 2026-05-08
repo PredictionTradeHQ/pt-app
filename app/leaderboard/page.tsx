@@ -1,19 +1,16 @@
 import { Metadata } from "next";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { AppShell } from "@/components/app-shell/app-shell";
 import { LeaderboardClient } from "@/components/leaderboard/leaderboard-client";
 
 export const metadata: Metadata = {
   title: "Leaderboard — PredictionTrade",
-  description:
-    "See the top traders on PredictionTrade. Live rankings by profit and best streak.",
+  description: "Top traders ranked by performance.",
 };
 
 export default function LeaderboardPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
+    <AppShell>
+      <main className="container mx-auto px-4 md:px-8 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Leaderboard</h1>
           <p className="text-muted-foreground">
@@ -22,7 +19,6 @@ export default function LeaderboardPage() {
         </div>
         <LeaderboardClient />
       </main>
-      <Footer />
-    </div>
+    </AppShell>
   );
 }
