@@ -3,7 +3,7 @@
 ## Project overview
 
 Prediction Trade (`predictiontrade.online`) is a **social forecasting platform** — demo, educational, AI-native, creator-friendly.
-Owner: Kevin (kevingabayo@gmail.com). Non-technical — needs clear, step-by-step guidance.
+Sole operator and admin: you (aventurarte.23@gmail.com). Technical decisions are made autonomously.
 
 **Purpose:** Social forecasting, demo trading, education, content engine, creator economy.
 **Positioning:** "The social platform for people who love being right about the future."

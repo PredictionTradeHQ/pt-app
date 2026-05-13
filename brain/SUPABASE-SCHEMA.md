@@ -12,7 +12,7 @@
 |---|---|
 | SQL migration file | ✅ Ready (`supabase/migrations/001_gamification.sql`) |
 | Sync layer | ✅ Ready (`lib/supabase-sync.ts`) |
-| Tables in Supabase | ⚠️ **Pending — Kevin must run SQL** |
+| Tables in Supabase | ⚠️ **Pending — run SQL in Supabase dashboard** |
 | Sync activation | Auto (once tables exist) |
 
 ---

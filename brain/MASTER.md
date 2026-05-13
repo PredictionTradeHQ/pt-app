@@ -100,7 +100,7 @@ Never mix them. Never reference PMS from PT publicly.
 
 ## Development Rules
 
-- **Language:** Talk to Kevin in Spanish. All docs, code, commits in English.
+- **Language:** Talk to the operator in Spanish. All docs, code, commits in English.
 - **Balance:** Starting balance is always $100,000. Never change this.
 - **Stack:** Next.js + Supabase + Tailwind + shadcn/ui. No new frameworks without discussion.
 - **Deploy:** `npx vercel --prod` from `pt-merged/`
