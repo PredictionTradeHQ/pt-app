@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
+import { StreakWidget } from "@/components/streak-widget";
+import { BadgesGrid } from "@/components/badges-grid";
 
 export function ProfileClient({
   displayName,
@@ -78,6 +80,32 @@ export function ProfileClient({
               </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Streak card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Flame className="w-5 h-5 text-orange-400" />
+            {isEs ? "Racha de predicciones" : "Prediction Streak"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StreakWidget variant="profile" />
+        </CardContent>
+      </Card>
+
+      {/* Badges card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Medal className="w-5 h-5 text-primary" />
+            {isEs ? "Insignias" : "Badges"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <BadgesGrid />
         </CardContent>
       </Card>
 

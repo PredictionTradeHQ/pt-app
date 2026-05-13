@@ -29,6 +29,9 @@ import {
 } from "lucide-react";
 import { detectPTCategory, CATEGORY_TABS } from "@/lib/categories";
 import { SharePredictionModal } from "@/components/share-prediction-modal";
+import { useGamification } from "@/stores/gamification";
+import { StreakWidget } from "@/components/streak-widget";
+import { BadgeEarnedToast } from "@/components/badge-earned-toast";
 import { cn } from "@/lib/utils";
 import { MarketDetailModal } from "@/components/market-detail-modal";
 import { Sparkline, generateMockHistory } from "@/components/sparkline";
@@ -507,6 +510,10 @@ export function MarketsApp() {
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
   const [shareTarget, setShareTarget] = useState<{ market: Market; prediction?: "YES" | "NO" } | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
+
+  // Gamification store (Zustand persist — survives refreshes)
+  const { recordPrediction } = useGamification();
   const [activeTab, setActiveTab] = useState<"activity" | "positions">("activity");
 
   // Hydrate persistent balance + positions when user is logged in
@@ -754,6 +761,13 @@ export function MarketsApp() {
     };
     setRecentTrades(prev => [userTrade, ...prev.slice(0, 5)]);
 
+    // Record prediction in gamification store (streak + badges)
+    const ptCat = detectPTCategory(market.title, market.category);
+    const gamResult = recordPrediction(ptCat.id);
+    if (gamResult.newBadgeIds.length > 0) {
+      setEarnedBadgeIds(gamResult.newBadgeIds);
+    }
+
     setBetConfirmation(null);
     setBetSuccess({ outcome, amount });
     setShareTarget({ market, prediction: outcome });
@@ -987,7 +1001,7 @@ export function MarketsApp() {
               </div>
 
               {/* Stats row */}
-              <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 <div className="p-2 rounded-lg bg-muted/50 text-center">
                   <p className="text-[10px] text-muted-foreground mb-0.5">{t("yesWagered")}</p>
                   <p className="font-bold text-primary text-sm">${userPositions.yes.toFixed(0)}</p>
@@ -1001,6 +1015,9 @@ export function MarketsApp() {
                   <p className="font-bold text-foreground text-sm">{totalBets}</p>
                 </div>
               </div>
+
+              {/* Streak widget */}
+              <StreakWidget variant="sidebar" className="mb-3" />
 
               {/* Tabs: Activity | Positions */}
               <div className="flex rounded-lg bg-muted/50 p-1 mb-3">
@@ -1265,6 +1282,12 @@ export function MarketsApp() {
           prediction={shareTarget.prediction}
         />
       )}
+
+      {/* Badge earned toast */}
+      <BadgeEarnedToast
+        badgeIds={earnedBadgeIds}
+        onDismiss={() => setEarnedBadgeIds([])}
+      />
     </div>
   );
 }
