@@ -761,9 +761,15 @@ export function MarketsApp() {
     };
     setRecentTrades(prev => [userTrade, ...prev.slice(0, 5)]);
 
-    // Record prediction in gamification store (streak + badges)
+    // Record prediction in gamification store (streak + badges + accuracy tracking)
     const ptCat = detectPTCategory(market.title, market.category);
-    const gamResult = recordPrediction(ptCat.id);
+    const gamResult = recordPrediction(ptCat.id, {
+      marketId: market.id,
+      marketTitle: market.title,
+      probAtTime: Math.round(market.yesPrice * 100), // always store YES probability
+      prediction: outcome,
+      amount,
+    });
     if (gamResult.newBadgeIds.length > 0) {
       setEarnedBadgeIds(gamResult.newBadgeIds);
     }

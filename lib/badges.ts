@@ -107,6 +107,27 @@ export const BADGE_DEFINITIONS: Record<string, BadgeDefinition> = {
     emoji: "📊",
     rarity: "rare",
   },
+  contrarian: {
+    id: "contrarian",
+    name: "Contrarian",
+    description: "Predicted when the odds were heavily against you",
+    emoji: "🎲",
+    rarity: "uncommon",
+  },
+  sharp: {
+    id: "sharp",
+    name: "Sharp",
+    description: "70%+ accuracy over 10+ resolved predictions",
+    emoji: "🎯",
+    rarity: "rare",
+  },
+  called_it: {
+    id: "called_it",
+    name: "Called It",
+    description: "Correct prediction when your side had <20% probability",
+    emoji: "💡",
+    rarity: "legendary",
+  },
 }
 
 // Ordered list for display (earned first, then by rarity)
@@ -118,6 +139,9 @@ export const BADGE_DISPLAY_ORDER = [
   "early_adopter",
   "market_explorer",
   "prolific",
+  "contrarian",
+  "sharp",
+  "called_it",
   "ai_forecaster",
   "crypto_predictor",
   "sports_oracle",

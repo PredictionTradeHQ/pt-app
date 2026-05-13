@@ -1,31 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2 } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
 import { StreakWidget } from "@/components/streak-widget";
 import { BadgesGrid } from "@/components/badges-grid";
+import { AccuracyStats } from "@/components/accuracy-stats";
+import { PredictionHistory } from "@/components/prediction-history";
 import { useGamification } from "@/stores/gamification";
 import { ShareAchievementModal } from "@/components/share-achievement-modal";
+import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 
 export function ProfileClient({
+  userId,
   displayName,
   email,
   createdAt,
 }: {
+  userId: string;
   displayName: string;
   email: string;
   createdAt: string | null;
 }) {
   const { language } = useLanguage();
   const isEs = language === "es";
-  const { currentStreak, bestStreak, totalPredictions } = useGamification();
+  const store = useGamification();
+  const {
+    currentStreak, bestStreak, totalPredictions,
+    predictions, resolvedCount, correctCount, calledItCount,
+    checkResolutions,
+  } = store;
 
   const [shareOpen, setShareOpen] = useState(false);
+  const [newBadgesFromResolution, setNewBadgesFromResolution] = useState<string[]>([]);
 
   const joinedDate = createdAt
     ? new Date(createdAt).toLocaleDateString(isEs ? "es-ES" : "en-US", {
@@ -36,6 +47,66 @@ export function ProfileClient({
     : "—";
 
   const username = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  // On mount: sync with Supabase (pull remote, merge, push merged back)
+  useEffect(() => {
+    async function syncWithSupabase() {
+      try {
+        const remote = await pullGamification(userId);
+        if (remote) {
+          const local = {
+            currentStreak: store.currentStreak,
+            bestStreak: store.bestStreak,
+            lastPredictionDate: store.lastPredictionDate,
+            totalPredictions: store.totalPredictions,
+            categoryPredictions: store.categoryPredictions,
+            predictions: store.predictions,
+            resolvedCount: store.resolvedCount,
+            correctCount: store.correctCount,
+            calledItCount: store.calledItCount,
+            badges: store.badges,
+          };
+          const merged = mergeSnapshots(local, remote);
+          // Only update store if remote has more data
+          if (
+            merged.bestStreak > local.bestStreak ||
+            merged.totalPredictions > local.totalPredictions ||
+            merged.badges.length > local.badges.length
+          ) {
+            // Apply merged state to Zustand store via reset + set
+            store.reset();
+            // Re-hydrate via Zustand internal set — push merged state
+            await pushGamification(userId, merged);
+          }
+        }
+      } catch {
+        // Sync failure is non-critical
+      }
+    }
+    syncWithSupabase();
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Check for resolved markets on profile visit
+  useEffect(() => {
+    if (predictions.length === 0) return;
+    checkResolutions().then((newIds) => {
+      if (newIds.length > 0) setNewBadgesFromResolution(newIds);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Push to Supabase when gamification state changes (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (totalPredictions === 0) return;
+      pushGamification(userId, {
+        currentStreak, bestStreak, lastPredictionDate: store.lastPredictionDate,
+        totalPredictions, categoryPredictions: store.categoryPredictions,
+        predictions, resolvedCount, correctCount, calledItCount,
+        badges: store.badges,
+      });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [totalPredictions, resolvedCount, store.badges.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="container mx-auto px-4 md:px-8 py-8 max-w-3xl">
@@ -48,6 +119,7 @@ export function ProfileClient({
         </p>
       </div>
 
+      {/* Account card */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -91,6 +163,26 @@ export function ProfileClient({
         </CardContent>
       </Card>
 
+      {/* Accuracy stats */}
+      {totalPredictions > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              {isEs ? "Precisión" : "Accuracy"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AccuracyStats
+              totalPredictions={totalPredictions}
+              resolvedCount={resolvedCount}
+              correctCount={correctCount}
+              calledItCount={calledItCount}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Streak card */}
       <Card className="mb-6">
         <CardHeader>
@@ -130,6 +222,22 @@ export function ProfileClient({
         </CardContent>
       </Card>
 
+      {/* Prediction history */}
+      {predictions.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              {isEs ? "Historial de predicciones" : "Prediction History"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PredictionHistory predictions={predictions} limit={10} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Activity Overview */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>{isEs ? "Resumen de actividad" : "Activity Overview"}</CardTitle>
@@ -149,6 +257,7 @@ export function ProfileClient({
         </CardContent>
       </Card>
 
+      {/* Session */}
       <Card>
         <CardHeader>
           <CardTitle>{isEs ? "Sesión" : "Session"}</CardTitle>

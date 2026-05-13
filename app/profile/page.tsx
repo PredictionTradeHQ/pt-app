@@ -24,6 +24,7 @@ export default async function ProfilePage() {
   return (
     <AppShell>
       <ProfileClient
+        userId={user.id}
         displayName={displayName}
         email={user.email ?? ""}
         createdAt={createdAt}
