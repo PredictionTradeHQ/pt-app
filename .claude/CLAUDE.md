@@ -2,11 +2,25 @@
 
 ## Project overview
 
-Prediction Trade (`predictiontrade.online`) is a demo trading platform and educational ecosystem.
+Prediction Trade (`predictiontrade.online`) is a **social forecasting platform** — demo, educational, AI-native, creator-friendly.
 Owner: Kevin (kevingabayo@gmail.com). Non-technical — needs clear, step-by-step guidance.
 
-**Purpose:** demo/showcase, educational platform, content vehicle, commercial onboarding funnel.
-**Positioning:** "Learn Before You Earn" — safe entry point to Polymarket.
+**Purpose:** Social forecasting, demo trading, education, content engine, creator economy.
+**Positioning:** "The social platform for people who love being right about the future."
+**Tagline:** "Predict. Compete. Share. Learn."
+
+## Brain — read before any strategic or architectural session
+
+```
+brain/MASTER.md          ← read first — strategic overview
+brain/VISION.md          ← platform identity and positioning
+brain/MARKET-CATEGORIES.md ← category architecture
+brain/CONTENT-ENGINE.md  ← content system design
+brain/UX-SOCIAL-LOOPS.md ← UX direction and social features
+brain/AI-NATIVE.md       ← AI-first experience roadmap
+brain/GROWTH-SYSTEMS.md  ← growth loops and creator economy
+brain/ROADMAP.md         ← execution roadmap by phase
+```
 
 ---
 

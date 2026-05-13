@@ -25,7 +25,10 @@ import {
   Trophy,
   BarChart2,
   ChevronRight,
+  Share2,
 } from "lucide-react";
+import { detectPTCategory, CATEGORY_TABS } from "@/lib/categories";
+import { SharePredictionModal } from "@/components/share-prediction-modal";
 import { cn } from "@/lib/utils";
 import { MarketDetailModal } from "@/components/market-detail-modal";
 import { Sparkline, generateMockHistory } from "@/components/sparkline";
@@ -167,9 +170,10 @@ function SkeletonCard() {
 
 // ─── MarketCard ──────────────────────────────────────────────────────────────
 
-function MarketCard({ 
-  market, 
-  onClick, 
+function MarketCard({
+  market,
+  onClick,
+  onShare,
   onQuickBet,
   balance,
   selectedAmount,
@@ -179,9 +183,10 @@ function MarketCard({
   realtimePriceHistory,
   isLive,
   labels,
-}: { 
-  market: Market; 
+}: {
+  market: Market;
   onClick: () => void;
+  onShare?: (market: Market) => void;
   onQuickBet?: (outcome: "YES" | "NO", amount: number) => void;
   balance?: number;
   selectedAmount?: number;
@@ -227,9 +232,18 @@ function MarketCard({
     >
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-xs capitalize shrink-0">
-            {market.category}
-          </Badge>
+          {/* PT category badge */}
+          {(() => {
+            const ptCat = detectPTCategory(market.title, market.category);
+            return (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
+                style={{ background: ptCat.color + "20", color: ptCat.color }}
+              >
+                {ptCat.emoji} {ptCat.label}
+              </span>
+            );
+          })()}
           {isLive && (
             <Badge variant="secondary" className="bg-primary/10 text-primary border-0 gap-1 text-xs shrink-0">
               <span className="relative flex h-1.5 w-1.5">
@@ -382,7 +396,21 @@ function MarketCard({
           <Clock className="w-3 h-3" />
           {market.endDate}
         </span>
-        <span className="font-medium text-foreground">{market.volume}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-foreground">{market.volume}</span>
+          {onShare && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare(market);
+              }}
+              className="ml-1 rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-primary/10 hover:text-primary"
+              title="Share this market"
+            >
+              <Share2 className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -390,17 +418,7 @@ function MarketCard({
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  { id: "all", labelKey: "allCategory" },
-  { id: "politics", labelKey: "politicsCategory" },
-  { id: "sports", labelKey: "sportsCategory" },
-  { id: "crypto", labelKey: "cryptoCategory" },
-  { id: "entertainment", labelKey: "popCultureCategory" },
-  { id: "business", labelKey: "businessCategory" },
-  { id: "tech", labelKey: "techCategory" },
-  { id: "science", labelKey: "scienceCategory" },
-  { id: "world", labelKey: "worldCategory" },
-];
+// PT category tabs — imported from lib/categories
 
 const SORT_OPTIONS = [
   { value: "volume", label: "Volume" },
@@ -487,6 +505,8 @@ export function MarketsApp() {
   const [selectedBetAmount, setSelectedBetAmount] = useState(50);
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
+  const [shareTarget, setShareTarget] = useState<{ market: Market; prediction?: "YES" | "NO" } | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"activity" | "positions">("activity");
 
   // Hydrate persistent balance + positions when user is logged in
@@ -588,12 +608,20 @@ export function MarketsApp() {
     return () => clearTimeout(t);
   }, [search]);
 
+  // Client-side category filtering using PT category detection
+  const filteredMarkets = useMemo(() => {
+    if (activeCategory === "all") return markets;
+    return markets.filter(
+      (m) => detectPTCategory(m.title, m.category).id === activeCategory
+    );
+  }, [markets, activeCategory]);
+
   const fetchMarkets = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({ limit: "50", sortBy });
-      if (activeCategory !== "all") params.set("category", activeCategory);
+      // Category filtering done client-side via PT category detection
       if (debouncedSearch) params.set("search", debouncedSearch);
 
       const res = await fetch("/api/polymarket?" + params.toString() + `&_t=${Date.now()}`, { cache: "no-store" });
@@ -620,7 +648,7 @@ export function MarketsApp() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, activeCategory, debouncedSearch]);
+  }, [sortBy, debouncedSearch]);
 
   useEffect(() => {
     setMounted(true);
@@ -728,7 +756,8 @@ export function MarketsApp() {
 
     setBetConfirmation(null);
     setBetSuccess({ outcome, amount });
-    setTimeout(() => setBetSuccess(null), 3000);
+    setShareTarget({ market, prediction: outcome });
+    setTimeout(() => setBetSuccess(null), 4000);
     setActiveTab("positions");
 
     void persistPortfolio({
@@ -787,7 +816,7 @@ export function MarketsApp() {
               </div>
               <h1 className="text-3xl font-bold mb-1">{t("predictionMarkets")}</h1>
               <p className="text-muted-foreground text-sm">
-                {loading ? t("loadingMarkets") : markets.length + " " + t("activeMarkets")}
+                {loading ? t("loadingMarkets") : filteredMarkets.length + " " + t("activeMarkets")}
               </p>
             </div>
 
@@ -842,20 +871,21 @@ export function MarketsApp() {
             </div>
           </div>
 
-          {/* Category pills */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {CATEGORIES.map((cat) => (
+          {/* Category pills — PT categories with emoji */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {CATEGORY_TABS.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={cn(
-                  "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0",
+                  "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-all",
                   activeCategory === cat.id
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
-                {t(cat.labelKey)}
+                <span className="text-[13px]">{cat.emoji}</span>
+                <span>{cat.label}</span>
               </button>
             ))}
           </div>
@@ -882,13 +912,14 @@ export function MarketsApp() {
                         {t("noMarketsFound")}
                       </div>
                     )
-: markets.map((market) => {
+: filteredMarkets.map((market) => {
   const rtPrice = realtimePrices.get(market.id);
   return (
     <MarketCard
       key={market.id}
       market={market}
       onClick={() => setSelectedMarket(market)}
+      onShare={(m) => { setShareTarget({ market: m }); setShowShareModal(true); }}
       onQuickBet={(outcome, amount) => handleQuickBet(market, outcome, amount)}
       balance={balance}
       selectedAmount={selectedBetAmount}
@@ -920,9 +951,19 @@ export function MarketsApp() {
             {betSuccess && (
               <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary animate-in fade-in slide-in-from-top-2">
                 <CheckCircle className="w-5 h-5 shrink-0" />
-                <span className="text-sm font-medium">
-                  {t("betPlaced")} ${betSuccess.amount} {t("onOutcome")} <strong>{betSuccess.outcome === "YES" ? t("yes") : t("no")}</strong>
+                <span className="flex-1 text-sm font-medium">
+                  {t("betPlaced")} ${betSuccess.amount} {t("onOutcome")}{" "}
+                  <strong>{betSuccess.outcome === "YES" ? t("yes") : t("no")}</strong>
                 </span>
+                {shareTarget && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="flex shrink-0 items-center gap-1 rounded-lg bg-primary/20 px-2.5 py-1 text-xs font-bold transition-all hover:bg-primary/30"
+                  >
+                    <Share2 className="h-3 w-3" />
+                    Share
+                  </button>
+                )}
               </div>
             )}
 
@@ -1209,6 +1250,21 @@ export function MarketsApp() {
         open={!!selectedMarket}
         onClose={() => setSelectedMarket(null)}
       />
+
+      {/* Share prediction modal */}
+      {shareTarget && (
+        <SharePredictionModal
+          open={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          marketTitle={shareTarget.market.title}
+          yesPercent={Math.round(
+            (realtimePrices.get(shareTarget.market.id)?.yesPrice ??
+              shareTarget.market.yesPrice) * 100
+          )}
+          marketCategory={shareTarget.market.category}
+          prediction={shareTarget.prediction}
+        />
+      )}
     </div>
   );
 }
