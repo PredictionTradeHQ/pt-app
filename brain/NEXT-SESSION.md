@@ -9,9 +9,9 @@
 | System | Status |
 |---|---|
 | predictiontrade.online | ✅ Live and healthy |
-| GitHub main | ✅ Clean — last commit `6ab1efb` |
-| Vercel | ✅ READY — deployment `dpl_aCjZ7rX9hqPaa4ziHPkA3VkM7SLH` |
-| Supabase `user_gamification` | ✅ Table live in production (executed 2026-05-13) |
+| GitHub main | ✅ Clean — last commit `5591936` |
+| Vercel | ✅ Auto-deploy triggered on push |
+| Supabase `user_gamification` + `public_leaderboard` | ✅ Live in production |
 | TypeScript build | ✅ Strict — 0 errors |
 
 ---
@@ -47,24 +47,35 @@ Next.js 16.2, Supabase auth, Vercel deploy, TypeScript strict, markets browser, 
 - Zustand store v2 with migration from v1
 - Ownership cleanup: sole operator aventurarte.23@gmail.com
 
+### Phase 4 — Real Leaderboard (DONE ✅ — commit 5591936)
+- `/api/leaderboard/forecasters` reads `public_leaderboard` view via Supabase anon key
+- Joins `profiles` for display names
+- Sort by best_streak / accuracy_pct / badge_count / total_predictions
+- Nulls-last on accuracy (users with < 5 resolved predictions appear last)
+- `ForecastersLeaderboard` fetches real data via SWR (60s refresh)
+- Merge: real users + demo anchors fill gaps up to 10 entries
+- Current user detected via Supabase auth client-side → "YOU" amber highlight
+- Real users show "Real" badge to distinguish from demo anchors
+- 10-row animated skeleton during loading
+- Graceful empty state
+
 ---
 
-## What Is Pending (Phase 4)
+## What Is Pending (Phase 4 AI Layer)
 
-### Priority 1 — Real Leaderboard (low complexity, high impact)
-The `public_leaderboard` VIEW is live. Just needs an API route to expose it.
-
-**Files to create/modify:**
-- `app/api/leaderboard/forecasters/route.ts` — reads `public_leaderboard` view via Supabase
-- `components/leaderboard/forecasters-leaderboard.tsx` — switch from pure demo data to API + demo fallback
-- Merge strategy: if fewer than 10 real users, fill with demo anchors
-
-### Priority 2 — AI Layer
+### Priority 1 — "Explain this market" (low complexity, high impact)
+- Add button to market cards in `components/markets-app.tsx`
 - `app/api/ai/market-summary/route.ts` — Claude API call, Supabase cache (30 min TTL)
-- Add "Explain this market" button to market cards in `components/markets-app.tsx`
-- Pre-prediction advisor panel (show AI context before confirming bet)
-- Requires: Anthropic API key in `.env.local` as `ANTHROPIC_API_KEY`
-- Note: Claude API account setup is tracked in `memory/project_predictiontrade.md`
+- Requires: `ANTHROPIC_API_KEY` in `.env.local`
+
+### Priority 2 — Pre-prediction advisor panel
+- Show AI context (risk level, crowd sentiment, key factors) before confirming bet
+- Requires: Claude API + market data
+
+### Priority 3 — Real public profiles for real users
+- `/profile/[username]` currently only supports demo users
+- Real users get redirected to `/profile` (their own profile)
+- To enable real public profiles: add `username` slug to `profiles` table, update route
 
 ---
 
@@ -78,17 +89,10 @@ lib/supabase-sync.ts
 Supabase user_gamification
   ↕ VIEW
 public_leaderboard (anon readable)
-```
-
-```
-User makes prediction in /demo or /markets
-  → recordPrediction(categoryId, details)
-  → PredictionRecord saved in Zustand
-  → On /profile visit: checkResolutions()
-    → Polymarket Gamma API per marketId
-    → If closed + price settled: mark resolved + correct/incorrect
-    → Award badges if earned
-  → push to Supabase (debounced 2s)
+  ↕ API
+/api/leaderboard/forecasters
+  ↕ SWR 60s
+ForecastersLeaderboard component
 ```
 
 ---
@@ -96,20 +100,21 @@ User makes prediction in /demo or /markets
 ## Risks / Watch Out For
 
 - **Supabase anon key** in `.env.local` — do not expose service role key client-side (already correct)
-- **Zustand v2 migration** — v1 users without `predictions[]` get migrated on next store hydration. Do not bump version again without adding a migration for v2.
-- **Demo anchor usernames** are hardcoded in `lib/demo-leaderboard.ts` — public profile links like `/profile/alex-morgan` depend on these being stable
+- **Zustand v2 migration** — do not bump version again without adding a migration for v2
+- **Demo anchor usernames** are hardcoded in `lib/demo-leaderboard.ts` — do not rename them (profile links depend on stability)
 - **OG image route** is edge runtime — do not import Node-only modules into `/api/og/streak/route.tsx`
-- **Polymarket API** sometimes returns `outcomePrices` as a JSON string, not array — `checkResolutions()` handles this with `JSON.parse` fallback
+- **Polymarket API** sometimes returns `outcomePrices` as JSON string — `checkResolutions()` handles with `JSON.parse` fallback
 - **TypeScript strict** — always run `pnpm build` before `npx vercel --prod`
+- **`createClient()` in `lib/supabase/client.ts`** returns `any` when env vars missing — cast to `SupabaseClient` when type inference is needed
 
 ---
 
 ## Recommended Next Actions (in order)
 
-1. **Build real leaderboard API** — `/api/leaderboard/forecasters` reading `public_leaderboard` view. Merge with demo data if <10 real rows.
-2. **Get Anthropic API key** — needed for Phase 4 AI features (see `memory/project_predictiontrade.md` for Make.com pipeline status)
-3. **Add "Explain this market"** — simplest AI feature, high perceived value, low cost
-4. **Market summary cache** — Supabase table `ai_market_summaries` with `market_id`, `summary`, `cached_at`
+1. **Get Anthropic API key** — add to `.env.local` + Vercel env vars to unlock AI layer
+2. **"Explain this market"** — simplest AI feature, Claude API call on market card click
+3. **Market summary cache** — Supabase table `ai_market_summaries` (market_id, summary, cached_at)
+4. **Real public profiles** — add `username` slug to `profiles` table for real user profile URLs
 
 ---
 
@@ -122,6 +127,7 @@ User makes prediction in /demo or /markets
 | Badge definitions | `lib/badges.ts` |
 | Demo leaderboard data | `lib/demo-leaderboard.ts` |
 | Forecasters leaderboard UI | `components/leaderboard/forecasters-leaderboard.tsx` |
+| **Real forecasters API** | `app/api/leaderboard/forecasters/route.ts` |
 | Public profile page | `app/profile/[username]/page.tsx` |
 | OG image route | `app/api/og/streak/route.tsx` |
 | SQL migration | `supabase/migrations/001_gamification.sql` |

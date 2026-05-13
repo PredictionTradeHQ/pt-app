@@ -67,14 +67,18 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 
 ---
 
-### Phase 4 — Real Leaderboard + AI Layer (NEXT)
+### Phase 4 — Real Leaderboard + AI Layer (IN PROGRESS)
 **Goal:** PT feels intelligent. Leaderboard shows real users. AI adds ambient value.
-**Recommended start:** next session
 
-#### Real Leaderboard (low complexity, high impact)
-- [ ] `/api/leaderboard/forecasters` route reading `public_leaderboard` view
-- [ ] Merge real users with demo users if fewer than 10 real entries
-- [ ] Show real usernames from `user_metadata.display_name`
+#### Real Leaderboard (DONE ✅ — commit 5591936)
+- [x] `/api/leaderboard/forecasters` route reading `public_leaderboard` view
+- [x] Merge real users with demo anchors if fewer than 10 real entries
+- [x] Display names from `profiles` table (joined server-side)
+- [x] Real users highlighted with "Real" badge in UI
+- [x] Logged-in user highlighted as "YOU" via Supabase auth client-side check
+- [x] Loading skeleton (10 animated rows) during fetch
+- [x] Empty state if no data
+- [x] SWR with 60s refresh interval
 - [ ] Category accuracy breakdown per user (extend `category_predictions` JSONB)
 
 #### AI Layer
@@ -112,7 +116,7 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 | Supabase gamification sync | 3 | Very High | Medium | ✅ Done |
 | Real accuracy engine | 3 | High | Medium | ✅ Done |
 | Called It system | 3 | High | Low | ✅ Done |
-| Real leaderboard API | 4 | High | Low | 🔲 Next |
+| Real leaderboard API | 4 | High | Low | ✅ Done |
 | Market summary AI | 4 | High | Medium | 🔲 Not started |
 | "Explain this market" | 4 | High | Low | 🔲 Not started |
 | Pre-prediction advisor | 4 | Medium | Medium | 🔲 Not started |
