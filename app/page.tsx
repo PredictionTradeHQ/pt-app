@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero";
 import { FeaturesGrid } from "@/components/features-grid";
 import { HowItWorks } from "@/components/how-it-works";
 import { LiveMarketsPreview } from "@/components/live-markets-preview";
+import { HomeSocialWidgets } from "@/components/home-social-widgets";
 import { WhyUs } from "@/components/why-us";
 import { Community } from "@/components/community";
 import { Footer } from "@/components/footer";
@@ -15,6 +16,7 @@ export default function Home() {
         <Hero />
         <FeaturesGrid />
         <LiveMarketsPreview />
+        <HomeSocialWidgets />
         <section id="how-it-works">
           <HowItWorks />
         </section>

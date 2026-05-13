@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard, Flame, Medal } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2 } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
 import { StreakWidget } from "@/components/streak-widget";
 import { BadgesGrid } from "@/components/badges-grid";
+import { useGamification } from "@/stores/gamification";
+import { ShareAchievementModal } from "@/components/share-achievement-modal";
 
 export function ProfileClient({
   displayName,
@@ -20,6 +23,9 @@ export function ProfileClient({
 }) {
   const { language } = useLanguage();
   const isEs = language === "es";
+  const { currentStreak, bestStreak, totalPredictions } = useGamification();
+
+  const [shareOpen, setShareOpen] = useState(false);
 
   const joinedDate = createdAt
     ? new Date(createdAt).toLocaleDateString(isEs ? "es-ES" : "en-US", {
@@ -28,6 +34,8 @@ export function ProfileClient({
         day: "numeric",
       })
     : "—";
+
+  const username = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   return (
     <main className="container mx-auto px-4 md:px-8 py-8 max-w-3xl">
@@ -52,7 +60,7 @@ export function ProfileClient({
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
               {displayName.charAt(0).toUpperCase()}
             </div>
-            <div>
+            <div className="flex-1">
               <p className="font-semibold text-lg">{displayName}</p>
               <p className="text-sm text-muted-foreground">
                 {isEs ? "Miembro de PredictionTrade" : "PredictionTrade Member"}
@@ -86,10 +94,23 @@ export function ProfileClient({
       {/* Streak card */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-orange-400" />
-            {isEs ? "Racha de predicciones" : "Prediction Streak"}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-orange-400" />
+              {isEs ? "Racha de predicciones" : "Prediction Streak"}
+            </CardTitle>
+            {currentStreak > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-8 text-xs"
+                onClick={() => setShareOpen(true)}
+              >
+                <Share2 className="w-3 h-3" />
+                {isEs ? "Compartir" : "Share"}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <StreakWidget variant="profile" />
@@ -141,6 +162,18 @@ export function ProfileClient({
           <ProfileSignOutButton />
         </CardContent>
       </Card>
+
+      <ShareAchievementModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        achievement={{
+          type: "streak",
+          streak: currentStreak,
+          bestStreak,
+          totalPredictions,
+          username,
+        }}
+      />
     </main>
   );
 }
