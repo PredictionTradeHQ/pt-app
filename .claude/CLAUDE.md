@@ -76,14 +76,18 @@ Workflow notes → `../../workflows/`
 ## Ecosystem structure
 
 ```
-PredictionTrade/
-├── pt-infrastructure/pt-merged/   ← this repo
-├── assets/investor/               pitch, PDF, logo
-├── docs/content-scripts/          content drafts
-├── workflows/                     n8n, Make.com, Twilio notes
-├── published/                     published social content
-└── _archive/                      legacy code and experiments
+Documents\PREDICTION TRADE\               ← PT ecosystem root
+├── pt-infrastructure\pt-merged\          ← this repo (source of truth)
+├── assets\investor\                      pitch, PDF, logo
+├── docs\content-scripts\                 content drafts
+├── workflows\                            n8n, Make.com, Twilio notes
+├── published\                            published social content
+└── _archive\                             legacy code and experiments
 ```
+
+Mirrors PMS convention:
+- `Documents\PREDICTION MARKETS SOLUTIONS\pms-infrastructure\` → PMS
+- `Documents\PREDICTION TRADE\pt-infrastructure\pt-merged\` → PT
 
 ---
 
