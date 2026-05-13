@@ -90,7 +90,7 @@ const dictionaries: Record<Language, Dictionary> = {
     verifyEmailHelp:
       "Click the link in your email to verify your account and start trading with virtual funds.",
     didntReceiveEmail: "Didn't receive an email? Check your spam folder or",
-    tryAgain: "try again",
+    tryAgainLink: "try again",
     backToLogin: "Back to login",
     authSomethingWrong: "Something went wrong",
     authUnexpectedErrorLong: "An unexpected error occurred during authentication.",
@@ -268,7 +268,7 @@ const dictionaries: Record<Language, Dictionary> = {
     verifyEmailHelp:
       "Haz clic en el enlace de tu correo para verificar tu cuenta y empezar a operar con fondos virtuales.",
     didntReceiveEmail: "¿No recibiste el correo? Revisa la carpeta de spam o",
-    tryAgain: "inténtalo de nuevo",
+    tryAgainLink: "inténtalo de nuevo",
     backToLogin: "Volver al inicio de sesión",
     authSomethingWrong: "Algo salió mal",
     authUnexpectedErrorLong: "Ocurrió un error inesperado durante la autenticación.",

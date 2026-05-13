@@ -11,10 +11,10 @@ export interface PriceHistory {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { marketId: string } }
+  { params }: { params: Promise<{ marketId: string }> }
 ) {
   try {
-    const marketId = params.marketId;
+    const { marketId } = await params;
     console.log(`[v0] Fetching price history for market: ${marketId}`);
 
     // Try to fetch from Polymarket history endpoint

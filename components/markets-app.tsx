@@ -883,7 +883,7 @@ export function MarketsApp() {
                       </div>
                     )
 : markets.map((market) => {
-  const rtPrice = realtimePrices[market.id];
+  const rtPrice = realtimePrices.get(market.id);
   return (
     <MarketCard
       key={market.id}

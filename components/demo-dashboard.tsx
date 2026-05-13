@@ -170,7 +170,7 @@ export function DemoDashboard() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Current Price</span>
                     <span className="font-semibold">
-                      {(selectedBet.outcome === 'YES'
+                      {((selectedBet.outcome === 'YES'
                         ? selectedBet.market.yesPrice
                         : selectedBet.market.noPrice) * 100
                       ).toFixed(0)}c

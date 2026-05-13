@@ -65,7 +65,7 @@ export async function fetchMarkets(
     if (!response.ok) throw new Error("Failed to fetch markets");
 
     const markets = await response.json();
-    const categories = [...new Set(markets.map((m: any) => m.category).filter(Boolean))];
+    const categories: string[] = [...new Set<string>(markets.map((m: any) => m.category).filter(Boolean))];
 
     return { markets, categories };
   } catch (error) {

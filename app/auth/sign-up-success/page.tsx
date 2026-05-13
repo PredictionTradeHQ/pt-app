@@ -46,7 +46,7 @@ export default function SignUpSuccessPage() {
             <p className="text-xs text-muted-foreground">
               {t("didntReceiveEmail")}{" "}
               <Link href="/auth/sign-up" className="text-primary hover:underline underline-offset-4">
-                {t("tryAgain")}
+                {t("tryAgainLink")}
               </Link>
             </p>
 
