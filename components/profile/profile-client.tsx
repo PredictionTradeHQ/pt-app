@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2 } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
 import { StreakWidget } from "@/components/streak-widget";
@@ -38,6 +38,18 @@ export function ProfileClient({
 
   const [shareOpen, setShareOpen] = useState(false);
   const [newBadgesFromResolution, setNewBadgesFromResolution] = useState<string[]>([]);
+  const [copiedProfile, setCopiedProfile] = useState(false);
+
+  const username = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const profileUrl = `https://predictiontrade.online/profile/${username}`;
+
+  const handleCopyProfile = async () => {
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      setCopiedProfile(true);
+      setTimeout(() => setCopiedProfile(false), 2000);
+    } catch { /* ignore */ }
+  };
 
   const joinedDate = createdAt
     ? new Date(createdAt).toLocaleDateString(isEs ? "es-ES" : "en-US", {
@@ -46,8 +58,6 @@ export function ProfileClient({
         day: "numeric",
       })
     : "—";
-
-  const username = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
   // On mount: sync with Supabase (pull remote, merge, push merged back)
   useEffect(() => {
@@ -130,15 +140,26 @@ export function ProfileClient({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 pb-4 border-b border-border">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary shrink-0">
               {displayName.charAt(0).toUpperCase()}
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-lg">{displayName}</p>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-lg truncate">{displayName}</p>
               <p className="text-sm text-muted-foreground">
-                {isEs ? "Miembro de PredictionTrade" : "PredictionTrade Member"}
+                @{username} · {isEs ? "Miembro de PredictionTrade" : "PredictionTrade Forecaster"}
               </p>
             </div>
+            <button
+              onClick={handleCopyProfile}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+              title={isEs ? "Copiar enlace de perfil" : "Copy profile link"}
+            >
+              {copiedProfile ? (
+                <><Check className="w-3 h-3 text-primary" /><span className="text-primary">{isEs ? "Copiado" : "Copied!"}</span></>
+              ) : (
+                <><Link2 className="w-3 h-3" /><span>{isEs ? "Compartir perfil" : "Share profile"}</span></>
+              )}
+            </button>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
@@ -290,6 +311,7 @@ export function ProfileClient({
       <ShareAchievementModal
         open={shareOpen}
         onClose={() => setShareOpen(false)}
+        profileUrl={profileUrl}
         achievement={{
           type: "streak",
           streak: currentStreak,

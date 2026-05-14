@@ -45,6 +45,7 @@ import { computeMarketSignals, type MarketSignals } from "@/lib/market-signals";
 import { ActivityTicker, type TickerTrade } from "@/components/activity-ticker";
 import { getSortedLeaderboard } from "@/lib/demo-leaderboard";
 import { StreakAtRiskBanner } from "@/components/streak-at-risk-banner";
+import { MilestoneCelebration } from "@/components/milestone-celebration";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -546,11 +547,12 @@ export function MarketsApp() {
   const [totalBets, setTotalBets] = useState(0);
   const [selectedBetAmount, setSelectedBetAmount] = useState(50);
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
-  const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
+  const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number; streakNote?: string } | null>(null);
   const [shareTarget, setShareTarget] = useState<{ market: Market; prediction?: "YES" | "NO" } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
+  const [milestoneStreak, setMilestoneStreak] = useState<number | null>(null);
 
   // Gamification store (Zustand persist — survives refreshes)
   const { recordPrediction } = useGamification();
@@ -838,10 +840,20 @@ export function MarketsApp() {
     });
     if (gamResult.newBadgeIds.length > 0) {
       setEarnedBadgeIds(gamResult.newBadgeIds);
+      const STREAK_MILESTONES = ["streak_3", "streak_7", "streak_30"]
+      const hasStreakMilestone = gamResult.newBadgeIds.some((id) => STREAK_MILESTONES.includes(id))
+      if (hasStreakMilestone) setMilestoneStreak(gamResult.currentStreak)
     }
 
+    const streakNote =
+      gamResult.streakIncreased && gamResult.currentStreak > 1
+        ? `🔥 Day ${gamResult.currentStreak} streak — keep it going!`
+        : gamResult.currentStreak === 1
+        ? "🎯 First prediction — streak started!"
+        : undefined
+
     setBetConfirmation(null);
-    setBetSuccess({ outcome, amount });
+    setBetSuccess({ outcome, amount, streakNote });
     setShareTarget({ market, prediction: outcome });
     setShowCelebration(true);
     setTimeout(() => { setBetSuccess(null); setShowCelebration(false); }, 8000);
@@ -1030,15 +1042,20 @@ export function MarketsApp() {
           <div className="container mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
             <span className="text-xl shrink-0">🎯</span>
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-bold text-primary">
-                {betSuccess.outcome === "YES" ? "Called YES" : "Called NO"}
-              </span>
-              <span className="text-sm text-muted-foreground ml-2">
-                ${betSuccess.amount} on{" "}
-                <span className="text-foreground font-medium">
-                  {shareTarget.market.title.slice(0, 55)}{shareTarget.market.title.length > 55 ? "…" : ""}
+              <div className="flex flex-wrap items-center gap-x-2">
+                <span className="text-sm font-bold text-primary">
+                  {betSuccess.outcome === "YES" ? "Called YES" : "Called NO"}
                 </span>
-              </span>
+                <span className="text-sm text-muted-foreground">
+                  ${betSuccess.amount} on{" "}
+                  <span className="text-foreground font-medium">
+                    {shareTarget.market.title.slice(0, 50)}{shareTarget.market.title.length > 50 ? "…" : ""}
+                  </span>
+                </span>
+              </div>
+              {betSuccess.streakNote && (
+                <p className="text-xs text-orange-400 font-semibold mt-0.5">{betSuccess.streakNote}</p>
+              )}
             </div>
             <button
               onClick={() => setShowShareModal(true)}
@@ -1478,6 +1495,16 @@ export function MarketsApp() {
         badgeIds={earnedBadgeIds}
         onDismiss={() => setEarnedBadgeIds([])}
       />
+
+      {/* Streak milestone celebration */}
+      {milestoneStreak !== null && (
+        <MilestoneCelebration
+          streak={milestoneStreak}
+          open={milestoneStreak !== null}
+          onClose={() => setMilestoneStreak(null)}
+          username={authUser?.display_name ?? authUser?.email?.split("@")[0] ?? "forecaster"}
+        />
+      )}
     </div>
   );
 }

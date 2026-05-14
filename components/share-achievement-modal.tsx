@@ -31,9 +31,10 @@ interface ShareAchievementModalProps {
   open: boolean
   onClose: () => void
   achievement: Achievement | null
+  profileUrl?: string  // e.g. "https://predictiontrade.online/profile/alex-m"
 }
 
-export function ShareAchievementModal({ open, onClose, achievement }: ShareAchievementModalProps) {
+export function ShareAchievementModal({ open, onClose, achievement, profileUrl }: ShareAchievementModalProps) {
   const [copied, setCopied] = useState(false)
 
   if (!achievement) return null
@@ -54,8 +55,9 @@ export function ShareAchievementModal({ open, onClose, achievement }: ShareAchie
     : `/api/og/badge?id=${(achievement as BadgeAchievement).badgeId}&username=${encodeURIComponent(achievement.username)}`
 
   const handleCopy = async () => {
+    const url = profileUrl ?? "https://predictiontrade.online/leaderboard"
     try {
-      await navigator.clipboard.writeText("https://predictiontrade.online/leaderboard")
+      await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
