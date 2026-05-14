@@ -81,6 +81,14 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 - [x] SWR with 60s refresh interval
 - [ ] Category accuracy breakdown per user (extend `category_predictions` JSONB)
 
+#### Real Public Profiles (DONE ✅ — commit 11c2aa7)
+- [x] `slugify()` utility in `lib/utils.ts` — shared URL slug generation
+- [x] `/api/profile/[username]` — public lookup: display_name slug → gamification data
+- [x] `RealPublicProfile` component — streak, accuracy, badge grid, CTA
+- [x] `/profile/[username]` — handles demo users + real Supabase users; own profile → /profile
+- [x] Leaderboard real user rows now link to `/profile/[username]`
+- [x] `supabase/migrations/002_profiles_username.sql` — optional username column + backfill
+
 #### AI Layer
 - [ ] Market summary generator (`/api/ai/market-summary`)
 - [ ] "Explain this market" button on market cards
