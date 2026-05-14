@@ -12,7 +12,6 @@ import {
   TrendingDown,
   Clock,
   Users,
-  Flame,
   ArrowRight,
   Vote,
   Bitcoin,
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { computeMarketSignals } from "@/lib/market-signals";
 
 interface TransformedMarket {
   id: string;
@@ -89,6 +89,11 @@ function MarketCardWithSparkline({ market, isEs }: { market: MarketWithHistory; 
     return ((last - first) / first) * 100;
   }, [market.priceHistory]);
 
+  const signals = useMemo(
+    () => computeMarketSignals(market.yesPrice, market.volume, market.volume24hr, market.endDate, market.isNew),
+    [market.yesPrice, market.volume, market.volume24hr, market.endDate, market.isNew]
+  );
+
   return (
     <Link
       href={`/markets`}
@@ -100,10 +105,13 @@ function MarketCardWithSparkline({ market, isEs }: { market: MarketWithHistory; 
           <Badge variant="outline" className="text-xs capitalize shrink-0">
             {market.category || (isEs ? "General" : "General")}
           </Badge>
-          {market.volume24hr > 50000 && (
-            <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 border-0 gap-1 text-xs shrink-0">
-              <Flame className="w-3 h-3" />{isEs ? "Hot" : "Hot"}
-            </Badge>
+          {signals.primarySignal && (
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shrink-0",
+              signals.primarySignal.className
+            )}>
+              {signals.primarySignal.icon} {signals.primarySignal.label}
+            </span>
           )}
         </div>
         <span className={cn(
@@ -133,7 +141,7 @@ function MarketCardWithSparkline({ market, isEs }: { market: MarketWithHistory; 
             {(market.yesPrice * 100).toFixed(0)}%
           </div>
           <div className="text-[10px] text-muted-foreground">
-            {isEs ? "Probabilidad SÍ" : "Yes probability"}
+            {signals.communityLabel}
           </div>
         </div>
       </div>
@@ -158,7 +166,12 @@ function MarketCardWithSparkline({ market, isEs }: { market: MarketWithHistory; 
           <Users className="w-3 h-3" />
           {Math.max(1, Math.floor(market.volume / 180))}
         </span>
-        <span className="flex items-center gap-1">
+        <span className={cn(
+          "flex items-center gap-1",
+          signals.timeUrgency === "urgent" && "text-red-400",
+          signals.timeUrgency === "today" && "text-amber-400",
+          signals.timeUrgency === "soon" && "text-yellow-400",
+        )}>
           <Clock className="w-3 h-3" />
           {formatDate(market.endDate, isEs)}
         </span>

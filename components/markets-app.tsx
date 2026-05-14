@@ -41,6 +41,7 @@ import { RealtimeStatus } from "@/components/realtime-status";
 import { PricePulse, LiveIndicator } from "@/components/price-pulse";
 import type { TransformedMarket } from "@/app/api/polymarket/route";
 import { useLanguage } from "@/contexts/language-context";
+import { computeMarketSignals, type MarketSignals } from "@/lib/market-signals";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -61,6 +62,7 @@ interface Market {
   priceHistory: number[];
   // Asset IDs for WebSocket subscriptions
   assetIds: string[];
+  signals: MarketSignals;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -108,6 +110,7 @@ function toMarket(m: TransformedMarket, i: number): Market {
     description: m.description || m.question || "",
     priceHistory: generateMockHistory(m.yesPrice, 20),
     assetIds: m.assetIds || [],
+    signals: computeMarketSignals(m.yesPrice, m.volume, m.volume24hr, m.endDate, m.isNew),
   };
 }
 
@@ -256,15 +259,13 @@ function MarketCard({
               {labels.live}
             </Badge>
           )}
-          {market.trending && (
-            <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 border-0 gap-1 text-xs shrink-0">
-              <Flame className="w-3 h-3" />{labels.hot}
-            </Badge>
-          )}
-          {market.isNew && !isLive && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-0 gap-1 text-xs shrink-0">
-              <Zap className="w-3 h-3" />{labels.newest}
-            </Badge>
+          {market.signals.primarySignal && !isLive && (
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shrink-0",
+              market.signals.primarySignal.className
+            )}>
+              {market.signals.primarySignal.icon} {market.signals.primarySignal.label}
+            </span>
           )}
         </div>
         <span className={cn(
@@ -302,7 +303,7 @@ function MarketCard({
               {(yesPrice * 100).toFixed(0)}%
             </PricePulse>
           </div>
-          <div className="text-[10px] text-muted-foreground">{labels.probability}</div>
+          <div className="text-[10px] text-muted-foreground">{market.signals.communityLabel}</div>
         </div>
       </div>
 
@@ -395,7 +396,12 @@ function MarketCard({
           <Users className="w-3 h-3" />
           {formatTraders(market.traders)}
         </span>
-        <span className="flex items-center gap-1">
+        <span className={cn(
+          "flex items-center gap-1",
+          market.signals.timeUrgency === "urgent" && "text-red-400",
+          market.signals.timeUrgency === "today" && "text-amber-400",
+          market.signals.timeUrgency === "soon" && "text-yellow-400",
+        )}>
           <Clock className="w-3 h-3" />
           {market.endDate}
         </span>
