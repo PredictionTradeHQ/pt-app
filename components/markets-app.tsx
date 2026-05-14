@@ -42,6 +42,7 @@ import { PricePulse, LiveIndicator } from "@/components/price-pulse";
 import type { TransformedMarket } from "@/app/api/polymarket/route";
 import { useLanguage } from "@/contexts/language-context";
 import { computeMarketSignals, type MarketSignals } from "@/lib/market-signals";
+import { ActivityTicker, type TickerTrade } from "@/components/activity-ticker";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -63,6 +64,8 @@ interface Market {
   // Asset IDs for WebSocket subscriptions
   assetIds: string[];
   signals: MarketSignals;
+  volume24hr: number;
+  heatLevel: "hot" | "warm" | "normal";
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -111,6 +114,8 @@ function toMarket(m: TransformedMarket, i: number): Market {
     priceHistory: generateMockHistory(m.yesPrice, 20),
     assetIds: m.assetIds || [],
     signals: computeMarketSignals(m.yesPrice, m.volume, m.volume24hr, m.endDate, m.isNew),
+    volume24hr: m.volume24hr,
+    heatLevel: m.volume24hr > 100_000 ? "hot" : m.volume24hr > 30_000 ? "warm" : "normal",
   };
 }
 
@@ -228,14 +233,30 @@ function MarketCard({
     return ((last - first) / first) * 100;
   }, [priceHistory, market.change]);
   
+  const heatLevel = market.heatLevel
+
   return (
     <div
       onClick={onClick}
       className={cn(
-        "group p-4 rounded-xl border bg-card hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer",
-        isLive ? "border-primary/30" : "border-border"
+        "group p-4 rounded-xl border bg-card hover:bg-card/80 transition-all cursor-pointer relative overflow-hidden",
+        isLive
+          ? "border-primary/30 hover:border-primary/60"
+          : heatLevel === "hot"
+          ? "border-orange-500/40 hover:border-orange-500/70"
+          : heatLevel === "warm"
+          ? "border-primary/20 hover:border-primary/50"
+          : "border-border hover:border-primary/50"
       )}
     >
+      {/* Heat glow strip — top edge */}
+      {heatLevel !== "normal" && (
+        <div className={cn(
+          "absolute top-0 left-0 right-0 h-[2px]",
+          heatLevel === "hot" ? "bg-gradient-to-r from-orange-500/60 via-orange-400/80 to-orange-500/60"
+                              : "bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20"
+        )} />
+      )}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           {/* PT category badge */}
@@ -392,8 +413,18 @@ function MarketCard({
       </div>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Users className="w-3 h-3" />
+        <span className={cn(
+          "flex items-center gap-1",
+          heatLevel !== "normal" && "text-green-400"
+        )}>
+          {heatLevel !== "normal" ? (
+            <span className="relative flex h-1.5 w-1.5 mr-0.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+            </span>
+          ) : (
+            <Users className="w-3 h-3" />
+          )}
           {formatTraders(market.traders)}
         </span>
         <span className={cn(
@@ -628,6 +659,32 @@ export function MarketsApp() {
       (m) => detectPTCategory(m.title, m.category).id === activeCategory
     );
   }, [markets, activeCategory]);
+
+  // Compute which PT category has the highest total volume24hr
+  const hotCategoryId = useMemo(() => {
+    if (markets.length === 0) return null
+    const tally = new Map<string, number>()
+    for (const m of markets) {
+      const catId = detectPTCategory(m.title, m.category).id
+      tally.set(catId, (tally.get(catId) ?? 0) + m.volume24hr)
+    }
+    let bestId: string | null = null
+    let bestVol = 0
+    for (const [id, vol] of tally) {
+      if (vol > bestVol) { bestVol = vol; bestId = id }
+    }
+    return bestId
+  }, [markets])
+
+  // Social proof stats
+  const socialStats = useMemo(() => {
+    const totalTraders = markets.reduce((s, m) => s + m.traders, 0)
+    const hotCount = markets.filter(m => m.heatLevel === "hot").length
+    const closingToday = markets.filter(
+      m => m.signals.timeUrgency === "today" || m.signals.timeUrgency === "urgent"
+    ).length
+    return { totalTraders, hotCount, closingToday }
+  }, [markets])
 
   const fetchMarkets = useCallback(async () => {
     setLoading(true);
@@ -904,7 +961,7 @@ export function MarketsApp() {
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-all",
+                  "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-all relative",
                   activeCategory === cat.id
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
@@ -912,11 +969,53 @@ export function MarketsApp() {
               >
                 <span className="text-[13px]">{cat.emoji}</span>
                 <span>{cat.label}</span>
+                {cat.id !== "all" && cat.id === hotCategoryId && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-400" />
+                  </span>
+                )}
               </button>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Activity ticker — full width, below header */}
+      {!loading && recentTrades.length > 0 && (
+        <ActivityTicker trades={recentTrades} />
+      )}
+
+      {/* Social proof bar */}
+      {!loading && markets.length > 0 && (
+        <div className="border-b border-border/30 bg-card/20">
+          <div className="container mx-auto px-4 md:px-8 py-2 flex items-center gap-4 text-[11px] text-muted-foreground overflow-x-auto scrollbar-none">
+            <span className="flex items-center gap-1.5 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              <span className="text-green-400 font-semibold">{socialStats.totalTraders.toLocaleString()}</span>
+              <span>traders active</span>
+            </span>
+            <span className="text-border">·</span>
+            <span className="shrink-0">{markets.length} markets live</span>
+            {socialStats.hotCount > 0 && (
+              <>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1 text-orange-400 font-semibold shrink-0">
+                  🔥 {socialStats.hotCount} on fire
+                </span>
+              </>
+            )}
+            {socialStats.closingToday > 0 && (
+              <>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1 text-amber-400 shrink-0">
+                  ⏰ {socialStats.closingToday} closing today
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Content with Trading Panel */}
       <div className="container mx-auto px-4 py-8 pb-16">
