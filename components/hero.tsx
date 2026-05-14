@@ -58,6 +58,14 @@ export function Hero() {
           </Button>
         </div>
 
+        {/* Social proof */}
+        <p className="text-sm text-muted-foreground mb-6">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>4,200+ predictions made · <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">Join free →</Link></span>
+          </span>
+        </p>
+
         {/* Auth Buttons */}
         <div className="flex items-center justify-center gap-3 mb-16">
           <Button asChild variant="ghost" size="sm" className="gap-2">
