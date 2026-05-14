@@ -1,8 +1,8 @@
 # PT Strategic Roadmap
 
 > **Document:** Execution Roadmap — Strategic Expansion
-> **Phase:** v2.0
-> **Last updated:** 2026-05-13
+> **Phase:** v2.1
+> **Last updated:** 2026-05-14
 
 ---
 
@@ -67,29 +67,72 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 
 ---
 
-### Phase 4 — Real Leaderboard + AI Layer (IN PROGRESS)
-**Goal:** PT feels intelligent. Leaderboard shows real users. AI adds ambient value.
+### Phase 4 — Real Leaderboard + Social Viral UX (IN PROGRESS)
+**Goal:** PT feels intelligent, alive, and social. Real data. Frictionless betting. Viral loops.
 
-#### Real Leaderboard (DONE ✅ — commit 5591936)
+#### Phase 4a — Real Leaderboard (DONE ✅ — commit 5591936)
 - [x] `/api/leaderboard/forecasters` route reading `public_leaderboard` view
 - [x] Merge real users with demo anchors if fewer than 10 real entries
 - [x] Display names from `profiles` table (joined server-side)
 - [x] Real users highlighted with "Real" badge in UI
 - [x] Logged-in user highlighted as "YOU" via Supabase auth client-side check
 - [x] Loading skeleton (10 animated rows) during fetch
-- [x] Empty state if no data
 - [x] SWR with 60s refresh interval
-- [ ] Category accuracy breakdown per user (extend `category_predictions` JSONB)
+- [x] #1 Spotlight card with amber glow above rank list
 
-#### Real Public Profiles (DONE ✅ — commit 11c2aa7)
+#### Phase 4b — Real Public Profiles (DONE ✅ — commit 11c2aa7)
 - [x] `slugify()` utility in `lib/utils.ts` — shared URL slug generation
 - [x] `/api/profile/[username]` — public lookup: display_name slug → gamification data
 - [x] `RealPublicProfile` component — streak, accuracy, badge grid, CTA
 - [x] `/profile/[username]` — handles demo users + real Supabase users; own profile → /profile
 - [x] Leaderboard real user rows now link to `/profile/[username]`
-- [x] `supabase/migrations/002_profiles_username.sql` — optional username column + backfill
 
-#### AI Layer
+#### Phase 4c — Market Intelligence Signals (DONE ✅ — commit 54a3f56)
+- [x] `lib/market-signals.ts` — pure rule-based signal engine, $0, zero external APIs
+- [x] 9 signal types: closing-urgent, closing-today, moving-fast, tossup, consensus, closing-soon, hot, new
+- [x] Signal badges on market cards (replace static Hot/New)
+- [x] Community labels: "71% say YES", "Leaning NO · 68%", "Community split"
+- [x] Time urgency coloring (red/amber/yellow by proximity to resolution)
+- [x] Community Momentum panel in MarketDetailModal
+- [x] Signal system in LiveMarketsPreview (home page cards)
+
+#### Phase 4d — Social Live Feeling (DONE ✅ — commits 1a1fdb2, 72a6308, 06c1098)
+- [x] `ActivityTicker` — horizontally scrolling live trade feed (CSS animation, no library)
+- [x] `StreakAtRiskBanner` — orange warning when streak ≥2 and no prediction today
+- [x] `CategoryAccuracy` component — per-category accuracy bars from local Zustand predictions
+- [x] Social proof bar: total traders, hot markets count, closing today count
+- [x] Top Predictors sidebar widget (demo anchors, links to profiles)
+- [x] Heat gradient strip on hot market cards + orange border for hot markets
+- [x] Green pulse dot on active traders count
+- [x] `hotCategoryId` memo — highlights category with highest 24h volume
+
+#### Phase 4e — Viral Social Loops (DONE ✅ — commits 3fcb40b, 2068c9f)
+- [x] Share Profile button in `/profile` account card — copies URL with clipboard feedback
+- [x] Fix `ShareAchievementModal.handleCopy` — was copying `/leaderboard`, now copies profile URL
+- [x] `MilestoneCelebration` modal — pure CSS confetti (no library), fires at streak 3/7/30
+- [x] First Prediction Today streak context note in bet celebration strip
+- [x] Streak milestone detection in `confirmBet()` with 8s auto-dismiss
+- [x] Hero social proof CTA: "4,200+ predictions made · Join free →" (static, $0)
+- [x] `@{username}` display in profile account card header
+
+#### Phase 4f — Bet Flow Stability & UX Polish (DONE ✅ — commits aebb24f, 49aca71)
+**Root cause fixed:** `persistPortfolio` did 3 sequential API calls (GET+PUT+PUT), each triggering
+Supabase middleware `getUser()`. If JWT was near expiry, token refresh + `Set-Cookie` could emit
+`onAuthStateChange` on client and disrupt UI. Fixed to 2 parallel writes, no intermediate GET.
+
+- [x] `activityLog` local state — hydrated on mount, updated on bet, sent to persist
+- [x] `persistPortfolio` — now `Promise.all([walletPUT, portfolioPUT])` — 2 parallel, no GET
+- [x] `isSubmitting` state — prevents double-click, shows spinner on Place Bet button
+- [x] Custom amount input in confirmation modal (`type="number" inputMode="numeric"`)
+- [x] `lastBetAmountRef` — remembers last bet amount across bets (no re-renders)
+- [x] Remove amount chips from MarketCards — cards are now clean YES/NO only
+- [x] `handleQuickBet` no longer takes amount from card — uses last-used amount from ref
+- [x] `MarketDetailModal` — `onBet` prop wired, "Connect Wallet to Trade" → "Make Prediction"
+- [x] "Virtual funds only — no real money involved" footer in detail modal
+- [x] Confirmation modal summary: `toLocaleString()`, `Math.max(0, balance-amount)`, price=0 guard
+- [x] `type="button"` on all modal buttons (prevent accidental form submit)
+
+#### Phase 4g — AI Layer (NOT STARTED — requires ANTHROPIC_API_KEY)
 - [ ] Market summary generator (`/api/ai/market-summary`)
 - [ ] "Explain this market" button on market cards
 - [ ] Pre-prediction advisor panel (show AI context before betting)
@@ -99,14 +142,14 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 
 ---
 
-### Phase 5 — Growth & Creator (after Phase 4)
-- [ ] Trending feed on home page
-- [ ] Category leaderboards (per-category rankings)
-- [ ] Creator profile cards (shareable performance card)
+### Phase 5 — Growth & Creator (after Phase 4g)
+- [ ] Trending feed on home page (dynamic, replaces static hero)
+- [ ] Category leaderboards (per-category rankings on `/leaderboard`)
+- [ ] Creator profile cards (shareable performance card PNG)
 - [ ] Automated content engine (Claude API → Buffer)
 - [ ] Outcome-triggered share notifications
-- [ ] Streak at-risk notification
 - [ ] Product Hunt launch preparation
+- [ ] Onboarding flow (category select → first prediction guided)
 
 ---
 
@@ -124,13 +167,19 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 | Supabase gamification sync | 3 | Very High | Medium | ✅ Done |
 | Real accuracy engine | 3 | High | Medium | ✅ Done |
 | Called It system | 3 | High | Low | ✅ Done |
-| Real leaderboard API | 4 | High | Low | ✅ Done |
-| Market summary AI | 4 | High | Medium | 🔲 Not started |
-| "Explain this market" | 4 | High | Low | 🔲 Not started |
-| Pre-prediction advisor | 4 | Medium | Medium | 🔲 Not started |
+| Real leaderboard API | 4a | High | Low | ✅ Done |
+| Real public profiles | 4b | High | Medium | ✅ Done |
+| Market intelligence signals | 4c | High | Low | ✅ Done |
+| Activity ticker + live feeling | 4d | Medium | Low | ✅ Done |
+| Milestone celebration + share profile | 4e | High | Low | ✅ Done |
+| Bet flow stability + UX polish | 4f | Critical | Medium | ✅ Done |
+| Market summary AI | 4g | High | Medium | 🔲 Not started |
+| "Explain this market" | 4g | High | Low | 🔲 Not started |
+| Pre-prediction advisor | 4g | Medium | Medium | 🔲 Not started |
 | Trending home feed | 5 | Very High | High | 🔲 Not started |
+| Category leaderboards | 5 | Medium | Low | 🔲 Not started |
 | Auto content engine | 5 | Very High | High | 🔲 Not started |
-| AI copilot panel | 5 | High | High | 🔲 Not started |
+| Onboarding flow | 5 | High | Medium | 🔲 Not started |
 
 ---
 
@@ -142,6 +191,21 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 - Market creation by users
 - Complex analytics / BI dashboards
 - Native mobile app (web-first, then PWA)
+
+---
+
+## Known Friction Points (as of 2026-05-14)
+
+These are documented, non-critical, to address in future sessions:
+
+| Issue | Impact | Fix direction |
+|---|---|---|
+| Bet celebration strip not visible when scrolled down on mobile | Low | Viewport-fixed toast notification (replace strip) |
+| `MarketDetailModal` amount input doesn't show user's real balance | Low | Add balance display + cap input at balance |
+| `CategoryAccuracy` on public `/profile/[username]` shows nothing (reads local Zustand only) | Low | Serve category accuracy from `user_gamification` Supabase table |
+| Hero "4,200+ predictions made" is hardcoded | Very low | Connect to real `user_gamification` row count (optional) |
+| `supabase/migrations/002_profiles_username.sql` not yet executed | Low | Optional: execute in Supabase dashboard for indexed username lookup |
+| Activity ticker resets CSS animation every 6s when new simulated trade is added | Very low | Acceptable as-is |
 
 ---
 
@@ -159,6 +223,11 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 | 2026-05-13 | Demo anchor pattern for leaderboard | Community feel without requiring multi-user DB |
 | 2026-05-13 | Accuracy requires ≥5 resolved predictions | Prevents misleading 100% from 1 correct prediction |
 | 2026-05-13 | TikTok excluded from content pipeline | Operator decision |
+| 2026-05-14 | Market signals rule-based only, $0, no LLM | Cost constraint + instant performance |
+| 2026-05-14 | Amount chips removed from MarketCards | Cards were re-rendering all 50+ on every chip click; modal has full amount control |
+| 2026-05-14 | `persistPortfolio` — 2 parallel writes, no intermediate GET | Reduces Supabase middleware auth checks from 3 to 2, prevents JWT-refresh UI disruption |
+| 2026-05-14 | `lastBetAmountRef` (ref, not state) for bet amount memory | Persists within session, zero re-renders |
+| 2026-05-14 | "Make Prediction" replaces "Connect Wallet to Trade" | Previous copy implied crypto wallet integration that doesn't exist |
 
 ---
 
@@ -169,10 +238,17 @@ PT has evolved from a demo trading platform into a gamified social forecasting p
 - Real accuracy computed from resolved Polymarket markets
 - "Called It" badge awarded for low-probability correct predictions
 
-**Phase 4 complete when:**
-- Leaderboard shows real users (not just demo anchors)
-- Every market has an AI-generated summary
-- "Explain this market" returns useful, non-jargon text
+**Phase 4a-f complete ✅ (as of 2026-05-14):**
+- Leaderboard shows real users merged with demo anchors
+- Market cards have intelligent signals without external APIs
+- Platform feels social, live, and active
+- Bet flow is stable — no post-bet page disruptions
+- Share loops working end-to-end (profile, streak milestones, predictions)
+
+**Phase 4g complete when (next milestone):**
+- Every market has an AI-generated summary (requires `ANTHROPIC_API_KEY` in Vercel env)
+- "Explain this market" returns useful, plain-English text
+- Supabase cache prevents API cost on repeated views
 
 **Phase 5 complete when:**
 - PT is publishing 5+ pieces of content per week automatically
