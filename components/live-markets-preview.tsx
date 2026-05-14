@@ -50,6 +50,27 @@ interface MarketWithHistory extends TransformedMarket {
   priceHistory: number[];
 }
 
+function computeHomeStats(markets: TransformedMarket[]) {
+  if (markets.length === 0) return null
+  const totalTraders = markets.reduce((s, m) => s + Math.max(1, Math.floor(m.volume / 180)), 0)
+  const tally = new Map<string, number>()
+  for (const m of markets) {
+    const cat = m.category || "General"
+    tally.set(cat, (tally.get(cat) ?? 0) + m.volume24hr)
+  }
+  let hotCat = "Markets"
+  let hotVol = 0
+  for (const [cat, vol] of tally) {
+    if (vol > hotVol) { hotVol = vol; hotCat = cat }
+  }
+  const closingToday = markets.filter((m) => {
+    if (!m.endDate) return false
+    const hours = (new Date(m.endDate).getTime() - Date.now()) / 3_600_000
+    return hours > 0 && hours <= 24
+  }).length
+  return { totalTraders, hotCat, closingToday }
+}
+
 const CATEGORY_DEFS = [
   { id: "all", labelEn: "All", labelEs: "Todas", icon: Globe },
   { id: "politics", labelEn: "Politics", labelEs: "Política", icon: Vote },
@@ -269,6 +290,38 @@ export function LiveMarketsPreview() {
             </Link>
           </Button>
         </div>
+
+        {/* Live social proof strip */}
+        {!loading && (() => {
+          const stats = computeHomeStats(markets)
+          if (!stats) return null
+          return (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground mb-6">
+              <span className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                </span>
+                <span className="text-green-400 font-semibold">{stats.totalTraders.toLocaleString()}</span>
+                <span>{isEs ? "traders activos" : "traders active"}</span>
+              </span>
+              <span className="text-border hidden sm:inline">·</span>
+              <span className="shrink-0">{markets.length} {isEs ? "mercados en vivo" : "markets live"}</span>
+              <span className="text-border hidden sm:inline">·</span>
+              <span className="flex items-center gap-1 text-orange-400 font-semibold shrink-0">
+                🔥 {stats.hotCat} {isEs ? "más activo" : "hottest"}
+              </span>
+              {stats.closingToday > 0 && (
+                <>
+                  <span className="text-border hidden sm:inline">·</span>
+                  <span className="text-amber-400 shrink-0">
+                    ⏰ {stats.closingToday} {isEs ? "cierran hoy" : "closing today"}
+                  </span>
+                </>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">

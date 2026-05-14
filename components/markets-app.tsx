@@ -43,6 +43,7 @@ import type { TransformedMarket } from "@/app/api/polymarket/route";
 import { useLanguage } from "@/contexts/language-context";
 import { computeMarketSignals, type MarketSignals } from "@/lib/market-signals";
 import { ActivityTicker, type TickerTrade } from "@/components/activity-ticker";
+import { getSortedLeaderboard } from "@/lib/demo-leaderboard";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -1273,6 +1274,44 @@ export function MarketsApp() {
               )}
             </div>
           </div>
+
+          {/* Top Predictors */}
+          {(() => {
+            const top3 = getSortedLeaderboard("streak").slice(0, 3)
+            return (
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold">{language === "es" ? "Mejores Predictores" : "Top Predictors"}</p>
+                  <Link href="/leaderboard" className="text-xs text-primary hover:underline flex items-center gap-0.5">
+                    {language === "es" ? "Ver todos" : "See all"}
+                    <ChevronRight className="w-3 h-3" />
+                  </Link>
+                </div>
+                <div className="space-y-2.5">
+                  {top3.map((u, i) => {
+                    const initials = u.displayName.split(" ").map((w: string) => w[0] ?? "").join("").toUpperCase().slice(0, 2)
+                    return (
+                      <Link key={u.id} href={`/profile/${u.username}`} className="flex items-center gap-2.5 group">
+                        <span className="w-5 text-center text-[11px] text-muted-foreground font-bold shrink-0">
+                          {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                        </span>
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold truncate group-hover:text-primary transition-colors">{u.displayName}</p>
+                          <p className="text-[10px] text-muted-foreground">🔥 {u.currentStreak}d streak</p>
+                        </div>
+                        {u.accuracy !== null && (
+                          <span className="text-[11px] font-semibold text-primary shrink-0">{u.accuracy}%</span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </div>
 

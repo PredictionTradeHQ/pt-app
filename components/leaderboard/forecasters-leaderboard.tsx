@@ -210,6 +210,43 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         </span>
       </div>
 
+      {/* #1 Spotlight */}
+      {!isLoading && ranked.length > 0 && (() => {
+        const top = ranked[0]
+        const initials = top.displayName
+          .split(" ").map((w) => w[0] ?? "").join("").toUpperCase().slice(0, 2)
+        const primaryValue =
+          sort === "accuracy" && top.accuracy !== null ? `${top.accuracy}%` :
+          sort === "badges" ? `🏅 ${top.badgeCount}` :
+          sort === "activity" ? `${top.totalPredictions} pred.` :
+          `🔥 ${top.currentStreak}d`
+        return (
+          <div className="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70 mb-3">
+              🏆 {isEs ? "Mejor predictor" : "Top Predictor"}
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400 shrink-0">
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">{top.displayName}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {top.totalPredictions} {isEs ? "predicciones" : "predictions"} · {top.badgeCount} {isEs ? "insignias" : "badges"}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xl font-bold text-amber-400">{primaryValue}</p>
+                {top.accuracy !== null && sort !== "accuracy" && (
+                  <p className="text-[11px] text-muted-foreground">{top.accuracy}% {isEs ? "precisión" : "accuracy"}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Rows */}
       <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
         {isLoading ? (

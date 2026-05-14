@@ -245,6 +245,45 @@ export function MarketDetailModal({ market, open, onClose }: MarketDetailModalPr
 
           {/* Right: Trade Panel */}
           <div className="md:col-span-2 p-6 bg-muted/30">
+            {/* Community Momentum */}
+            {(() => {
+              const yesPct = Math.round(market.yesPrice * 100)
+              const label =
+                yesPct >= 87 ? `${yesPct}% say YES` :
+                yesPct >= 72 ? `Leaning YES · ${yesPct}%` :
+                yesPct >= 57 ? "Slight YES lean" :
+                yesPct >= 44 ? "Community split" :
+                yesPct >= 29 ? "Slight NO lean" :
+                yesPct >= 14 ? `Leaning NO · ${100 - yesPct}%` :
+                `${100 - yesPct}% say NO`
+              return (
+                <div className="mb-5 rounded-xl border border-border bg-background/40 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2.5">
+                    Community
+                  </p>
+                  {/* YES / NO split bar */}
+                  <div className="flex rounded-full overflow-hidden h-2 mb-2">
+                    <div className="bg-primary transition-all" style={{ width: market.yesPrice * 100 + "%" }} />
+                    <div className="bg-destructive transition-all" style={{ width: market.noPrice * 100 + "%" }} />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] mb-2.5">
+                    <span className="text-primary font-semibold">{yesPct}% YES</span>
+                    <span className="text-muted-foreground">{label}</span>
+                    <span className="text-destructive font-semibold">{100 - yesPct}% NO</span>
+                  </div>
+                  {/* Live traders */}
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                    </span>
+                    <span className="text-green-400 font-semibold">{market.traders.toLocaleString()}</span>
+                    <span className="text-muted-foreground">traders in this market</span>
+                  </div>
+                </div>
+              )
+            })()}
+
             <h3 className="font-semibold mb-4">Place Order</h3>
 
             {/* Order Type */}
