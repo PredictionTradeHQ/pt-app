@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -190,8 +190,6 @@ function MarketCard({
   onShare,
   onQuickBet,
   balance,
-  selectedAmount,
-  onAmountChange,
   realtimeYesPrice,
   realtimeNoPrice,
   realtimePriceHistory,
@@ -201,10 +199,8 @@ function MarketCard({
   market: Market;
   onClick: () => void;
   onShare?: (market: Market) => void;
-  onQuickBet?: (outcome: "YES" | "NO", amount: number) => void;
+  onQuickBet?: (outcome: "YES" | "NO") => void;
   balance?: number;
-  selectedAmount?: number;
-  onAmountChange?: (amount: number) => void;
   realtimeYesPrice?: number;
   realtimeNoPrice?: number;
   realtimePriceHistory?: number[];
@@ -220,7 +216,6 @@ function MarketCard({
     newest: string;
   };
 }) {
-  const quickBetAmount = selectedAmount || 50;
   
   // Use real-time prices if available, otherwise fallback to market data
   const yesPrice = realtimeYesPrice ?? market.yesPrice;
@@ -352,42 +347,19 @@ function MarketCard({
         </div>
       </div>
 
-      {/* Quick bet amount selector */}
-      {onQuickBet && onAmountChange && (
-        <div className="flex gap-1 mb-2" onClick={(e) => e.stopPropagation()}>
-          {[25, 50, 100].map((amt) => (
-            <button
-              key={amt}
-              type="button"
-              className={cn(
-                "flex-1 py-1 text-xs rounded transition-all",
-                quickBetAmount === amt 
-                  ? "bg-primary/20 text-primary font-semibold" 
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onAmountChange(amt);
-              }}
-            >
-              ${amt}
-            </button>
-          ))}
-        </div>
-      )}
-      
       <div className="flex gap-2 mb-4">
         <button
+          type="button"
           className={cn(
             "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
-            balance !== undefined && quickBetAmount > balance
+            balance !== undefined && balance < 1
               ? "bg-muted text-muted-foreground cursor-not-allowed"
               : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
           )}
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            if (onQuickBet && balance !== undefined && quickBetAmount <= balance) {
-              onQuickBet("YES", quickBetAmount);
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onQuickBet && (balance === undefined || balance >= 1)) {
+              onQuickBet("YES");
             } else {
               onClick();
             }
@@ -396,16 +368,17 @@ function MarketCard({
           {labels.buyYes}
         </button>
         <button
+          type="button"
           className={cn(
             "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
-            balance !== undefined && quickBetAmount > balance
+            balance !== undefined && balance < 1
               ? "bg-muted text-muted-foreground cursor-not-allowed"
               : "bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           )}
-          onClick={(e) => { 
+          onClick={(e) => {
             e.stopPropagation();
-            if (onQuickBet && balance !== undefined && quickBetAmount <= balance) {
-              onQuickBet("NO", quickBetAmount);
+            if (onQuickBet && (balance === undefined || balance >= 1)) {
+              onQuickBet("NO");
             } else {
               onClick();
             }
@@ -545,7 +518,7 @@ export function MarketsApp() {
   const [userPositions, setUserPositions] = useState<{ yes: number; no: number }>({ yes: 0, no: 0 });
   const [userBets, setUserBets] = useState<UserPosition[]>([]);
   const [totalBets, setTotalBets] = useState(0);
-  const [selectedBetAmount, setSelectedBetAmount] = useState(50);
+  const lastBetAmountRef = useRef(50);
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number; streakNote?: string } | null>(null);
@@ -788,10 +761,10 @@ export function MarketsApp() {
     return `${Math.floor(minutes / 60)}h ago`;
   };
 
-  // Show bet confirmation modal
-  const handleQuickBet = (market: Market, outcome: "YES" | "NO", amount: number) => {
-    if (amount > balance) return;
-    setBetConfirmation({ market, outcome, amount });
+  // Show bet confirmation modal — amount defaults to last used (remembered via ref)
+  const handleQuickBet = (market: Market, outcome: "YES" | "NO", amount?: number) => {
+    const betAmount = amount ?? lastBetAmountRef.current;
+    setBetConfirmation({ market, outcome, amount: Math.min(betAmount, balance) });
   };
 
   // Confirm and execute a bet
@@ -817,6 +790,9 @@ export function MarketsApp() {
     const newBets = [newPosition, ...userBets];
     const newActivityEntry = { type: "buy", market: market.title, outcome, amount, price, timestamp: Date.now() };
     const newActivity = [newActivityEntry, ...activityLog].slice(0, 100);
+
+    // Remember this amount for next bet
+    lastBetAmountRef.current = amount;
 
     // Optimistic UI updates — all synchronous
     setBalance(newBalance);
@@ -1103,10 +1079,8 @@ export function MarketsApp() {
       market={market}
       onClick={() => setSelectedMarket(market)}
       onShare={(m) => { setShareTarget({ market: m }); setShowShareModal(true); }}
-      onQuickBet={(outcome, amount) => handleQuickBet(market, outcome, amount)}
+      onQuickBet={(outcome) => handleQuickBet(market, outcome)}
       balance={balance}
-      selectedAmount={selectedBetAmount}
-      onAmountChange={setSelectedBetAmount}
       realtimeYesPrice={rtPrice?.yesPrice}
       realtimeNoPrice={rtPrice?.noPrice}
       realtimePriceHistory={rtPrice?.priceHistory}
@@ -1395,33 +1369,35 @@ export function MarketsApp() {
             </div>
 
             {/* Summary */}
-            <div className="space-y-2 mb-5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("amount")}</span>
-                <span className="font-semibold">${betConfirmation.amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("price")}</span>
-                <span className="font-semibold">
-                  {betConfirmation.outcome === "YES"
-                    ? (betConfirmation.market.yesPrice * 100).toFixed(0)
-                    : (betConfirmation.market.noPrice * 100).toFixed(0)}c
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("potentialPayout")}</span>
-                <span className="font-semibold text-primary">
-                  ${(betConfirmation.outcome === "YES"
-                    ? betConfirmation.amount / betConfirmation.market.yesPrice
-                    : betConfirmation.amount / betConfirmation.market.noPrice
-                  ).toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-border">
-                <span className="text-muted-foreground">{t("balanceAfter")}</span>
-                <span className="font-semibold">${(balance - betConfirmation.amount).toLocaleString()}</span>
-              </div>
-            </div>
+            {(() => {
+              const price = betConfirmation.outcome === "YES"
+                ? betConfirmation.market.yesPrice
+                : betConfirmation.market.noPrice;
+              const payout = price > 0 ? betConfirmation.amount / price : 0;
+              const balanceAfter = Math.max(0, balance - betConfirmation.amount);
+              return (
+                <div className="space-y-2 mb-5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t("amount")}</span>
+                    <span className="font-semibold">${betConfirmation.amount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t("price")}</span>
+                    <span className="font-semibold">{(price * 100).toFixed(0)}c</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t("potentialPayout")}</span>
+                    <span className="font-semibold text-primary">${payout.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-border">
+                    <span className="text-muted-foreground">{t("balanceAfter")}</span>
+                    <span className={cn("font-semibold", betConfirmation.amount > balance && "text-destructive")}>
+                      ${balanceAfter.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Amount selector — quick chips */}
             <div className="flex gap-2 mb-2">
@@ -1447,6 +1423,7 @@ export function MarketsApp() {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none select-none">$</span>
               <input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max={balance}
                 value={betConfirmation.amount}
@@ -1495,6 +1472,12 @@ export function MarketsApp() {
         market={selectedMarket}
         open={!!selectedMarket}
         onClose={() => setSelectedMarket(null)}
+        onBet={(outcome, amount) => {
+          if (selectedMarket) {
+            setSelectedMarket(null);
+            handleQuickBet(selectedMarket, outcome, amount);
+          }
+        }}
       />
 
       {/* Share prediction modal */}

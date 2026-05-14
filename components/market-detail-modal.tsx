@@ -22,7 +22,7 @@ import {
   Star,
   Info,
   ArrowRight,
-  Wallet,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,9 +47,10 @@ interface MarketDetailModalProps {
   market: Market | null;
   open: boolean;
   onClose: () => void;
+  onBet?: (outcome: "YES" | "NO", amount: number) => void;
 }
 
-export function MarketDetailModal({ market, open, onClose }: MarketDetailModalProps) {
+export function MarketDetailModal({ market, open, onClose, onBet }: MarketDetailModalProps) {
   const [selectedOutcome, setSelectedOutcome] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
@@ -377,13 +378,23 @@ export function MarketDetailModal({ market, open, onClose }: MarketDetailModalPr
             </div>
 
             {/* Submit Button */}
-            <Button className="w-full gap-2" size="lg">
-              <Wallet className="w-4 h-4" />
-              Connect Wallet to Trade
+            <Button
+              className="w-full gap-2"
+              size="lg"
+              disabled={!amount || parseFloat(amount) <= 0}
+              onClick={() => {
+                const parsed = parseFloat(amount);
+                if (!parsed || parsed <= 0) return;
+                onBet?.(selectedOutcome === "yes" ? "YES" : "NO", parsed);
+                onClose();
+              }}
+            >
+              <Target className="w-4 h-4" />
+              Make Prediction
             </Button>
 
             <p className="text-xs text-muted-foreground text-center mt-3">
-              By trading, you agree to our Terms of Service
+              Virtual funds only — no real money involved
             </p>
           </div>
         </div>
