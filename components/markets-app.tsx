@@ -494,7 +494,7 @@ const generateRandomTrades = (marketTitles: string[]): RecentTrade[] => {
   return trades.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 };
 
-export function MarketsApp() {
+export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
   const { t, language } = useLanguage();
   const viewerLabel = language === "es" ? "Tu" : "You";
   const [mounted, setMounted] = useState(false);
@@ -528,6 +528,7 @@ export function MarketsApp() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
   const [milestoneStreak, setMilestoneStreak] = useState<number | null>(null);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(isNewUser);
 
   // Gamification store (Zustand persist — survives refreshes)
   const { recordPrediction } = useGamification();
@@ -868,6 +869,7 @@ export function MarketsApp() {
     setBetSuccess({ outcome, amount, streakNote });
     setShareTarget({ market, prediction: outcome });
     setShowCelebration(true);
+    setShowWelcomeBanner(false); // first bet = onboarding complete
     setTimeout(() => { setBetSuccess(null); setShowCelebration(false); }, 8000);
     setActiveTab("positions");
 
@@ -1031,6 +1033,30 @@ export function MarketsApp() {
                 </span>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Welcome banner — shown once to new users after email confirmation */}
+      {showWelcomeBanner && mounted && (
+        <div className="border-b border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 animate-in fade-in slide-in-from-top-2 duration-400">
+          <div className="container mx-auto px-4 md:px-8 py-3.5 flex items-center gap-3">
+            <span className="text-2xl shrink-0">👋</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">
+                Welcome{authUser?.display_name ? `, ${authUser.display_name}` : ""}! Your $100,000 virtual balance is ready.
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Pick a market below, call YES or NO, and make your first prediction — you&apos;ll earn your first badge instantly. 🎯
+              </p>
+            </div>
+            <button
+              onClick={() => setShowWelcomeBanner(false)}
+              className="shrink-0 p-1.5 rounded-lg text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
@@ -1270,12 +1296,22 @@ export function MarketsApp() {
               {activeTab === "positions" && (
                 <div className="space-y-2 max-h-72 overflow-y-auto">
                   {userBets.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <Trophy className="w-8 h-8 text-muted-foreground/40 mb-2" />
-                      <p className="text-sm text-muted-foreground">{t("noBetsYet")}</p>
-                      <p className="text-xs text-muted-foreground/60 mt-1">
-                        {t("noBetsHelp")}
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <div className="flex gap-1.5 mb-3">
+                        <span className="text-lg">⬜</span>
+                        <span className="text-muted-foreground/20 text-lg">›</span>
+                        <span className="text-lg">🎯</span>
+                        <span className="text-muted-foreground/20 text-lg">›</span>
+                        <span className="text-lg">🔥</span>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground mb-1">Make your first prediction</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Pick any market, call YES or NO.<br />
+                        You&apos;ll earn a badge instantly and start your streak.
                       </p>
+                      <div className="mt-3 flex items-center gap-1.5 text-[10px] text-primary font-semibold">
+                        <span>↓ Pick a market below</span>
+                      </div>
                     </div>
                   ) : (
                     userBets.map((pos, i) => {

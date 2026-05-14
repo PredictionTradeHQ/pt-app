@@ -272,11 +272,22 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       </div>
 
       {!isLoading && !hasLocalActivity && (
-        <p className="text-center text-xs text-muted-foreground mt-4">
-          {isEs
-            ? "Haz tu primera predicción para aparecer en el ranking."
-            : "Make your first prediction to appear on the leaderboard."}
-        </p>
+        <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
+          <p className="text-sm font-semibold text-foreground mb-1">
+            {isEs ? "¿Listo para aparecer aquí?" : "Ready to appear here?"}
+          </p>
+          <p className="text-xs text-muted-foreground mb-3">
+            {isEs
+              ? "Tu primera predicción te coloca en el ranking automáticamente."
+              : "Your first prediction places you on this leaderboard instantly."}
+          </p>
+          <a
+            href="/markets"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors"
+          >
+            🎯 {isEs ? "Hacer mi primera predicción" : "Make my first prediction"}
+          </a>
+        </div>
       )}
     </div>
   )
@@ -465,11 +476,18 @@ function EmptyState({ isEs }: { isEs: boolean }) {
   return (
     <div className="py-12 text-center">
       <Trophy className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-      <p className="text-sm text-muted-foreground">
-        {isEs
-          ? "Aún no hay predictores. ¡Sé el primero!"
-          : "No forecasters yet. Be the first!"}
+      <p className="text-sm font-semibold text-foreground mb-1">
+        {isEs ? "¡El ranking está vacío!" : "The leaderboard is empty!"}
       </p>
+      <p className="text-xs text-muted-foreground mb-4">
+        {isEs ? "Sé el primero en aparecer aquí." : "Be the first name on this board."}
+      </p>
+      <a
+        href="/markets"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors"
+      >
+        🎯 {isEs ? "Empezar ahora" : "Start predicting"}
+      </a>
     </div>
   )
 }

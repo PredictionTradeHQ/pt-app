@@ -52,7 +52,7 @@ export function StreakWidget({ variant = "sidebar", className }: StreakWidgetPro
             >
               {currentStreak > 0
                 ? `${currentStreak}-day streak`
-                : "No active streak"}
+                : "Start your streak"}
             </p>
             {predictedToday && currentStreak > 0 && (
               <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -62,6 +62,11 @@ export function StreakWidget({ variant = "sidebar", className }: StreakWidgetPro
             {!predictedToday && currentStreak > 0 && (
               <p className="text-[10px] text-orange-500/70 mt-0.5">
                 Predict today to continue
+              </p>
+            )}
+            {currentStreak === 0 && (
+              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                Predict once a day to build it 🔥
               </p>
             )}
           </div>
@@ -161,7 +166,7 @@ export function StreakWidget({ variant = "sidebar", className }: StreakWidgetPro
         <p className="text-xs text-orange-500/80 font-medium mt-3">
           {currentStreak > 0
             ? "⚠ Make a prediction today to keep your streak!"
-            : "Make your first prediction to start a streak."}
+            : "Predict once a day to build a streak. Top forecasters have 30+ day streaks 🔥"}
         </p>
       )}
     </div>
