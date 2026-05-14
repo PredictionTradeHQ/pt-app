@@ -13,6 +13,7 @@ import { AccuracyStats } from "@/components/accuracy-stats";
 import { PredictionHistory } from "@/components/prediction-history";
 import { useGamification } from "@/stores/gamification";
 import { ShareAchievementModal } from "@/components/share-achievement-modal";
+import { CategoryAccuracy } from "@/components/category-accuracy";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 
 export function ProfileClient({
@@ -172,13 +173,27 @@ export function ProfileClient({
               {isEs ? "Precisión" : "Accuracy"}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <AccuracyStats
               totalPredictions={totalPredictions}
               resolvedCount={resolvedCount}
               correctCount={correctCount}
               calledItCount={calledItCount}
             />
+            {predictions.length > 0 && (() => {
+              const resolved = predictions.filter((p) => p.resolved)
+              if (resolved.length === 0) return null
+              return (
+                <>
+                  <div className="border-t border-border pt-5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                      {isEs ? "Precisión por categoría" : "Accuracy by category"}
+                    </p>
+                    <CategoryAccuracy predictions={predictions} isEs={isEs} />
+                  </div>
+                </>
+              )
+            })()}
           </CardContent>
         </Card>
       )}

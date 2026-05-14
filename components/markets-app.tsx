@@ -44,6 +44,7 @@ import { useLanguage } from "@/contexts/language-context";
 import { computeMarketSignals, type MarketSignals } from "@/lib/market-signals";
 import { ActivityTicker, type TickerTrade } from "@/components/activity-ticker";
 import { getSortedLeaderboard } from "@/lib/demo-leaderboard";
+import { StreakAtRiskBanner } from "@/components/streak-at-risk-banner";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -547,6 +548,7 @@ export function MarketsApp() {
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number } | null>(null);
   const [shareTarget, setShareTarget] = useState<{ market: Market; prediction?: "YES" | "NO" } | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [earnedBadgeIds, setEarnedBadgeIds] = useState<string[]>([]);
 
@@ -841,7 +843,8 @@ export function MarketsApp() {
     setBetConfirmation(null);
     setBetSuccess({ outcome, amount });
     setShareTarget({ market, prediction: outcome });
-    setTimeout(() => setBetSuccess(null), 4000);
+    setShowCelebration(true);
+    setTimeout(() => { setBetSuccess(null); setShowCelebration(false); }, 8000);
     setActiveTab("positions");
 
     void persistPortfolio({
@@ -1014,6 +1017,43 @@ export function MarketsApp() {
                 </span>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Streak at-risk banner */}
+      <StreakAtRiskBanner />
+
+      {/* Bet celebration strip */}
+      {showCelebration && betSuccess && shareTarget && (
+        <div className="border-b border-primary/20 bg-primary/8 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="container mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
+            <span className="text-xl shrink-0">🎯</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-bold text-primary">
+                {betSuccess.outcome === "YES" ? "Called YES" : "Called NO"}
+              </span>
+              <span className="text-sm text-muted-foreground ml-2">
+                ${betSuccess.amount} on{" "}
+                <span className="text-foreground font-medium">
+                  {shareTarget.market.title.slice(0, 55)}{shareTarget.market.title.length > 55 ? "…" : ""}
+                </span>
+              </span>
+            </div>
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors"
+            >
+              <Share2 className="w-3 h-3" />
+              Share your call
+            </button>
+            <button
+              onClick={() => setShowCelebration(false)}
+              className="shrink-0 p-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              <span className="sr-only">Dismiss</span>
+              ×
+            </button>
           </div>
         </div>
       )}
