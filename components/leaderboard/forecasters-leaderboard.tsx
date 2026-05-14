@@ -14,6 +14,7 @@ import {
   type LeaderboardSortKey,
 } from "@/lib/demo-leaderboard"
 import { RARITY_COLORS } from "@/lib/badges"
+import { slugify } from "@/lib/utils"
 import type { ForecasterEntry } from "@/app/api/leaderboard/forecasters/route"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -106,6 +107,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       badgeCount: u.badgeCount,
       isCurrentUser: u.userId === currentUserId,
       isDemo: false,
+      profileSlug: slugify(u.displayName),
     }))
 
     // Fill with demo anchors if fewer than MIN_ROWS real users
@@ -385,8 +387,8 @@ function LeaderboardRow({
     </div>
   )
 
-  // Demo users link to their static public profile page
-  if (entry.isDemo && entry.profileSlug) {
+  // Both demo and real users link to their public profile (not the logged-in user — they can use /profile)
+  if (!entry.isCurrentUser && entry.profileSlug) {
     return (
       <Link href={`/profile/${entry.profileSlug}`} className="block">
         {rowContent}
