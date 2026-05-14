@@ -547,7 +547,9 @@ export function MarketsApp() {
   const [totalBets, setTotalBets] = useState(0);
   const [selectedBetAmount, setSelectedBetAmount] = useState(50);
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number; streakNote?: string } | null>(null);
+  const [activityLog, setActivityLog] = useState<{ type: string; market: string; outcome: string; amount: number; price: number; timestamp: number }[]>([]);
   const [shareTarget, setShareTarget] = useState<{ market: Market; prediction?: "YES" | "NO" } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -594,6 +596,9 @@ export function MarketsApp() {
               );
               setUserPositions(tally);
             }
+            if (Array.isArray(p.data.activity)) {
+              setActivityLog(p.data.activity);
+            }
           }
         }
       } catch (e) {
@@ -607,35 +612,33 @@ export function MarketsApp() {
     };
   }, [authUser]);
 
-  // Persist updated portfolio (best-effort, only when logged in)
+  // Persist updated portfolio (best-effort, only when logged in).
+  // Uses parallel fetches to avoid sequential Supabase auth checks in middleware.
   const persistPortfolio = useCallback(
     async (next: {
       balance: number;
       positions: UserPosition[];
-      activityEntry?: { type: string; market: string; outcome: string; amount: number; price: number; timestamp: number };
+      activity: { type: string; market: string; outcome: string; amount: number; price: number; timestamp: number }[];
     }) => {
       if (!authUser) return;
       try {
-        await fetch("/api/wallet", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ balance: next.balance }),
-        });
-        const existing = await fetch("/api/demo-portfolio", { cache: "no-store" })
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null);
-        const prevActivity = Array.isArray(existing?.data?.activity) ? existing.data.activity : [];
-        const newActivity = next.activityEntry ? [next.activityEntry, ...prevActivity].slice(0, 100) : prevActivity;
-        await fetch("/api/demo-portfolio", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            balance: next.balance,
-            positions: next.positions,
-            activity: newActivity,
-            startingBalance: 100000,
+        await Promise.all([
+          fetch("/api/wallet", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ balance: next.balance }),
           }),
-        });
+          fetch("/api/demo-portfolio", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              balance: next.balance,
+              positions: next.positions,
+              activity: next.activity,
+              startingBalance: 100000,
+            }),
+          }),
+        ]);
       } catch (e) {
         console.warn("[MarketsApp] persist failed:", e);
       }
@@ -793,7 +796,9 @@ export function MarketsApp() {
 
   // Confirm and execute a bet
   const confirmBet = () => {
-    if (!betConfirmation) return;
+    if (!betConfirmation || isSubmitting) return;
+    setIsSubmitting(true);
+
     const { market, outcome, amount } = betConfirmation;
     const price = outcome === "YES" ? market.yesPrice : market.noPrice;
     const shares = price > 0 ? amount / price : 0;
@@ -810,7 +815,10 @@ export function MarketsApp() {
       currentPrice: price,
     };
     const newBets = [newPosition, ...userBets];
+    const newActivityEntry = { type: "buy", market: market.title, outcome, amount, price, timestamp: Date.now() };
+    const newActivity = [newActivityEntry, ...activityLog].slice(0, 100);
 
+    // Optimistic UI updates — all synchronous
     setBalance(newBalance);
     setUserPositions(prev => ({
       ...prev,
@@ -818,6 +826,7 @@ export function MarketsApp() {
     }));
     setTotalBets(prev => prev + 1);
     setUserBets(newBets);
+    setActivityLog(newActivity);
 
     const userTrade: RecentTrade = {
       id: Date.now(),
@@ -834,15 +843,15 @@ export function MarketsApp() {
     const gamResult = recordPrediction(ptCat.id, {
       marketId: market.id,
       marketTitle: market.title,
-      probAtTime: Math.round(market.yesPrice * 100), // always store YES probability
+      probAtTime: Math.round(market.yesPrice * 100),
       prediction: outcome,
       amount,
     });
     if (gamResult.newBadgeIds.length > 0) {
       setEarnedBadgeIds(gamResult.newBadgeIds);
-      const STREAK_MILESTONES = ["streak_3", "streak_7", "streak_30"]
-      const hasStreakMilestone = gamResult.newBadgeIds.some((id) => STREAK_MILESTONES.includes(id))
-      if (hasStreakMilestone) setMilestoneStreak(gamResult.currentStreak)
+      const STREAK_MILESTONES = ["streak_3", "streak_7", "streak_30"];
+      const hasStreakMilestone = gamResult.newBadgeIds.some((id) => STREAK_MILESTONES.includes(id));
+      if (hasStreakMilestone) setMilestoneStreak(gamResult.currentStreak);
     }
 
     const streakNote =
@@ -850,27 +859,18 @@ export function MarketsApp() {
         ? `🔥 Day ${gamResult.currentStreak} streak — keep it going!`
         : gamResult.currentStreak === 1
         ? "🎯 First prediction — streak started!"
-        : undefined
+        : undefined;
 
     setBetConfirmation(null);
+    setIsSubmitting(false);
     setBetSuccess({ outcome, amount, streakNote });
     setShareTarget({ market, prediction: outcome });
     setShowCelebration(true);
     setTimeout(() => { setBetSuccess(null); setShowCelebration(false); }, 8000);
     setActiveTab("positions");
 
-    void persistPortfolio({
-      balance: newBalance,
-      positions: newBets,
-      activityEntry: {
-        type: "buy",
-        market: market.title,
-        outcome,
-        amount,
-        price,
-        timestamp: Date.now(),
-      },
-    });
+    // Fire-and-forget persist — parallel wallet + portfolio writes, no intermediate GET
+    void persistPortfolio({ balance: newBalance, positions: newBets, activity: newActivity });
   };
 
 // Show loading state during hydration to prevent mismatch
@@ -1423,8 +1423,8 @@ export function MarketsApp() {
               </div>
             </div>
 
-            {/* Amount selector */}
-            <div className="flex gap-2 mb-4">
+            {/* Amount selector — quick chips */}
+            <div className="flex gap-2 mb-2">
               {[25, 50, 100, 250].map((amt) => (
                 <button
                   key={amt}
@@ -1442,27 +1442,49 @@ export function MarketsApp() {
               ))}
             </div>
 
+            {/* Custom amount input */}
+            <div className="relative mb-4">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none select-none">$</span>
+              <input
+                type="number"
+                min="1"
+                max={balance}
+                value={betConfirmation.amount}
+                onChange={(e) => {
+                  const val = Math.floor(Number(e.target.value) || 0);
+                  if (val > 0) setBetConfirmation(prev => prev ? { ...prev, amount: Math.min(val, balance) } : null);
+                }}
+                className="w-full pl-7 pr-3 py-2 rounded-lg border border-border bg-background text-sm font-medium focus:outline-none focus:ring-1 focus:ring-ring tabular-nums"
+              />
+            </div>
+
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setBetConfirmation(null)}
                 className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted/50 transition-all"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={confirmBet}
-                disabled={betConfirmation.amount > balance}
+                disabled={betConfirmation.amount > balance || betConfirmation.amount < 1 || isSubmitting}
                 className={cn(
                   "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
-                  betConfirmation.amount > balance
+                  betConfirmation.amount > balance || betConfirmation.amount < 1 || isSubmitting
                     ? "bg-muted text-muted-foreground cursor-not-allowed"
                     : betConfirmation.outcome === "YES"
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 )}
               >
-                <ChevronRight className="w-4 h-4" />
-                Place Bet
+                {isSubmitting ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+                {isSubmitting ? "Placing…" : "Place Bet"}
               </button>
             </div>
           </div>
