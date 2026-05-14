@@ -6,7 +6,7 @@ import { RealPublicProfile } from "@/components/profile/real-public-profile"
 import { getDemoUser } from "@/lib/demo-leaderboard"
 import { createClient } from "@/lib/supabase/server"
 import { slugify } from "@/lib/utils"
-import type { RealProfileData } from "@/app/api/profile/[username]/route"
+import type { RealProfileData, PublicPredictionRecord } from "@/app/api/profile/[username]/route"
 
 interface Props {
   params: Promise<{ username: string }>
@@ -54,6 +54,37 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
       .eq("user_id", match.id)
       .maybeSingle()
 
+    // Fetch recent predictions from user_gamification (server-side)
+    type RawPred = {
+      marketTitle?: string
+      prediction?: string
+      outcome?: string
+      resolved?: boolean
+      correct?: boolean
+      createdAt?: string
+      probAtTime?: number
+    }
+    const { data: gamRow } = await supabase
+      .from("user_gamification")
+      .select("predictions")
+      .eq("user_id", match.id)
+      .maybeSingle()
+
+    const rawPreds: RawPred[] = Array.isArray(gamRow?.predictions) ? gamRow.predictions : []
+    const recentPredictions: PublicPredictionRecord[] = rawPreds
+      .filter((p) => p.marketTitle && p.prediction && p.createdAt)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+      .slice(0, 10)
+      .map((p) => ({
+        marketTitle: p.marketTitle!,
+        prediction: p.prediction === "YES" ? "YES" : "NO",
+        outcome: p.outcome === "YES" ? "YES" : p.outcome === "NO" ? "NO" : undefined,
+        resolved: p.resolved ?? false,
+        correct: p.correct,
+        createdAt: p.createdAt!,
+        probAtTime: p.probAtTime ?? 50,
+      }))
+
     return {
       displayName: match.display_name,
       username,
@@ -70,6 +101,7 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
             badges: Array.isArray(gam.badges) ? gam.badges : [],
           }
         : null,
+      recentPredictions,
     }
   } catch {
     return null

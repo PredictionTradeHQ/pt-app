@@ -723,19 +723,45 @@ export function MarketsApp() {
     }
   }, [markets, registerMarkets]);
 
-  // Generate initial trades when markets load
-  useEffect(() => {
-    if (markets.length > 0) {
-      const titles = markets.map(m => m.title.slice(0, 40) + (m.title.length > 40 ? "..." : ""));
-      setRecentTrades(generateRandomTrades(titles));
-    }
-  }, [markets]);
+  // Tracks whether we've successfully loaded real activity from Supabase
+  const hasRealTickerRef = useRef(false)
 
-  // Simulate new trades periodically
+  // Fetch real activity from Supabase after markets load; fall back to simulated data
   useEffect(() => {
     if (markets.length === 0) return;
-    
+
+    const titles = markets.map(m => m.title.slice(0, 40) + (m.title.length > 40 ? "..." : ""));
+
+    fetch("/api/activity/recent", { cache: "no-store" })
+      .then(r => r.ok ? r.json() : [])
+      .then((entries: Array<{ user: string; market: string; outcome: "YES" | "NO"; amount: number; ts: number }>) => {
+        if (entries.length >= 3) {
+          hasRealTickerRef.current = true;
+          const realTrades: RecentTrade[] = entries.map((e, i) => ({
+            id: e.ts + i,
+            user: e.user,
+            market: e.market,
+            outcome: e.outcome,
+            amount: e.amount,
+            timestamp: new Date(e.ts),
+          }));
+          setRecentTrades(realTrades);
+        } else {
+          // Not enough real data — use simulated fallback
+          setRecentTrades(generateRandomTrades(titles));
+        }
+      })
+      .catch(() => {
+        setRecentTrades(generateRandomTrades(titles));
+      });
+  }, [markets.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Inject a simulated trade periodically — only when no real data is available
+  useEffect(() => {
+    if (markets.length === 0) return;
+
     const interval = setInterval(() => {
+      if (hasRealTickerRef.current) return; // skip when real data is loaded
       const users = ["Alex M.", "Sarah K.", "John D.", "Emily R.", "Mike P.", "Lisa T.", "David W.", "Anna S."];
       const titles = markets.map(m => m.title.slice(0, 40) + (m.title.length > 40 ? "..." : ""));
       const newTrade: RecentTrade = {
@@ -748,7 +774,7 @@ export function MarketsApp() {
       };
       setRecentTrades(prev => [newTrade, ...prev.slice(0, 5)]);
     }, 6000);
-    
+
     return () => clearInterval(interval);
   }, [markets]);
 
@@ -1472,6 +1498,7 @@ export function MarketsApp() {
         market={selectedMarket}
         open={!!selectedMarket}
         onClose={() => setSelectedMarket(null)}
+        balance={balance}
         onBet={(outcome, amount) => {
           if (selectedMarket) {
             setSelectedMarket(null);
@@ -1509,6 +1536,59 @@ export function MarketsApp() {
           onClose={() => setMilestoneStreak(null)}
           username={authUser?.display_name ?? authUser?.email?.split("@")[0] ?? "forecaster"}
         />
+      )}
+
+      {/* Viewport-fixed bet success toast — visible regardless of scroll position (mobile-first) */}
+      {betSuccess && shareTarget && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <div className={cn(
+            "flex items-start gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-sm",
+            betSuccess.outcome === "YES"
+              ? "bg-primary/95 border-primary text-primary-foreground"
+              : "bg-card/95 border-destructive/40 text-foreground"
+          )}>
+            <span className="text-2xl shrink-0 mt-0.5">🎯</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm leading-tight">
+                {betSuccess.outcome === "YES" ? "Called YES" : "Called NO"} · ${betSuccess.amount}
+              </p>
+              <p className={cn(
+                "text-xs mt-0.5 truncate",
+                betSuccess.outcome === "YES" ? "text-primary-foreground/70" : "text-muted-foreground"
+              )}>
+                {shareTarget.market.title.slice(0, 55)}{shareTarget.market.title.length > 55 ? "…" : ""}
+              </p>
+              {betSuccess.streakNote && (
+                <p className="text-xs font-semibold mt-1 text-orange-300">{betSuccess.streakNote}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setShowShareModal(true)}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  betSuccess.outcome === "YES"
+                    ? "bg-white/20 hover:bg-white/30 text-primary-foreground"
+                    : "bg-primary/10 hover:bg-primary/20 text-primary"
+                )}
+              >
+                <Share2 className="w-3 h-3" />
+                Share
+              </button>
+              <button
+                onClick={() => setBetSuccess(null)}
+                className={cn(
+                  "p-1 rounded-lg transition-colors text-xs font-bold leading-none",
+                  betSuccess.outcome === "YES"
+                    ? "text-primary-foreground/50 hover:text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

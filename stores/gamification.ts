@@ -58,7 +58,7 @@ interface GamificationState {
     newBadgeIds: string[]
     currentStreak: number
   }
-  checkResolutions: () => Promise<string[]>  // returns newly earned badge ids
+  checkResolutions: () => Promise<{ newBadgeIds: string[]; newlyCorrect: PredictionRecord[] }>
   reset: () => void
 }
 
@@ -236,7 +236,7 @@ export const useGamification = create<GamificationState>()(
       async checkResolutions() {
         const state = get()
         const unresolved = state.predictions.filter((p) => !p.resolved)
-        if (unresolved.length === 0) return []
+        if (unresolved.length === 0) return { newBadgeIds: [], newlyCorrect: [] }
 
         // Check up to 5 at a time to avoid hammering the API
         const toCheck = unresolved.slice(0, 5)
@@ -268,7 +268,7 @@ export const useGamification = create<GamificationState>()(
           })
         )
 
-        if (resolutions.length === 0) return []
+        if (resolutions.length === 0) return { newBadgeIds: [], newlyCorrect: [] }
 
         // Apply resolutions to prediction records
         const updatedPredictions = state.predictions.map((p) => {
@@ -277,6 +277,12 @@ export const useGamification = create<GamificationState>()(
           const correct = p.prediction === resolution.outcome
           return { ...p, resolved: true, outcome: resolution.outcome, correct }
         })
+
+        // Identify predictions that are newly correct (just resolved correctly this check)
+        const previouslyUnresolvedIds = new Set(unresolved.map((p) => p.id))
+        const newlyCorrect = updatedPredictions.filter(
+          (p) => p.resolved && p.correct && previouslyUnresolvedIds.has(p.id)
+        )
 
         // Recompute aggregate accuracy stats
         const resolvedPreds = updatedPredictions.filter((p) => p.resolved)
@@ -318,7 +324,7 @@ export const useGamification = create<GamificationState>()(
           badges: [...state.badges, ...newBadges],
         })
 
-        return newBadgeIds
+        return { newBadgeIds, newlyCorrect }
       },
 
       reset() {

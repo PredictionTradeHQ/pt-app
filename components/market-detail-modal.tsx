@@ -48,9 +48,10 @@ interface MarketDetailModalProps {
   open: boolean;
   onClose: () => void;
   onBet?: (outcome: "YES" | "NO", amount: number) => void;
+  balance?: number;
 }
 
-export function MarketDetailModal({ market, open, onClose, onBet }: MarketDetailModalProps) {
+export function MarketDetailModal({ market, open, onClose, onBet, balance }: MarketDetailModalProps) {
   const [selectedOutcome, setSelectedOutcome] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
@@ -285,7 +286,14 @@ export function MarketDetailModal({ market, open, onClose, onBet }: MarketDetail
               )
             })()}
 
-            <h3 className="font-semibold mb-4">Place Order</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Make Prediction</h3>
+              {balance !== undefined && (
+                <span className="text-xs text-muted-foreground">
+                  Available: <span className="font-semibold text-foreground">${balance.toLocaleString()}</span>
+                </span>
+              )}
+            </div>
 
             {/* Order Type */}
             <div className="flex gap-2 mb-4">
@@ -342,22 +350,40 @@ export function MarketDetailModal({ market, open, onClose, onBet }: MarketDetail
                   type="number"
                   placeholder="0.00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="pl-9"
+                  max={balance}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (balance !== undefined && parseFloat(val) > balance) {
+                      setAmount(String(balance));
+                    } else {
+                      setAmount(val);
+                    }
+                  }}
+                  className={cn(
+                    "pl-9",
+                    balance !== undefined && parseFloat(amount) > balance && "border-destructive"
+                  )}
                 />
               </div>
+              {balance !== undefined && parseFloat(amount) > balance && (
+                <p className="text-xs text-destructive mt-1">Exceeds available balance</p>
+              )}
               <div className="flex gap-2 mt-2">
-                {["10", "25", "50", "100"].map((val) => (
-                  <Button
-                    key={val}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => setAmount(val)}
-                  >
-                    ${val}
-                  </Button>
-                ))}
+                {["10", "25", "50", "100"].map((val) => {
+                  const disabled = balance !== undefined && parseInt(val) > balance;
+                  return (
+                    <Button
+                      key={val}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs"
+                      disabled={disabled}
+                      onClick={() => setAmount(val)}
+                    >
+                      ${val}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
@@ -381,10 +407,15 @@ export function MarketDetailModal({ market, open, onClose, onBet }: MarketDetail
             <Button
               className="w-full gap-2"
               size="lg"
-              disabled={!amount || parseFloat(amount) <= 0}
+              disabled={
+                !amount ||
+                parseFloat(amount) <= 0 ||
+                (balance !== undefined && parseFloat(amount) > balance)
+              }
               onClick={() => {
                 const parsed = parseFloat(amount);
                 if (!parsed || parsed <= 0) return;
+                if (balance !== undefined && parsed > balance) return;
                 onBet?.(selectedOutcome === "yes" ? "YES" : "NO", parsed);
                 onClose();
               }}

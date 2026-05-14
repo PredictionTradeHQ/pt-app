@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { slugify } from "@/lib/utils"
 
+export type PublicPredictionRecord = {
+  marketTitle: string
+  prediction: "YES" | "NO"
+  outcome?: "YES" | "NO"
+  resolved: boolean
+  correct?: boolean
+  createdAt: string
+  probAtTime: number
+}
+
 export type RealProfileData = {
   displayName: string
   username: string
@@ -16,6 +26,7 @@ export type RealProfileData = {
     calledItCount: number
     badges: Array<{ id: string; earnedAt: string }>
   } | null
+  recentPredictions: PublicPredictionRecord[]
 }
 
 export async function GET(
@@ -58,6 +69,37 @@ export async function GET(
       .eq("user_id", match.id)
       .maybeSingle()
 
+    // 4. Fetch recent predictions from user_gamification (server-side, last 10)
+    type RawPred = {
+      marketTitle?: string
+      prediction?: string
+      outcome?: string
+      resolved?: boolean
+      correct?: boolean
+      createdAt?: string
+      probAtTime?: number
+    }
+    const { data: gamRow } = await supabase
+      .from("user_gamification")
+      .select("predictions")
+      .eq("user_id", match.id)
+      .maybeSingle()
+
+    const rawPreds: RawPred[] = Array.isArray(gamRow?.predictions) ? gamRow.predictions : []
+    const recentPredictions: PublicPredictionRecord[] = rawPreds
+      .filter((p) => p.marketTitle && p.prediction && p.createdAt)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+      .slice(0, 10)
+      .map((p) => ({
+        marketTitle: p.marketTitle!,
+        prediction: p.prediction === "YES" ? "YES" : "NO",
+        outcome: p.outcome === "YES" ? "YES" : p.outcome === "NO" ? "NO" : undefined,
+        resolved: p.resolved ?? false,
+        correct: p.correct,
+        createdAt: p.createdAt!,
+        probAtTime: p.probAtTime ?? 50,
+      }))
+
     const result: RealProfileData = {
       displayName: match.display_name,
       username,
@@ -74,6 +116,7 @@ export async function GET(
             badges: Array.isArray(gam.badges) ? gam.badges : [],
           }
         : null,
+      recentPredictions,
     }
 
     return NextResponse.json(result)

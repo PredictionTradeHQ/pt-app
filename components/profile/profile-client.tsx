@@ -14,7 +14,9 @@ import { PredictionHistory } from "@/components/prediction-history";
 import { useGamification } from "@/stores/gamification";
 import { ShareAchievementModal } from "@/components/share-achievement-modal";
 import { CategoryAccuracy } from "@/components/category-accuracy";
+import { CalledItModal } from "@/components/called-it-modal";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
+import type { PredictionRecord } from "@/stores/gamification";
 
 export function ProfileClient({
   userId,
@@ -38,6 +40,7 @@ export function ProfileClient({
 
   const [shareOpen, setShareOpen] = useState(false);
   const [newBadgesFromResolution, setNewBadgesFromResolution] = useState<string[]>([]);
+  const [calledItPrediction, setCalledItPrediction] = useState<PredictionRecord | null>(null);
   const [copiedProfile, setCopiedProfile] = useState(false);
 
   const username = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -100,8 +103,17 @@ export function ProfileClient({
   // Check for resolved markets on profile visit
   useEffect(() => {
     if (predictions.length === 0) return;
-    checkResolutions().then((newIds) => {
-      if (newIds.length > 0) setNewBadgesFromResolution(newIds);
+    checkResolutions().then(({ newBadgeIds, newlyCorrect }) => {
+      if (newBadgeIds.length > 0) setNewBadgesFromResolution(newBadgeIds);
+      // Show "Called It" modal for the most impressive correct call (contrarian first, then any)
+      if (newlyCorrect.length > 0) {
+        const contrarian = newlyCorrect.find(
+          (p) =>
+            (p.prediction === "YES" && p.probAtTime < 20) ||
+            (p.prediction === "NO" && 100 - p.probAtTime < 20)
+        );
+        setCalledItPrediction(contrarian ?? newlyCorrect[0]);
+      }
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -320,6 +332,19 @@ export function ProfileClient({
           username,
         }}
       />
+
+      {calledItPrediction && (
+        <CalledItModal
+          prediction={calledItPrediction}
+          username={username}
+          accuracyPct={
+            resolvedCount >= 5
+              ? Math.round((correctCount / resolvedCount) * 100)
+              : null
+          }
+          onClose={() => setCalledItPrediction(null)}
+        />
+      )}
     </main>
   );
 }
