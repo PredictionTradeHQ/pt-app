@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, TrendingUp, Shield, Globe, Zap, UserPlus, LogIn } from "lucide-react";
+import { ArrowRight, Flame, Shield, Globe, Zap, UserPlus, LogIn } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 
 // Paper Trading for Polymarket - Simulator Component
@@ -99,7 +99,7 @@ export function Hero() {
             <span>{t("realPrices")}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <TrendingUp className="w-5 h-5 text-primary" />
+            <Flame className="w-5 h-5 text-primary" />
             <span>{t("paperMode")}</span>
           </div>
         </div>

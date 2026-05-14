@@ -521,7 +521,7 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
   const lastBetAmountRef = useRef(50);
   const [betConfirmation, setBetConfirmation] = useState<BetConfirmation | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number; streakNote?: string } | null>(null);
+  const [betSuccess, setBetSuccess] = useState<{ outcome: string; amount: number; streakNote?: string; totalCount: number } | null>(null);
   const [activityLog, setActivityLog] = useState<{ type: string; market: string; outcome: string; amount: number; price: number; timestamp: number }[]>([]);
   const [shareTarget, setShareTarget] = useState<{ market: Market; prediction?: "YES" | "NO" } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -866,7 +866,7 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
 
     setBetConfirmation(null);
     setIsSubmitting(false);
-    setBetSuccess({ outcome, amount, streakNote });
+    setBetSuccess({ outcome, amount, streakNote, totalCount: newBets.length });
     setShareTarget({ market, prediction: outcome });
     setShowCelebration(true);
     setShowWelcomeBanner(false); // first bet = onboarding complete
@@ -1596,6 +1596,16 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
               </p>
               {betSuccess.streakNote && (
                 <p className="text-xs font-semibold mt-1 text-orange-300">{betSuccess.streakNote}</p>
+              )}
+              {betSuccess.totalCount === 1 && !betSuccess.streakNote && (
+                <Link href="/leaderboard" className={`text-[10px] font-semibold mt-1 block underline-offset-2 hover:underline ${betSuccess.outcome === "YES" ? "text-primary-foreground/70" : "text-primary"}`}>
+                  → See where you rank on the leaderboard
+                </Link>
+              )}
+              {betSuccess.totalCount === 5 && (
+                <Link href="/profile" className={`text-[10px] font-semibold mt-1 block underline-offset-2 hover:underline ${betSuccess.outcome === "YES" ? "text-primary-foreground/70" : "text-primary"}`}>
+                  → 5 predictions done — check your accuracy on your profile
+                </Link>
               )}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">

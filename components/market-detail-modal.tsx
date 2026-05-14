@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp,
   TrendingDown,
@@ -21,7 +20,6 @@ import {
   Share2,
   Star,
   Info,
-  ArrowRight,
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -175,74 +173,23 @@ export function MarketDetailModal({ market, open, onClose, onBet, balance }: Mar
               </div>
             </div>
 
-            {/* Tabs */}
-            <Tabs defaultValue="about" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="about" className="flex-1">
-                  About
-                </TabsTrigger>
-                <TabsTrigger value="activity" className="flex-1">
-                  Activity
-                </TabsTrigger>
-                <TabsTrigger value="comments" className="flex-1">
-                  Comments
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="about" className="mt-4">
-                <div className="prose prose-sm prose-invert max-w-none">
-                  <p className="text-muted-foreground leading-relaxed">
-                    {market.description}
-                  </p>
-                  <div className="mt-4 p-4 rounded-lg bg-muted/50">
-                    <div className="flex items-start gap-2">
-                      <Info className="w-4 h-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium mb-1">Resolution Criteria</p>
-                        <p className="text-xs text-muted-foreground">
-                          This market will be resolved based on official announcements and verified news sources. Resolution will occur within 24 hours of the outcome being determined.
-                        </p>
-                      </div>
-                    </div>
+            {/* About */}
+            <div className="prose prose-sm prose-invert max-w-none">
+              <p className="text-muted-foreground leading-relaxed">
+                {market.description}
+              </p>
+              <div className="mt-4 p-4 rounded-lg bg-muted/50">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium mb-1">Resolution Criteria</p>
+                    <p className="text-xs text-muted-foreground">
+                      This market will be resolved based on official announcements and verified news sources. Resolution will occur within 24 hours of the outcome being determined.
+                    </p>
                   </div>
                 </div>
-              </TabsContent>
-              <TabsContent value="activity" className="mt-4">
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-medium">
-                            {["JD", "AK", "MR", "LS", "BT"][i]}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">
-                            Bought {["Yes", "No", "Yes", "Yes", "No"][i]}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {["2 min", "5 min", "12 min", "1 hour", "3 hours"][i]} ago
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-sm font-medium">
-                        ${["150", "500", "75", "1,200", "300"][i]}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-              <TabsContent value="comments" className="mt-4">
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground text-sm">
-                    No comments yet. Be the first to share your thoughts!
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
 
           {/* Right: Trade Panel */}

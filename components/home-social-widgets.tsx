@@ -22,11 +22,6 @@ export function HomeSocialWidgets() {
   // Hot categories — take first 5 PT categories (all are "hot" for demo)
   const hotCategories = PT_CATEGORIES.slice(0, 5)
 
-  const communityStats = {
-    predictions: "47,293",
-    forecasters: "8,140",
-    markets: "1,200+",
-  }
 
   return (
     <section className="py-16 border-t border-border/50">
@@ -110,16 +105,25 @@ export function HomeSocialWidgets() {
               </div>
             </div>
 
-            {/* Community counter */}
-            <div className="rounded-xl border border-border bg-card/50 p-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                {isEs ? "Estadísticas" : "Community Stats"}
+            {/* Join CTA */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                {isEs ? "Únete gratis" : "Join free"}
               </p>
-              <div className="space-y-3">
-                <StatRow label={isEs ? "Predicciones hechas" : "Predictions made"} value={communityStats.predictions} />
-                <StatRow label={isEs ? "Predictores activos" : "Active forecasters"} value={communityStats.forecasters} />
-                <StatRow label={isEs ? "Mercados abiertos" : "Open markets"} value={communityStats.markets} />
-              </div>
+              <p className="text-sm font-bold text-foreground mb-1">
+                {isEs ? "¿Listo para predecir?" : "Ready to make your call?"}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                {isEs
+                  ? "Tu primera predicción te coloca en el ranking automáticamente."
+                  : "Your first prediction puts you on the leaderboard instantly."}
+              </p>
+              <a
+                href="/markets"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors w-full justify-center"
+              >
+                🎯 {isEs ? "Empezar a predecir" : "Start predicting"}
+              </a>
             </div>
           </div>
         </div>
@@ -193,11 +197,3 @@ function StreakCard({
   )
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-bold text-foreground">{value}</span>
-    </div>
-  )
-}

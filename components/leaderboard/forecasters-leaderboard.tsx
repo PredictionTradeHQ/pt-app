@@ -42,12 +42,14 @@ const SORT_TABS: {
   key: LeaderboardSortKey
   label: string
   labelEs: string
+  description: string
+  descriptionEs: string
   icon: React.ElementType
 }[] = [
-  { key: "streak",   label: "Streaks",  labelEs: "Rachas",    icon: Flame },
-  { key: "accuracy", label: "Accuracy", labelEs: "Precisión", icon: Trophy },
-  { key: "badges",   label: "Badges",   labelEs: "Insignias", icon: Medal },
-  { key: "activity", label: "Activity", labelEs: "Actividad", icon: Activity },
+  { key: "streak",   label: "Streaks",  labelEs: "Rachas",    icon: Flame,     description: "Days in a row with a prediction",           descriptionEs: "Días consecutivos prediciendo" },
+  { key: "accuracy", label: "Accuracy", labelEs: "Precisión", icon: Trophy,    description: "Win rate across 5+ resolved predictions",   descriptionEs: "Tasa de acierto en 5+ predicciones resueltas" },
+  { key: "badges",   label: "Badges",   labelEs: "Insignias", icon: Medal,     description: "Total badges earned across all activity",   descriptionEs: "Total de insignias ganadas" },
+  { key: "activity", label: "Activity", labelEs: "Actividad", icon: Activity,  description: "Total predictions made all time",           descriptionEs: "Total de predicciones hechas" },
 ]
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -181,7 +183,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
   return (
     <div>
       {/* Sort tabs */}
-      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl mb-6 overflow-x-auto">
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl overflow-x-auto mb-2">
         {SORT_TABS.map((tab) => (
           <button
             key={tab.key}
@@ -198,6 +200,15 @@ export function ForecastersLeaderboard({ isEs }: Props) {
           </button>
         ))}
       </div>
+      {/* Active tab description */}
+      {(() => {
+        const active = SORT_TABS.find((t) => t.key === sort)
+        return active ? (
+          <p className="text-[11px] text-muted-foreground text-center mb-5">
+            {isEs ? active.descriptionEs : active.description}
+          </p>
+        ) : null
+      })()}
 
       {/* Column headers */}
       <div className="flex items-center gap-3 px-4 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
