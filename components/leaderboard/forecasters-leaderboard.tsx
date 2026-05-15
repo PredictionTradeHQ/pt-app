@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import useSWR from "swr"
 import { Flame, Trophy, Activity, Medal } from "lucide-react"
@@ -9,13 +9,13 @@ import { useGamification } from "@/stores/gamification"
 import { createClient } from "@/lib/supabase/client"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import {
-  DEMO_USERS,
   getSortedLeaderboard,
   type LeaderboardSortKey,
 } from "@/lib/demo-leaderboard"
 import { RARITY_COLORS } from "@/lib/badges"
 import { slugify } from "@/lib/utils"
 import type { ForecasterEntry } from "@/app/api/leaderboard/forecasters/route"
+import { LeaderboardClimbToast, type ClimbInfo } from "@/components/leaderboard-climb-toast"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -63,6 +63,8 @@ interface Props {
 export function ForecastersLeaderboard({ isEs }: Props) {
   const [sort, setSort] = useState<LeaderboardSortKey>("streak")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [climbInfo, setClimbInfo] = useState<ClimbInfo | null>(null)
+  const hasCheckedClimb = useRef(false)
 
   const {
     currentStreak,
@@ -71,6 +73,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
     badges,
     resolvedCount,
     correctCount,
+    setLeaderboardRank,
   } = useGamification()
 
   // Get current user's Supabase ID for "YOU" highlighting
@@ -180,7 +183,30 @@ export function ForecastersLeaderboard({ isEs }: Props) {
     isEs,
   ])
 
+  // Detect leaderboard rank improvement on initial data load (once per session)
+  useEffect(() => {
+    if (isLoading || !ranked.length || hasCheckedClimb.current) return
+    hasCheckedClimb.current = true
+
+    const myIndex = ranked.findIndex((e) => e.isCurrentUser)
+    if (myIndex === -1) return
+
+    const currentRank = myIndex + 1
+    const result = setLeaderboardRank(currentRank)
+    if (result.climbed && result.previousRank !== null) {
+      setClimbInfo({
+        previousRank: result.previousRank,
+        currentRank,
+        accuracyPct: localAccuracyPct,
+      })
+    }
+  }, [isLoading, ranked, setLeaderboardRank, localAccuracyPct])
+
+  const dismissClimb = useCallback(() => setClimbInfo(null), [])
+
   return (
+    <>
+      <LeaderboardClimbToast climb={climbInfo} onDismiss={dismissClimb} />
     <div>
       {/* Sort tabs */}
       <div className="flex gap-1 p-1 bg-muted/50 rounded-xl overflow-x-auto mb-2">
@@ -301,6 +327,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         </div>
       )}
     </div>
+    </>
   )
 }
 

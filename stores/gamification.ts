@@ -48,6 +48,9 @@ interface GamificationState {
   // Badges
   badges: EarnedBadge[]
 
+  // Leaderboard rank tracking (for climb moments)
+  lastLeaderboardRank: number | null
+
   // Actions
   recordPrediction: (
     categoryId: string,
@@ -59,6 +62,11 @@ interface GamificationState {
     currentStreak: number
   }
   checkResolutions: () => Promise<{ newBadgeIds: string[]; newlyCorrect: PredictionRecord[] }>
+  setLeaderboardRank: (rank: number) => {
+    climbed: boolean
+    previousRank: number | null
+    currentRank: number
+  }
   reset: () => void
 }
 
@@ -145,7 +153,7 @@ function resolveNewBadges(
 
 // ─── Initial state ─────────────────────────────────────────────────────────────
 
-const INITIAL: Omit<GamificationState, "recordPrediction" | "checkResolutions" | "reset"> = {
+const INITIAL: Omit<GamificationState, "recordPrediction" | "checkResolutions" | "setLeaderboardRank" | "reset"> = {
   currentStreak: 0,
   bestStreak: 0,
   lastPredictionDate: null,
@@ -156,6 +164,7 @@ const INITIAL: Omit<GamificationState, "recordPrediction" | "checkResolutions" |
   correctCount: 0,
   calledItCount: 0,
   badges: [],
+  lastLeaderboardRank: null,
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -327,24 +336,36 @@ export const useGamification = create<GamificationState>()(
         return { newBadgeIds, newlyCorrect }
       },
 
+      setLeaderboardRank(rank: number) {
+        const prev = get().lastLeaderboardRank
+        set({ lastLeaderboardRank: rank })
+        const climbed = prev !== null && rank < prev
+        return { climbed, previousRank: prev, currentRank: rank }
+      },
+
       reset() {
         set(INITIAL)
       },
     }),
     {
       name: "pt-gamification",
-      version: 2,
+      version: 3,
       migrate(persistedState: unknown, version: number) {
+        const s = persistedState as Record<string, unknown>
         // v1 → v2: add prediction records and accuracy fields
         if (version === 1) {
-          const s = persistedState as Record<string, unknown>
           return {
             ...s,
             predictions: [],
             resolvedCount: 0,
             correctCount: 0,
             calledItCount: 0,
+            lastLeaderboardRank: null,
           }
+        }
+        // v2 → v3: add leaderboard rank tracking
+        if (version === 2) {
+          return { ...s, lastLeaderboardRank: null }
         }
         return persistedState
       },

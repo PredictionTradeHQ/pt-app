@@ -46,6 +46,7 @@ import { ActivityTicker, type TickerTrade } from "@/components/activity-ticker";
 import { getSortedLeaderboard } from "@/lib/demo-leaderboard";
 import { StreakAtRiskBanner } from "@/components/streak-at-risk-banner";
 import { MilestoneCelebration } from "@/components/milestone-celebration";
+import { FirstPredictionGuide } from "@/components/onboarding/first-prediction-guide";
 
 // Shape that MarketDetailModal expects
 interface Market {
@@ -1060,6 +1061,11 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
           </div>
         </div>
       )}
+
+      {/* First-prediction onboarding — self-dismisses on first prediction */}
+      <div className="container mx-auto px-4 md:px-8 pt-4">
+        <FirstPredictionGuide />
+      </div>
 
       {/* Streak at-risk banner */}
       <StreakAtRiskBanner />
