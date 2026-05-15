@@ -210,15 +210,16 @@ be4158c  feat(profiles): server-side category accuracy + top calls on public pro
 
 ## PRIORITIES — next sessions
 
-### Priority 1 — Phase 4g: AI Layer (high impact, moderate complexity)
+### Priority 1 — Execute SQL migration 003 (5 min, unlocks live feature)
+- Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase dashboard
+- This activates CategoryAccuracy + TopCalls on all public profiles immediately
+- Code is already deployed (commit `be4158c`) — only the DB view update is missing
+
+### Priority 2 — Phase 4g: AI Layer (high impact, moderate complexity)
 1. Add `ANTHROPIC_API_KEY` to `.env.local` AND Vercel env vars
 2. Uncomment 10 lines in `app/api/ai/share-copy/route.ts` → Claude API live
 3. Add `/api/ai/market-summary` with Supabase cache table (30 min TTL)
 4. "Explain this market" button on market cards
-
-### Priority 2 — CategoryAccuracy on public profiles
-- Read `user_gamification` from Supabase (not local Zustand) for `/profile/[username]`
-- Requires: join `profiles` + `user_gamification` by user_id
 
 ### Priority 3 — Phase 5 Growth (longer term)
 - Trending feed dynamic in home
