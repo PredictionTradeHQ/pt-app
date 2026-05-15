@@ -1,26 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { TrendingUp, Zap, GraduationCap, LayoutDashboard, ArrowRight } from "lucide-react";
+import { TrendingUp, Zap, GraduationCap, Trophy, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 
 const FEATURES = [
   {
     icon: TrendingUp,
-    titleEn: "Markets",
-    titleEs: "Mercados",
-    descEn: "Browse and trade live prediction markets with $100K virtual funds.",
-    descEs: "Explora y opera en mercados en vivo con $100K virtuales.",
+    titleEn: "Live Markets",
+    titleEs: "Mercados en vivo",
+    descEn: "Browse real prediction markets and make your call. Every prediction builds your public track record.",
+    descEs: "Explora mercados reales y haz tu predicción. Cada predicción construye tu historial público.",
     href: "/markets",
     accent: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
   {
     icon: Zap,
-    titleEn: "Game",
-    titleEs: "Juego",
-    descEn: "Test your reflexes in Prediction Flash — fast-paced predictions.",
-    descEs: "Pon a prueba tus reflejos en Prediction Flash.",
+    titleEn: "Prediction Flash",
+    titleEs: "Prediction Flash",
+    descEn: "Fast-paced prediction rounds to sharpen your instincts. See how you rank against other forecasters.",
+    descEs: "Rondas rápidas para afinar tu intuición. Comprueba cómo te comparas con otros predictores.",
     href: "/play",
     accent: "text-yellow-500",
     bg: "bg-yellow-500/10",
@@ -29,19 +29,19 @@ const FEATURES = [
     icon: GraduationCap,
     titleEn: "Academy",
     titleEs: "Academia",
-    descEn: "Free lessons on risk, psychology and strategy. Learn before you earn.",
-    descEs: "Lecciones gratis sobre riesgo, psicología y estrategia.",
+    descEn: "Free lessons on how prediction markets work. Learn to read signals before you make your first call.",
+    descEs: "Lecciones gratis sobre cómo funcionan los mercados de predicción. Aprende antes de tu primera predicción.",
     href: "/academy",
     accent: "text-blue-500",
     bg: "bg-blue-500/10",
   },
   {
-    icon: LayoutDashboard,
-    titleEn: "Dashboard",
-    titleEs: "Panel",
-    descEn: "Track your portfolio, game stats and academy progress in one place.",
-    descEs: "Sigue tu portfolio, stats del juego y progreso de academia.",
-    href: "/dashboard",
+    icon: Trophy,
+    titleEn: "Leaderboard",
+    titleEs: "Ranking",
+    descEn: "See the top forecasters ranked by accuracy, streak, and badges. Your profile is public — own it.",
+    descEs: "Los mejores predictores clasificados por precisión, racha y badges. Tu perfil es público — demuéstralo.",
+    href: "/leaderboard",
     accent: "text-primary",
     bg: "bg-primary/10",
   },
@@ -56,15 +56,15 @@ export function FeaturesGrid() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
-            {isEs ? "Todo lo que ofrece la plataforma" : "Everything the platform offers"}
+            {isEs ? "Todo lo que ofrece la plataforma" : "What you get"}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-            {isEs ? "Cuatro formas de aprender a operar" : "Four ways to master trading"}
+            {isEs ? "Construye tu reputación como predictor" : "Build your forecasting reputation"}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
             {isEs
-              ? "Cada sección está diseñada para llevarte un paso más cerca de operar como un profesional."
-              : "Each section takes you one step closer to trading like a pro."}
+              ? "Predice, compite y demuestra que tienes razón. Tu historial te sigue a todas partes."
+              : "Predict, compete, and prove you're right. Your track record follows you everywhere."}
           </p>
         </div>
 

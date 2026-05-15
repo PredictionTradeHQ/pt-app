@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageCircle, HelpCircle, FileText, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { Trophy, GraduationCap, TrendingUp, ArrowUpRight } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 
 const socialLinks = [
@@ -12,9 +13,10 @@ const socialLinks = [
     ),
     name: "Instagram",
     handle: "@predictiontradeonline",
-    descEn: "Daily trading tips & education",
-    descEs: "Consejos de trading y educación diaria",
+    descEn: "Daily market calls & prediction highlights",
+    descEs: "Predicciones diarias y highlights del mercado",
     href: "https://www.instagram.com/predictiontradeonline/",
+    external: true,
   },
   {
     icon: () => (
@@ -24,53 +26,46 @@ const socialLinks = [
     ),
     name: "YouTube",
     handle: "@PredictionTrade",
-    descEn: "Tutorials, market analysis & strategies",
-    descEs: "Tutoriales, análisis de mercado y estrategias",
+    descEn: "Market breakdowns, forecasting tips & strategy",
+    descEs: "Análisis de mercados, consejos y estrategia",
     href: "https://www.youtube.com/@PredictionTrade",
+    external: true,
+  },
+];
+
+const platformFeatures = [
+  {
+    icon: Trophy,
+    titleEn: "Leaderboard",
+    titleEs: "Ranking",
+    descEn: "See the top forecasters ranked by accuracy and streak. Your public profile goes live after your first prediction.",
+    descEs: "Los mejores predictores por precisión y racha. Tu perfil público se activa con tu primera predicción.",
+    href: "/leaderboard",
+    external: false,
   },
   {
-    icon: () => (
-      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-    ),
-    nameEn: "Website",
-    nameEs: "Sitio web",
-    handle: "predictiontrade.online",
-    descEn: "Practice trading risk-free",
-    descEs: "Practica trading sin riesgo",
-    href: "https://predictiontrade.online",
+    icon: GraduationCap,
+    titleEn: "Forecasting Academy",
+    titleEs: "Academia",
+    descEn: "Free lessons on how prediction markets work — probabilities, signals, and how to read community consensus.",
+    descEs: "Lecciones gratis sobre mercados de predicción — probabilidades, señales y consenso de la comunidad.",
+    href: "/academy",
+    external: false,
+  },
+  {
+    icon: TrendingUp,
+    titleEn: "Live Markets",
+    titleEs: "Mercados en vivo",
+    descEn: "Browse real-world events powered by Polymarket. Make your call, build your record, share when you're right.",
+    descEs: "Eventos reales del mundo con datos de Polymarket. Haz tu predicción, construye tu historial, comparte cuando aciertes.",
+    href: "/markets",
+    external: false,
   },
 ];
 
 export function Community() {
   const { language } = useLanguage();
   const isEs = language === "es";
-
-  const supportOptions = [
-    {
-      icon: MessageCircle,
-      title: isEs ? "Chat en vivo" : "Live Chat",
-      description: isEs
-        ? "Soporte 24/7 para resolver tus dudas al instante."
-        : "24/7 support to resolve your questions instantly",
-    },
-    {
-      icon: HelpCircle,
-      title: isEs ? "Centro de ayuda" : "Help Center",
-      description: isEs
-        ? "Guías, tutoriales y preguntas frecuentes."
-        : "Guides, tutorials, and frequently asked questions",
-    },
-    {
-      icon: FileText,
-      title: isEs ? "Documentación" : "Documentation",
-      description: isEs
-        ? "Documentación técnica completa para desarrolladores."
-        : "Complete technical documentation for developers",
-    },
-  ];
 
   return (
     <section id="community" className="py-24 border-t border-border">
@@ -80,64 +75,71 @@ export function Community() {
             {isEs ? "Comunidad" : "Community"}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-            {isEs ? "Únete a nuestra comunidad" : "Join Our Community"}
+            {isEs ? "Tu reputación es pública" : "Your reputation is public"}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
             {isEs
-              ? "Conecta con miles de predictores, comparte estrategias y mantente al día con las últimas novedades."
-              : "Connect with thousands of predictors, share strategies, and stay up to date with the latest news and updates."}
+              ? "Cada predicción que haces construye tu historial. Los mejores predictores aparecen en el ranking y pueden compartir su perfil."
+              : "Every prediction you make builds your track record. Top forecasters get featured on the leaderboard and can share their profile."}
           </p>
         </div>
 
+        {/* Platform feature cards */}
         <div className="grid sm:grid-cols-3 gap-6 mb-16">
-          {socialLinks.map((social, idx) => {
-            const name =
-              "nameEs" in social
-                ? isEs
-                  ? social.nameEs
-                  : social.nameEn
-                : (social as any).name;
-            const desc = isEs ? social.descEs : social.descEn;
+          {platformFeatures.map((feature) => {
+            const title = isEs ? feature.titleEs : feature.titleEn;
+            const desc = isEs ? feature.descEs : feature.descEn;
             return (
-              <a
-                key={idx}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                key={feature.href}
+                href={feature.href}
                 className="group p-6 rounded-2xl border border-border bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
-                    <social.icon />
+                    <feature.icon className="w-5 h-5" />
                   </div>
                   <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                <h3 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">
-                  {name}
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                  {title}
                 </h3>
-                <p className="text-primary text-sm mb-2">{social.handle}</p>
-                <p className="text-muted-foreground text-sm">{desc}</p>
-              </a>
+                <p className="text-muted-foreground text-sm leading-relaxed">{desc}</p>
+              </Link>
             );
           })}
         </div>
 
-        <div className="p-8 rounded-2xl border border-border bg-card/30 backdrop-blur-sm">
-          <h3 className="text-2xl font-bold text-center mb-8">
-            {isEs ? "Soporte al usuario" : "User Support"}
-          </h3>
-          <div className="grid sm:grid-cols-3 gap-6">
-            {supportOptions.map((option) => (
-              <div key={option.title} className="text-center">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <option.icon className="w-7 h-7 text-primary" />
-                </div>
-                <h4 className="font-semibold mb-2">{option.title}</h4>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {option.description}
-                </p>
-              </div>
-            ))}
+        {/* Social links */}
+        <div className="border-t border-border/50 pt-12">
+          <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">
+            {isEs ? "Síguenos" : "Follow us"}
+          </p>
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            {socialLinks.map((social, idx) => {
+              const desc = isEs ? social.descEs : social.descEn;
+              return (
+                <a
+                  key={idx}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group p-6 rounded-2xl border border-border bg-card/50 backdrop-blur-sm hover:border-primary/50 hover:bg-card transition-all"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
+                      <social.icon />
+                    </div>
+                    <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">
+                    {social.name}
+                  </h3>
+                  <p className="text-primary text-sm mb-2">{social.handle}</p>
+                  <p className="text-muted-foreground text-sm">{desc}</p>
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

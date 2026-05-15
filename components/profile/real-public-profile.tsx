@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Flame, Target, Medal, Trophy, ArrowRight, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { useState } from "react"
+import { Flame, Target, Medal, Trophy, ArrowRight, CheckCircle2, XCircle, Clock, Share2, Check } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { BadgeCard } from "@/components/badge-card"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
@@ -14,6 +15,7 @@ interface Props {
 
 export function RealPublicProfile({ data }: Props) {
   const { displayName, username, gamification: gam } = data
+  const [copied, setCopied] = useState(false)
 
   const initials = displayName
     .split(" ")
@@ -28,6 +30,33 @@ export function RealPublicProfile({ data }: Props) {
 
   const hasStats = gam !== null && gam.totalPredictions > 0
 
+  const shareProfile = () => {
+    const url = `${window.location.origin}/profile/${username}`
+    const text = gam && gam.accuracyPct !== null
+      ? `Check out ${displayName}'s prediction track record on @PredictionTrade — ${gam.accuracyPct}% accuracy, ${gam.totalPredictions} predictions. 🎯`
+      : `Check out ${displayName}'s prediction profile on @PredictionTrade 🎯`
+
+    if (navigator.share) {
+      navigator.share({ title: `${displayName} — PredictionTrade`, text, url }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }).catch(() => {})
+    }
+  }
+
+  const shareOnX = () => {
+    const url = `${window.location.origin}/profile/${username}`
+    const text = gam && gam.accuracyPct !== null
+      ? `${displayName} is ${gam.accuracyPct}% accurate on ${gam.totalPredictions} predictions. See their full track record on @PredictionTrade 🎯`
+      : `Check out ${displayName}'s prediction profile on @PredictionTrade 🎯`
+    window.open(
+      `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      "_blank"
+    )
+  }
+
   return (
     <main className="container mx-auto px-4 md:px-8 py-8 max-w-3xl">
       {/* Header */}
@@ -41,6 +70,31 @@ export function RealPublicProfile({ data }: Props) {
           <p className="text-xs text-muted-foreground mt-1">
             PredictionTrade Forecaster
           </p>
+        </div>
+        {/* Share buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={shareOnX}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-border/80 hover:bg-muted/40 transition-colors text-xs font-semibold text-foreground"
+            title="Share on X"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.859L1.254 2.25H8.08l4.259 5.632L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            Share
+          </button>
+          <button
+            onClick={shareProfile}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-border/80 hover:bg-muted/40 transition-colors text-xs font-semibold text-foreground"
+            title="Copy profile link"
+          >
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-primary" />
+            ) : (
+              <Share2 className="w-3.5 h-3.5" />
+            )}
+            {copied ? "Copied!" : "Copy link"}
+          </button>
         </div>
       </div>
 

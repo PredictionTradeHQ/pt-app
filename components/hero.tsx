@@ -2,12 +2,27 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Flame, Shield, Globe, Zap, UserPlus, LogIn } from "lucide-react";
+import { ArrowRight, Trophy, Shield, Globe, Zap, UserPlus, LogIn } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
+import { useEffect, useState } from "react";
 
-// Paper Trading for Polymarket - Simulator Component
+interface PlatformStats {
+  forecasters: number
+  totalPredictions: number
+}
+
 export function Hero() {
   const { t } = useLanguage();
+  const [stats, setStats] = useState<PlatformStats | null>(null)
+
+  useEffect(() => {
+    fetch("/api/stats/platform")
+      .then((r) => r.json())
+      .then((data: PlatformStats) => {
+        if (data.totalPredictions > 0) setStats(data)
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -58,13 +73,35 @@ export function Hero() {
           </Button>
         </div>
 
-        {/* Social proof */}
-        <p className="text-sm text-muted-foreground mb-6">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>4,200+ predictions made · <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">Join free →</Link></span>
-          </span>
-        </p>
+        {/* Social proof — real count from Supabase, hidden when empty */}
+        {stats && (
+          <p className="text-sm text-muted-foreground mb-6">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>
+                {stats.totalPredictions.toLocaleString()} predictions made by {stats.forecasters} forecasters
+                {" · "}
+                <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
+                  Join free →
+                </Link>
+              </span>
+            </span>
+          </p>
+        )}
+        {!stats && (
+          <p className="text-sm text-muted-foreground mb-6">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>
+                Free to join · Build your prediction track record
+                {" · "}
+                <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
+                  Start now →
+                </Link>
+              </span>
+            </span>
+          </p>
+        )}
 
         {/* Auth Buttons */}
         <div className="flex items-center justify-center gap-3 mb-16">
@@ -99,7 +136,7 @@ export function Hero() {
             <span>{t("realPrices")}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Flame className="w-5 h-5 text-primary" />
+            <Trophy className="w-5 h-5 text-primary" />
             <span>{t("paperMode")}</span>
           </div>
         </div>
