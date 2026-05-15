@@ -89,10 +89,10 @@ PT and PMS are **completely separate ecosystems**.
 
 | | PT | PMS |
 |---|---|---|
-| Nature | Consumer / social / demo | B2B / infrastructure / enterprise |
+| Nature | Consumer / social / creator | B2B / infrastructure / enterprise |
 | Audience | Anyone curious about predictions | Operators building platforms |
 | Tone | Fun, social, modern | Professional, technical, AI-first |
-| Path | `Documents\PREDICTION TRADE\` | `Documents\PREDICTION MARKETS SOLUTIONS\` |
+| Path | `Documents\PREDICTION TRADE\pt-infrastructure\pt-app\` | `Documents\PREDICTION MARKETS SOLUTIONS\pms-infrastructure\` |
 
 Never mix them. Never reference PMS from PT publicly.
 
@@ -103,5 +103,5 @@ Never mix them. Never reference PMS from PT publicly.
 - **Language:** Talk to the operator in Spanish. All docs, code, commits in English.
 - **Balance:** Starting balance is always $100,000. Never change this.
 - **Stack:** Next.js + Supabase + Tailwind + shadcn/ui. No new frameworks without discussion.
-- **Deploy:** `npx vercel --prod` from `pt-merged/`
+- **Deploy:** `npx vercel --prod` from `pt-app/`
 - **Build:** TypeScript strict mode — always run `pnpm build` before deploy

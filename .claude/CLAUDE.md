@@ -2,12 +2,12 @@
 
 ## Project overview
 
-Prediction Trade (`predictiontrade.online`) is a **social forecasting platform** — demo, educational, AI-native, creator-friendly.
+Prediction Trade (`predictiontrade.online`) is a **consumer social forecasting platform** — profile-driven, leaderboard-native, creator-oriented, gamified, social-first.
 Sole operator and admin: you (aventurarte.23@gmail.com). Technical decisions are made autonomously.
 
-**Purpose:** Social forecasting, demo trading, education, content engine, creator economy.
+**Purpose:** Social forecasting, reputation building, creator economy, content engine, gamification.
 **Positioning:** "The social platform for people who love being right about the future."
-**Tagline:** "Predict. Compete. Share. Learn."
+**Tagline:** "Predict. Compete. Share."
 
 ## Brain — read before any strategic or architectural session
 
@@ -91,7 +91,7 @@ Workflow notes → `../../workflows/`
 
 ```
 Documents\PREDICTION TRADE\               ← PT ecosystem root
-├── pt-infrastructure\pt-merged\          ← this repo (source of truth)
+├── pt-infrastructure\pt-app\             ← this repo (source of truth)
 ├── assets\investor\                      pitch, PDF, logo
 ├── docs\content-scripts\                 content drafts
 ├── workflows\                            n8n, Make.com, Twilio notes
@@ -101,7 +101,7 @@ Documents\PREDICTION TRADE\               ← PT ecosystem root
 
 Mirrors PMS convention:
 - `Documents\PREDICTION MARKETS SOLUTIONS\pms-infrastructure\` → PMS
-- `Documents\PREDICTION TRADE\pt-infrastructure\pt-merged\` → PT
+- `Documents\PREDICTION TRADE\pt-infrastructure\pt-app\` → PT
 
 ---
 
@@ -129,4 +129,4 @@ Skills are activated in Claude.ai (PT project) via trigger phrases, or used as s
 - Visual, fast, modern, educational
 - Do not add features speculatively
 - Do not mix PT and PMS — they are separate ecosystems with separate skills, tones, and audiences
-- Deploy with: `npx vercel --prod` from this directory
+- Deploy with: `npx vercel --prod` from `pt-app/`

@@ -1,24 +1,25 @@
 # Prediction Trade — Web Platform
 
-Live demo trading platform powered by real Polymarket data.
+Social forecasting platform where users predict the future, build a public track record, and compete on the leaderboard.
 
 **URL:** https://predictiontrade.online  
-**Tagline:** Learn Before You Earn  
+**Tagline:** Predict. Compete. Share.  
 **Stack:** Next.js 16 · TypeScript · Tailwind · shadcn/ui · Supabase · Vercel
 
 ---
 
 ## What it is
 
-Prediction Trade is a paper trading simulator and educational platform. Users practice prediction market trading with $100,000 in virtual funds using live Polymarket data — zero financial risk.
+Prediction Trade is a **consumer social forecasting platform**. Users predict real-world outcomes using live Polymarket data, build a reputation through accuracy and streaks, compete on public leaderboards, and share wins with shareable prediction cards — all with $100,000 in virtual funds, zero financial risk.
 
 **Core sections:**
 - `/markets` — live market browser (Polymarket data, public)
-- `/demo` — trading terminal (auth required)
+- `/demo` — prediction terminal (auth required)
 - `/play` — Prediction Flash arcade game
 - `/academy` — educational courses
-- `/dashboard` — broker-style dashboard (auth required)
+- `/dashboard` — forecaster dashboard (auth required)
 - `/leaderboard` — public ranking
+- `/profile/[username]` — public forecaster profiles
 
 ---
 
@@ -39,7 +40,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Deploy
 
-Connected to Vercel via GitHub (`PredictionMarketsSolutions/PredictionTradeWEB`).  
+Connected to Vercel via GitHub (`PredictionTradeHQ/pt-app`).  
 Every push to `main` auto-deploys. For manual deploy:
 
 ```bash
@@ -51,7 +52,7 @@ npx vercel --prod
 ## Infrastructure
 
 - **Auth + DB:** Supabase (project `dvevwlhshcyvnsubyvzw`)
-- **Tables:** `profiles`, `wallets`, `trades`, `activity_logs`, `game_results`, `academy_progress`
+- **Tables:** `profiles`, `wallets`, `trades`, `activity_logs`, `game_results`, `academy_progress`, `user_gamification`
 - **Starting balance:** $100,000 virtual (hardcoded — do not change)
 - **Market data:** Polymarket Gamma API, `cache: "no-store"`, auto-refresh every 30s
 
@@ -60,13 +61,11 @@ npx vercel --prod
 ## Project location
 
 ```
-C:\Users\Usuario\PredictionTrade\
-├── pt-infrastructure\pt-merged\   ← this repo (source of truth)
-├── assets\                         investor, branding, exports
-├── docs\                           content scripts, strategy docs
-├── workflows\                      n8n, Make.com, automation notes
-├── published\                      published social content
-└── _archive\                       legacy versions
+C:\Users\Usuario\Documents\PREDICTION TRADE\
+├── pt-infrastructure\pt-app\   ← this repo (source of truth)
+├── assets\                      investor, branding, exports
+├── docs\                        content scripts, strategy docs
+├── workflows\                   n8n, Make.com, automation notes
+├── published\                   published social content
+└── _archive\                    legacy versions
 ```
-trigger redeploy
-test
