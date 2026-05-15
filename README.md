@@ -68,3 +68,5 @@ C:\Users\Usuario\PredictionTrade\
 ├── published\                      published social content
 └── _archive\                       legacy versions
 ```
+trigger redeploy
+test
