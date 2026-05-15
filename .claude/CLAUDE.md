@@ -105,11 +105,28 @@ Mirrors PMS convention:
 
 ---
 
+## Tone & AI skills
+
+**Tone guide:** `.claude/PT-TONE-GUIDE.md` — read before generating any copy, AI output, or skill content for PT.
+Core rule: PT is a social forecasting platform, not a trading terminal. Users are forecasters, not traders.
+
+**Skills** (`.claude/skills/`):
+
+| Skill | Trigger | Purpose |
+|---|---|---|
+| `pt-called-it-post` | User wants to share a correct prediction | Viral share copy for X, Instagram, WhatsApp |
+| `pt-market-brief` | "Explain this market" / pre-prediction context | 2–4 sentence plain-language market summary |
+
+Skills are activated in Claude.ai (PT project) via trigger phrases, or used as system prompts in Make.com / n8n Claude API calls.
+**Never use or adapt PMS skills for PT.** They are separate ecosystems with different audiences and tones.
+
+---
+
 ## Principles
 
-- Keep it simple — PT is a demo, not enterprise software
-- UX-first, content-first
+- Keep it simple — PT is a social consumer product, not enterprise software
+- UX-first, content-first, social-first
 - Visual, fast, modern, educational
 - Do not add features speculatively
-- Do not mix PT and PMS — they are separate ecosystems
+- Do not mix PT and PMS — they are separate ecosystems with separate skills, tones, and audiences
 - Deploy with: `npx vercel --prod` from this directory
