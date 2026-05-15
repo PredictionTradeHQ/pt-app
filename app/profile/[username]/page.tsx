@@ -6,7 +6,12 @@ import { RealPublicProfile } from "@/components/profile/real-public-profile"
 import { getDemoUser } from "@/lib/demo-leaderboard"
 import { createClient } from "@/lib/supabase/server"
 import { slugify } from "@/lib/utils"
-import type { RealProfileData, PublicPredictionRecord } from "@/app/api/profile/[username]/route"
+import {
+  computeCategoryStats,
+  computeTopCalls,
+  normalizeRecentPredictions,
+} from "@/lib/profile-helpers"
+import type { RealProfileData } from "@/app/api/profile/[username]/route"
 
 interface Props {
   params: Promise<{ username: string }>
@@ -46,44 +51,16 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
     )
     if (!match) return null
 
+    // public_leaderboard is anon-accessible; `predictions` available after migration 003
     const { data: gam } = await supabase
       .from("public_leaderboard")
       .select(
-        "current_streak, best_streak, total_predictions, resolved_count, correct_count, accuracy_pct, badge_count, called_it_count, badges"
+        "current_streak, best_streak, total_predictions, resolved_count, correct_count, accuracy_pct, badge_count, called_it_count, badges, predictions"
       )
       .eq("user_id", match.id)
       .maybeSingle()
 
-    // Fetch recent predictions from user_gamification (server-side)
-    type RawPred = {
-      marketTitle?: string
-      prediction?: string
-      outcome?: string
-      resolved?: boolean
-      correct?: boolean
-      createdAt?: string
-      probAtTime?: number
-    }
-    const { data: gamRow } = await supabase
-      .from("user_gamification")
-      .select("predictions")
-      .eq("user_id", match.id)
-      .maybeSingle()
-
-    const rawPreds: RawPred[] = Array.isArray(gamRow?.predictions) ? gamRow.predictions : []
-    const recentPredictions: PublicPredictionRecord[] = rawPreds
-      .filter((p) => p.marketTitle && p.prediction && p.createdAt)
-      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-      .slice(0, 10)
-      .map((p) => ({
-        marketTitle: p.marketTitle!,
-        prediction: p.prediction === "YES" ? "YES" : "NO",
-        outcome: p.outcome === "YES" ? "YES" : p.outcome === "NO" ? "NO" : undefined,
-        resolved: p.resolved ?? false,
-        correct: p.correct,
-        createdAt: p.createdAt!,
-        probAtTime: p.probAtTime ?? 50,
-      }))
+    const rawPreds = Array.isArray(gam?.predictions) ? gam.predictions : []
 
     return {
       displayName: match.display_name,
@@ -101,7 +78,9 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
             badges: Array.isArray(gam.badges) ? gam.badges : [],
           }
         : null,
-      recentPredictions,
+      recentPredictions: normalizeRecentPredictions(rawPreds),
+      categoryStats: computeCategoryStats(rawPreds),
+      topCalls: computeTopCalls(rawPreds),
     }
   } catch {
     return null
@@ -111,7 +90,7 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params
 
-  // 1. Demo users (fast — local data, no DB)
+  // 1. Demo users — local data, fast, no DB
   const demoUser = getDemoUser(username)
   if (demoUser) {
     const supabase = await createClient()
@@ -127,11 +106,11 @@ export default async function PublicProfilePage({ params }: Props) {
     )
   }
 
-  // 2. Real Supabase users — look up by display_name slug
+  // 2. Real Supabase user — look up by display_name slug
   const realProfile = await fetchRealProfile(username)
 
   if (realProfile) {
-    // If this is the logged-in user's own profile, redirect to /profile (full private view)
+    // Redirect own profile to /profile (private full view)
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {

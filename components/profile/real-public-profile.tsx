@@ -2,19 +2,53 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { Flame, Target, Medal, Trophy, ArrowRight, CheckCircle2, XCircle, Clock, Share2, Check } from "lucide-react"
+import {
+  Flame, Target, Medal, Trophy, ArrowRight,
+  CheckCircle2, XCircle, Clock, Share2, Check, Zap,
+} from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { BadgeCard } from "@/components/badge-card"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
+import { PT_CATEGORIES } from "@/lib/categories"
 import { cn } from "@/lib/utils"
-import type { RealProfileData, PublicPredictionRecord } from "@/app/api/profile/[username]/route"
+import type {
+  RealProfileData,
+  PublicPredictionRecord,
+  CategoryStat,
+  TopCall,
+} from "@/app/api/profile/[username]/route"
 
 interface Props {
   data: RealProfileData
 }
 
+// ─── Profile headline — one-line shareable summary ────────────────────────────
+
+function buildHeadline(
+  gam: RealProfileData["gamification"],
+  categoryStats: CategoryStat[]
+): string {
+  if (!gam || gam.totalPredictions === 0) return "Forecaster on PredictionTrade"
+
+  const parts: string[] = []
+
+  if (gam.accuracyPct !== null) parts.push(`${gam.accuracyPct}% accurate`)
+  if (gam.currentStreak >= 2) parts.push(`🔥 ${gam.currentStreak}-day streak`)
+  if (gam.calledItCount > 0) parts.push(`${gam.calledItCount} ${gam.calledItCount === 1 ? "Called It" : "Called Its"} 💡`)
+
+  const best = categoryStats[0]
+  if (best && best.pct >= 50) {
+    const cat = PT_CATEGORIES.find((c) => c.id === best.catId)
+    if (cat) parts.push(`Best at ${cat.label} ${cat.emoji}`)
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : `${gam.totalPredictions} predictions made`
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export function RealPublicProfile({ data }: Props) {
-  const { displayName, username, gamification: gam } = data
+  const { displayName, username, gamification: gam, recentPredictions, categoryStats, topCalls } = data
   const [copied, setCopied] = useState(false)
 
   const initials = displayName
@@ -29,15 +63,29 @@ export function RealPublicProfile({ data }: Props) {
   const earnedMap = new Map(earnedBadges.map((b) => [b.id, b.earnedAt]))
 
   const hasStats = gam !== null && gam.totalPredictions > 0
+  const headline = buildHeadline(gam, categoryStats)
 
-  const shareProfile = () => {
-    const url = `${window.location.origin}/profile/${username}`
-    const text = gam && gam.accuracyPct !== null
-      ? `Check out ${displayName}'s prediction track record on @PredictionTrade — ${gam.accuracyPct}% accuracy, ${gam.totalPredictions} predictions. 🎯`
-      : `Check out ${displayName}'s prediction profile on @PredictionTrade 🎯`
+  const shareText = `${displayName} on @PredictionTrade — ${headline}`
+  const profileUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/profile/${username}`
+    : `/profile/${username}`
 
+  const shareOnX = () => {
+    const url = typeof window !== "undefined"
+      ? `${window.location.origin}/profile/${username}`
+      : `/profile/${username}`
+    window.open(
+      `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`,
+      "_blank"
+    )
+  }
+
+  const copyLink = () => {
+    const url = typeof window !== "undefined"
+      ? `${window.location.origin}/profile/${username}`
+      : `/profile/${username}`
     if (navigator.share) {
-      navigator.share({ title: `${displayName} — PredictionTrade`, text, url }).catch(() => {})
+      navigator.share({ title: `${displayName} — PredictionTrade`, text: shareText, url }).catch(() => {})
     } else {
       navigator.clipboard.writeText(url).then(() => {
         setCopied(true)
@@ -46,36 +94,23 @@ export function RealPublicProfile({ data }: Props) {
     }
   }
 
-  const shareOnX = () => {
-    const url = `${window.location.origin}/profile/${username}`
-    const text = gam && gam.accuracyPct !== null
-      ? `${displayName} is ${gam.accuracyPct}% accurate on ${gam.totalPredictions} predictions. See their full track record on @PredictionTrade 🎯`
-      : `Check out ${displayName}'s prediction profile on @PredictionTrade 🎯`
-    window.open(
-      `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-      "_blank"
-    )
-  }
-
   return (
     <main className="container mx-auto px-4 md:px-8 py-8 max-w-3xl">
-      {/* Header */}
-      <div className="flex items-start gap-5 mb-8">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary shrink-0">
+
+      {/* ── Header ── */}
+      <div className="flex items-start gap-4 mb-3">
+        <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl font-bold text-primary shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold truncate">{displayName}</h1>
           <p className="text-sm text-muted-foreground">@{username}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            PredictionTrade Forecaster
-          </p>
+          <p className="text-xs text-muted-foreground/60 mt-0.5">PredictionTrade Forecaster</p>
         </div>
-        {/* Share buttons */}
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={shareOnX}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-border/80 hover:bg-muted/40 transition-colors text-xs font-semibold text-foreground"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-muted/40 transition-colors text-xs font-semibold"
             title="Share on X"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -84,36 +119,40 @@ export function RealPublicProfile({ data }: Props) {
             Share
           </button>
           <button
-            onClick={shareProfile}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-border/80 hover:bg-muted/40 transition-colors text-xs font-semibold text-foreground"
+            onClick={copyLink}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-muted/40 transition-colors text-xs font-semibold"
             title="Copy profile link"
           >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-primary" />
-            ) : (
-              <Share2 className="w-3.5 h-3.5" />
-            )}
+            {copied
+              ? <Check className="w-3.5 h-3.5 text-primary" />
+              : <Share2 className="w-3.5 h-3.5" />
+            }
             {copied ? "Copied!" : "Copy link"}
           </button>
         </div>
       </div>
 
+      {/* ── Headline ── */}
+      <p className="text-sm text-muted-foreground mb-6 pl-1">{headline}</p>
+
+      {/* ── No stats yet ── */}
       {!hasStats && (
         <Card className="mb-6">
           <CardContent className="pt-6 text-center text-sm text-muted-foreground">
-            <Trophy className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-            This forecaster hasn&apos;t made any predictions yet.
+            <Trophy className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
+            <p className="font-medium mb-1">No predictions yet</p>
+            <p className="text-xs">Once {displayName} makes their first prediction, their track record will appear here.</p>
           </CardContent>
         </Card>
       )}
 
       {hasStats && gam && (
         <>
-          {/* Stats grid */}
+          {/* ── Stats grid ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <StatCard
               icon={<Flame className="w-4 h-4 text-orange-400" />}
-              label="Current Streak"
+              label="Streak"
               value={`${gam.currentStreak}d`}
               sub={`Best: ${gam.bestStreak}d`}
             />
@@ -126,6 +165,7 @@ export function RealPublicProfile({ data }: Props) {
                   ? `${gam.resolvedCount} resolved`
                   : "Need ≥5 resolved"
               }
+              highlight={gam.accuracyPct !== null && gam.accuracyPct >= 60}
             />
             <StatCard
               icon={<Trophy className="w-4 h-4 text-yellow-400" />}
@@ -137,37 +177,83 @@ export function RealPublicProfile({ data }: Props) {
               icon={<Medal className="w-4 h-4 text-primary" />}
               label="Badges"
               value={String(gam.badgeCount)}
-              sub={
-                gam.calledItCount > 0
-                  ? `${gam.calledItCount} Called It`
-                  : "Earned"
-              }
+              sub={gam.calledItCount > 0 ? `${gam.calledItCount} Called It 💡` : "Earned"}
             />
           </div>
 
-          {/* Badges */}
+          {/* ── Category accuracy ── */}
+          {categoryStats.length > 0 && (
+            <Card className="mb-6">
+              <CardContent className="pt-5">
+                <SectionLabel>Category accuracy</SectionLabel>
+                <CategoryAccuracySection stats={categoryStats} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Top contrarian calls ── */}
+          {topCalls.length > 0 && (
+            <Card className="mb-6">
+              <CardContent className="pt-5">
+                <SectionLabel>
+                  <Zap className="w-3 h-3 inline mr-1 text-yellow-400" />
+                  Biggest calls
+                  <span className="ml-1.5 text-[10px] font-normal text-muted-foreground/60">
+                    — correct predictions against the crowd
+                  </span>
+                </SectionLabel>
+                <div className="space-y-3">
+                  {topCalls.map((call, i) => (
+                    <TopCallRow key={i} call={call} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Badges ── */}
           {earnedBadgeIds.size > 0 && (
             <Card className="mb-6">
               <CardContent className="pt-5">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                  Badges earned · {earnedBadgeIds.size} / {BADGE_DISPLAY_ORDER.length}
-                </p>
+                <SectionLabel>
+                  Badges earned
+                  <span className="ml-1.5 text-[10px] font-normal text-muted-foreground/60">
+                    {earnedBadgeIds.size} / {BADGE_DISPLAY_ORDER.length}
+                  </span>
+                </SectionLabel>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {BADGE_DISPLAY_ORDER.filter((id) => earnedBadgeIds.has(id)).map(
-                    (id) => {
-                      const def = BADGE_DEFINITIONS[id]
-                      if (!def) return null
-                      return (
-                        <BadgeCard
-                          key={id}
-                          badge={def}
-                          earned
-                          earnedAt={earnedMap.get(id)}
-                          size="md"
-                        />
-                      )
-                    }
-                  )}
+                  {BADGE_DISPLAY_ORDER.filter((id) => earnedBadgeIds.has(id)).map((id) => {
+                    const def = BADGE_DEFINITIONS[id]
+                    if (!def) return null
+                    return (
+                      <BadgeCard
+                        key={id}
+                        badge={def}
+                        earned
+                        earnedAt={earnedMap.get(id)}
+                        size="md"
+                      />
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Recent predictions ── */}
+          {recentPredictions.length > 0 && (
+            <Card className="mb-6">
+              <CardContent className="pt-5">
+                <SectionLabel>
+                  Recent predictions
+                  <span className="ml-1.5 text-[10px] font-normal text-muted-foreground/60">
+                    last {recentPredictions.length}
+                  </span>
+                </SectionLabel>
+                <div className="space-y-2">
+                  {recentPredictions.map((p, i) => (
+                    <PredictionRow key={i} prediction={p} />
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -175,23 +261,7 @@ export function RealPublicProfile({ data }: Props) {
         </>
       )}
 
-      {/* Recent Predictions */}
-      {data.recentPredictions.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="pt-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-              Recent predictions · {data.recentPredictions.length}
-            </p>
-            <div className="space-y-2">
-              {data.recentPredictions.map((p, i) => (
-                <PredictionRow key={i} prediction={p} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* CTA */}
+      {/* ── CTA ── */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-5 flex items-center justify-between gap-4">
           <div>
@@ -202,10 +272,7 @@ export function RealPublicProfile({ data }: Props) {
           </div>
           <Link
             href="/markets"
-            className={cn(
-              "flex items-center gap-1.5 text-sm font-semibold text-primary",
-              "hover:underline shrink-0"
-            )}
+            className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0"
           >
             Browse Markets
             <ArrowRight className="w-3.5 h-3.5" />
@@ -216,27 +283,133 @@ export function RealPublicProfile({ data }: Props) {
   )
 }
 
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      {children}
+    </p>
+  )
+}
+
 function StatCard({
   icon,
   label,
   value,
   sub,
+  highlight = false,
 }: {
   icon: React.ReactNode
   label: string
   value: string
   sub: string
+  highlight?: boolean
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card/50 p-4">
+    <div className={cn(
+      "rounded-xl border p-4",
+      highlight ? "border-primary/30 bg-primary/5" : "border-border bg-card/50"
+    )}>
       <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
         {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-wider">
-          {label}
-        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
+      <p className={cn("text-2xl font-bold", highlight ? "text-primary" : "text-foreground")}>
+        {value}
+      </p>
       <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
+    </div>
+  )
+}
+
+function CategoryAccuracySection({ stats }: { stats: CategoryStat[] }) {
+  const best = stats[0]
+
+  return (
+    <div className="space-y-1">
+      {/* Best category callout */}
+      {best && best.pct >= 50 && (() => {
+        const cat = PT_CATEGORIES.find((c) => c.id === best.catId)
+        if (!cat) return null
+        return (
+          <div className="flex items-center gap-3 mb-4 px-3 py-2.5 rounded-lg bg-primary/8 border border-primary/15">
+            <span className="text-xl leading-none">{cat.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-primary">
+                Best at {cat.label}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {best.correct}/{best.total} resolved predictions
+              </p>
+            </div>
+            <span className="text-xl font-bold text-primary shrink-0">{best.pct}%</span>
+          </div>
+        )
+      })()}
+
+      {/* Per-category bars */}
+      <div className="space-y-3">
+        {stats.map(({ catId, total, correct, pct }) => {
+          const cat = PT_CATEGORIES.find((c) => c.id === catId)
+          if (!cat) return null
+          return (
+            <div key={catId}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="flex items-center gap-1.5 text-sm">
+                  <span className="leading-none">{cat.emoji}</span>
+                  <span className="font-medium text-sm">{cat.label}</span>
+                </span>
+                <span className={cn(
+                  "text-sm font-bold tabular-nums",
+                  pct >= 60 ? "text-primary" : pct >= 40 ? "text-foreground" : "text-destructive/80"
+                )}>
+                  {pct}%
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    pct >= 60 ? "bg-primary" : pct >= 40 ? "bg-foreground/40" : "bg-destructive/50"
+                  )}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {correct}/{total} resolved
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function TopCallRow({ call }: { call: TopCall }) {
+  const crowd = call.prediction === "YES" ? call.probAtTime : 100 - call.probAtTime
+  const cat = call.marketTitle // no category in TopCall — just title
+
+  return (
+    <div className="flex items-start gap-3 rounded-lg bg-yellow-500/5 border border-yellow-500/15 px-3 py-2.5">
+      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium leading-snug text-foreground line-clamp-2">{cat}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className={cn(
+            "text-[10px] font-bold px-1.5 py-0.5 rounded",
+            call.prediction === "YES"
+              ? "bg-primary/15 text-primary"
+              : "bg-destructive/15 text-destructive"
+          )}>
+            {call.prediction}
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {crowd}% crowd · Called It 💡
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
@@ -262,6 +435,8 @@ function PredictionRow({ prediction: p }: { prediction: PublicPredictionRecord }
     (p.prediction === "YES" && p.probAtTime < 20) ||
     (p.prediction === "NO" && 100 - p.probAtTime < 20)
 
+  const cat = p.category ? PT_CATEGORIES.find((c) => c.id === p.category) : null
+
   return (
     <div className={cn(
       "flex items-start gap-3 rounded-lg p-3 text-sm",
@@ -272,7 +447,7 @@ function PredictionRow({ prediction: p }: { prediction: PublicPredictionRecord }
         <p className="font-medium text-xs leading-snug line-clamp-2 text-foreground">
           {p.marketTitle}
         </p>
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
           <span className={cn(
             "text-[10px] font-bold px-1.5 py-0.5 rounded",
             p.prediction === "YES"
@@ -281,12 +456,17 @@ function PredictionRow({ prediction: p }: { prediction: PublicPredictionRecord }
           )}>
             {p.prediction}
           </span>
+          {cat && (
+            <span className="text-[10px] text-muted-foreground">
+              {cat.emoji} {cat.label}
+            </span>
+          )}
           {isContrarian && (
             <span className="text-[10px] text-orange-400 font-semibold">contrarian 🎲</span>
           )}
           {p.resolved && p.outcome && (
             <span className="text-[10px] text-muted-foreground">
-              → resolved {p.outcome}
+              → {p.outcome}
             </span>
           )}
         </div>
