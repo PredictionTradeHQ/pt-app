@@ -176,11 +176,11 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 **Last commits:**
 ```
+be4158c  feat(profiles): server-side category accuracy + top calls on public profiles
+36babf8  docs(claude): professional CLAUDE.md with session protocol + updated NEXT-SESSION
 3891faf  feat(ux): credibility pass — real stats, honest copy, social-first framing
 067e3b2  docs: infrastructure migration cleanup — canonical paths updated
 6792e77  feat: social viral loops — share engine, climb toast, onboarding guide
-da736ef  feat: add PT tone guide and first two skills
-bf64d5b  Phase 5c: UX polish — remove fake tabs, honest stats, social hero reframe
 ```
 
 **Completed phases:**
@@ -201,9 +201,9 @@ bf64d5b  Phase 5c: UX polish — remove fake tabs, honest stats, social hero ref
 - ✅ Social Viral Loops (share-copy.ts, called-it-modal, leaderboard-climb-toast, onboarding guide)
 
 **Known friction points remaining:**
-1. `CategoryAccuracy` on `/profile/[username]` reads local Zustand, not Supabase — shows nothing for other users
+1. `CategoryAccuracy` on `/profile/[username]` — code complete (commit `be4158c`), **awaiting SQL** in Supabase dashboard (`supabase/migrations/003_public_leaderboard_predictions.sql`)
 2. Hero "4,200+ predictions made" still hardcoded (small issue)
-3. `supabase/migrations/002_profiles_username.sql` not executed (optional)
+3. `supabase/migrations/002_profiles_username.sql` not executed (optional — username column)
 4. Real ActivityTicker returns `[]` until real users accumulate data (fallback to simulated is active)
 
 ---
