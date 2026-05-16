@@ -49,13 +49,24 @@ The SELECT `avatar_url` from `profiles` would error if migration 005 isn't appli
 - `app/profile/page.tsx` wraps the new SELECT in try/catch and falls through to `avatarUrl = null` (initials).
 Result: zero practical regression during the pre-migration window.
 
-**⏳ Phase 2 — AvatarUploader (pending):**
-Waiting on the operator to apply migrations 005 + 006 in the Supabase Dashboard (SQL provided in the previous session message). Once confirmed, Phase 2 ships:
-- New `components/profile/avatar-uploader.tsx`: file input → optional client-side WebP transcode (if browser supports `canvas.toBlob("image/webp")`) → upload to `avatars/<user_id>.<ext>` with `upsert: true` → UPDATE `profiles.avatar_url` with the resulting public URL.
-- Integration into `ProfileClient` Account card: clicking the avatar opens the file picker; preview before commit; sonner toast on success/failure.
-- No new route, no new endpoint — 100% client-side using `supabase.storage.from('avatars')` and `supabase.from('profiles').update(...)`.
+**Phase 2 — AvatarUploader shipped (commit `6c4ccbd`):**
+Operator confirmed migrations 005 + 006 applied. Bucket reachable (`/storage/v1/object/public/avatars/nonexistent.webp` returns `Object not found`, not `Bucket not found`).
+- New `components/profile/avatar-uploader.tsx` wraps `<Avatar />` with a hover-revealed Camera overlay. Click → hidden `<input type="file" accept="image/jpeg,image/png,image/webp" />` → handler:
+  1. Validates ≤5 MB, MIME starts with `image/`.
+  2. Transcodes: `createImageBitmap` → resize longest edge to ≤512px on canvas → `canvas.toBlob("image/webp", 0.88)`. Bitmap is `.close()`'d in a finally block.
+  3. Uploads to `avatars/<user_id>.webp` (single-extension policy: matches storage RLS `split_part(name, '.', 1) = auth.uid()::text`, no orphan dual files). `upsert: true`, `contentType: "image/webp"`, `cacheControl: "0"`.
+  4. Reads public URL via `getPublicUrl`, appends `?v=Date.now()` so every CDN layer treats a re-upload as a new resource.
+  5. `UPDATE profiles SET avatar_url = $versionedUrl WHERE id = $userId`.
+  6. Sonner toast success / error.
+- Integrated into `ProfileClient` Account card (`<Avatar />` swapped for `<AvatarUploader />`).
+- `app/layout.tsx` now mounts `<Toaster position="top-center" richColors />` from `components/ui/sonner.tsx`. Without this the sonner toasts (used here and reachable for future surfaces) wouldn't render.
 
-**Phase 4 (deferred):** OG profile card avatar rendering inside Satori. Requires fetch + base64 inline. Skip until upload adoption justifies the complexity.
+**Deploy verification window:** AvatarUploader is split into its own chunk only reachable from authenticated `/profile`. The `"Could not encode image as WebP"` literal isn't present in any chunk reachable from public pages (24 sampled). Smoke 8 endpoints all 200, `/profile` auth-gate intact (`307 → /auth/login?next=/profile`). Deploy presumed live (build clean, push 8+ min ago, Vercel pipeline validated continuously across the day's commits).
+
+**Operator visual smoke (recommended whenever convenient):**
+Log in to `/profile`. The Account-card avatar should show a Camera icon overlay on hover. Click → file picker → choose an image → toast "Avatar updated." Avatar should change instantly in the card, and on next refresh should also appear in `RealPublicProfile` and `LeaderboardRow` (if you're on the leaderboard).
+
+**Phase 4 (deferred):** OG profile card avatar rendering inside Satori. Requires `fetch(url) → ArrayBuffer → base64 dataURL` inside the edge route. Skip until upload adoption justifies the complexity.
 
 ---
 
@@ -563,15 +574,21 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 
 **Activation funnel is now end-to-end coherent.** Every entry path (sign-up confirm, sign-in, returning visit to /profile, public profile of a brand-new forecaster, share preview) speaks the same identity language: 🔥 streak / 🪙 specialty / 🏆 leaderboard.
 
-**Avatar System status:** Phases 1 + 3 shipped. Phase 2 (uploader) blocked on operator action (apply migrations 005 + 006 in Supabase). Phase 4 (OG card rendering) deferred.
+**Avatar System status:** Phases 1 + 2 + 3 shipped end-to-end. Real users can upload, swap, and see their avatar render across all four surfaces collapsed in Phase 3. Phase 4 (OG card rendering inside Satori) deferred.
 
 **Next recommended steps (in order):**
-1. **⏳ Operator action: apply migrations 005 + 006** — SQL was provided in the last session message. Idempotent. ~30 seconds in Supabase SQL Editor. Unblocks Phase 2.
-2. **Phase 2 — AvatarUploader** — ships immediately after operator confirms. Client-side upload to `avatars/<user_id>.<ext>` + update `profiles.avatar_url`. Integration into `ProfileClient` Account card.
-3. **Follow System foundation (next major)** — once avatars are real, the visual ground is fertile for follower counts + follow button. Probable shape: new `follows` table (`follower_id`, `followee_id`, `created_at`, PK composite), one row per relationship, RLS read public + write own. Surfaces `RealPublicProfile` (follow button + count), `LeaderboardRow` (tiny follow chip on hover/long-press), eventually a `/feed` for "predictions from people you follow". Detailed proposal when operator gives the go.
-4. **Welcome modal on /markets first visit** — only if activation data shows the banner+guide aren't enough.
-5. **Server-side category filter** — once realUsers > a few dozen.
-6. **OG profile cache strategy** — explicit `s-maxage=300`. Low priority.
+1. **Follow System foundation (next major)** — avatars make this finally worth doing. Proposed shape:
+   - Migration `007_follows.sql`: `public.follows (follower_id uuid, followee_id uuid, created_at timestamptz default now(), primary key (follower_id, followee_id))` + RLS (`SELECT public`, `INSERT/DELETE where follower_id = auth.uid()`).
+   - New `/api/follows` (POST follow, DELETE unfollow) or direct client `.from('follows').upsert/delete` with the existing auth context.
+   - `RealPublicProfile` header: follow button (+1/-1 toggle) next to share buttons; follower count badge.
+   - `LeaderboardRow`: tiny follower count on hover or a follow chip for the top N rows.
+   - `public_leaderboard` extension or a separate VIEW exposing follower count per user so the leaderboard can show + sort by it.
+   - Scope cut: no /feed yet (build follow primitive first, observe).
+   Detailed proposal when operator gives the go.
+2. **Welcome modal on /markets first visit** — only if activation data shows the banner+guide aren't enough.
+3. **Server-side category filter** — once realUsers > a few dozen.
+4. **OG profile cache strategy** — explicit `s-maxage=300`. Low priority.
+5. **Phase 4 of Avatars** — render the user's photo inside the OG card. Only worth doing once a non-trivial number of users have actually uploaded one.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
