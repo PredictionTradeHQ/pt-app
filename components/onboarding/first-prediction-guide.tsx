@@ -1,28 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { X, Search, BarChart2, Share2 } from "lucide-react"
+import { ArrowRight, X } from "lucide-react"
 import { useGamification } from "@/stores/gamification"
 
-const DISMISSED_KEY = "pt-onboarding-v1"
-
-const STEPS = [
-  {
-    icon: Search,
-    title: "Find your market",
-    desc: "Browse events you have an opinion on. Politics, crypto, sports, tech — pick what you know.",
-  },
-  {
-    icon: BarChart2,
-    title: "Make your call",
-    desc: "Tap YES or NO. Your prediction is logged publicly and builds your track record from day one.",
-  },
-  {
-    icon: Share2,
-    title: "Share when you're right",
-    desc: "When you nail a call, share it. Your accuracy is public — own your reputation.",
-  },
-]
+// localStorage gate. Bump the version when the copy or shape changes meaningfully
+// so previously-dismissed users see the refreshed nudge once.
+const DISMISSED_KEY = "pt-first-call-v2"
 
 export function FirstPredictionGuide() {
   const totalPredictions = useGamification((s) => s.totalPredictions)
@@ -33,7 +17,7 @@ export function FirstPredictionGuide() {
     if (!done && totalPredictions === 0) setVisible(true)
   }, [totalPredictions])
 
-  // Auto-dismiss the moment the first prediction lands
+  // Auto-dismiss the moment the first prediction lands.
   useEffect(() => {
     if (totalPredictions >= 1 && visible) setVisible(false)
   }, [totalPredictions, visible])
@@ -46,54 +30,64 @@ export function FirstPredictionGuide() {
   if (!visible) return null
 
   return (
-    <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-4 relative animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="mb-4 rounded-xl border border-primary/25 bg-gradient-to-br from-primary/[0.07] via-transparent to-amber-500/[0.05] p-4 relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+
       <button
         onClick={dismiss}
         className="absolute top-3 right-3 p-1 rounded-lg text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-        aria-label="Close guide"
+        aria-label="Close"
       >
         <X className="w-3.5 h-3.5" />
       </button>
 
-      <p className="text-[11px] font-bold uppercase tracking-widest text-primary/70 mb-0.5">
-        How it works
-      </p>
-      <p className="text-xs text-muted-foreground mb-4">
-        Your predictions are public. Every correct call builds your reputation.
-      </p>
-
-      <div className="flex gap-3">
-        {STEPS.map((step, i) => (
-          <div key={i} className="flex-1 text-center">
-            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-2">
-              <step.icon className="w-4 h-4 text-primary" />
-            </div>
-            <p className="text-xs font-semibold text-foreground leading-tight mb-0.5">
-              {step.title}
-            </p>
-            <p className="text-[11px] text-muted-foreground leading-snug hidden sm:block">
-              {step.desc}
-            </p>
-          </div>
-        ))}
+      {/* Headline */}
+      <div className="text-center mb-4">
+        <span className="text-2xl block mb-1.5 leading-none" aria-hidden>🎯</span>
+        <p className="text-base font-bold leading-tight">Make your first call.</p>
+        <p className="text-[11px] text-muted-foreground mt-1 max-w-md mx-auto leading-snug">
+          Start your streak, earn your specialty, and appear on the leaderboard from your very first prediction.
+        </p>
       </div>
 
-      {/* Mobile fallback */}
-      <p className="text-[11px] text-muted-foreground text-center mt-3 sm:hidden">
-        Pick a market, tap YES or NO. Your accuracy is public — own it.
-      </p>
+      {/* Triad — same vocabulary as the empty-state heroes, OG cards, and share copy */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <Pillar emoji="🔥" accentClass="text-orange-400" title="Streak" />
+        <Pillar emoji="🪙" accentClass="text-amber-400" title="Specialty" />
+        <Pillar emoji="🏆" accentClass="text-primary"   title="Leaderboard" />
+      </div>
 
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/50">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] text-muted-foreground">
-          No real money involved. Just your reputation.
+          Virtual only. Your reputation is real.
         </p>
         <button
           onClick={dismiss}
-          className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors shrink-0"
         >
-          Make my first call →
+          Explore markets
+          <ArrowRight className="w-3 h-3" />
         </button>
       </div>
+    </div>
+  )
+}
+
+function Pillar({
+  emoji,
+  accentClass,
+  title,
+}: {
+  emoji: string
+  accentClass: string
+  title: string
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card/60 p-2.5 text-center">
+      <span className="text-lg block mb-1 leading-none" aria-hidden>{emoji}</span>
+      <p className={`text-[10px] font-bold uppercase tracking-wider ${accentClass}`}>
+        {title}
+      </p>
     </div>
   )
 }

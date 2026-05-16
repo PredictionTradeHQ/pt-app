@@ -1049,17 +1049,21 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
         </div>
       )}
 
-      {/* Welcome banner — shown once to new users after email confirmation */}
+      {/* Welcome banner — first surface after email confirmation. Uses the
+          same identity triad (🔥 streak / 🪙 specialty / 🏆 leaderboard) as the
+          empty-state heroes, OG cards, and share copy. */}
       {showWelcomeBanner && mounted && (
         <div className="border-b border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 animate-in fade-in slide-in-from-top-2 duration-400">
           <div className="container mx-auto px-4 md:px-8 py-3.5 flex items-center gap-3">
-            <span className="text-2xl shrink-0">👋</span>
+            <span className="text-2xl shrink-0">🎯</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-foreground">
-                Welcome{authUser?.display_name ? `, ${authUser.display_name}` : ""}! Your $100,000 virtual balance is ready.
+                {authUser?.display_name
+                  ? `Welcome, ${authUser.display_name}. Make your first call.`
+                  : "Make your first call."}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Pick a market below, call YES or NO, and make your first prediction — you&apos;ll earn your first badge instantly. 🎯
+                Start your <span className="font-semibold text-orange-400">🔥 streak</span>, earn your <span className="font-semibold text-amber-400">🪙 specialty</span>, and appear on the <span className="font-semibold text-primary">🏆 leaderboard</span> from your very first prediction.
               </p>
             </div>
             <button
@@ -1073,10 +1077,14 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
         </div>
       )}
 
-      {/* First-prediction onboarding — self-dismisses on first prediction */}
-      <div className="container mx-auto px-4 md:px-8 pt-4">
-        <FirstPredictionGuide />
-      </div>
+      {/* First-prediction nudge — only shown when the welcome banner is NOT.
+          Avoids double-narrative for users arriving via /markets?new=1, while
+          still nudging returning logged-in users with zero predictions. */}
+      {!showWelcomeBanner && (
+        <div className="container mx-auto px-4 md:px-8 pt-4">
+          <FirstPredictionGuide />
+        </div>
+      )}
 
       {/* Streak at-risk banner */}
       <StreakAtRiskBanner />
