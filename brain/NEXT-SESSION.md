@@ -22,17 +22,24 @@
 
 ## ⚠️ MIGRATIONS — BLOCKER — RUN BEFORE NEXT DEV SESSION
 
-**URL:** https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+**URL:** https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 
-### Step 1 — BLOCKER: `supabase/migrations/001_gamification.sql`
+### Step 1 — NEW CLEAN PROJECT: `supabase/migrations/000_wallets.sql`
 
-**Why it's critical:** `user_gamification` table does NOT exist. Migration 001 was never run.
-This table is required for: streaks, badges, accuracy, leaderboard, public profiles.
-Without it: migration 003 will also fail (depends on user_gamification).
+**Why it's needed:** New Supabase project has no `wallets` table. Migration 004 depends on it.
+Run this first so bet flow (/api/wallet) works correctly.
+
+**Run the full contents of `supabase/migrations/000_wallets.sql` in the SQL Editor.**
+
+### Step 2 — BLOCKER: `supabase/migrations/001_gamification.sql`
+
+**Why it's critical:** `user_gamification` table does NOT exist.
+Required for: streaks, badges, accuracy, leaderboard, public profiles.
+Migration 003 will fail without it (depends on user_gamification).
 
 **Run the full contents of `supabase/migrations/001_gamification.sql` in the SQL Editor.**
 
-### Step 2 — After 001: `supabase/migrations/003_public_leaderboard_predictions.sql`
+### Step 3 — After 001: `supabase/migrations/003_public_leaderboard_predictions.sql`
 
 **What it does:** Recreates `public_leaderboard` VIEW to include the `predictions` JSONB column, which powers category accuracy bars and "Biggest Calls" sections on public profiles.
 
@@ -63,15 +70,21 @@ FROM user_gamification;
 GRANT SELECT ON public_leaderboard TO anon, authenticated;
 ```
 
-**Impact if neither migration runs:**
-- ✅ Nothing breaks — all graceful fallbacks in place
-- ✅ Core loop (bet, balance, positions) now works correctly (migration 004 fixed this)
-- ❌ Leaderboard shows demo-only users (no real user data)
-- ❌ Streaks/badges don't sync to Supabase (only localStorage)
-- ❌ Public profiles show no category accuracy, no top calls, no recent predictions
+### Step 4 — After 001 and 003: `supabase/migrations/004_demo_portfolios.sql`
 
-**Impact once both migrations run:**
-- ✅ All leaderboard, gamification, and profile sections activate — no code changes needed
+Creates `demo_portfolios` table + ensures `wallet_update_own` UPDATE policy exists on wallets.
+If you ran 000_wallets.sql first, the DO block in 004 will detect the policy already exists and skip safely.
+
+**Impact if NO migration is run (new project):**
+- ✅ Auth, signup, profiles work (already verified)
+- ❌ Bet balance not saved — wallets table doesn't exist → 500 on /api/wallet
+- ❌ Bet positions not saved — demo_portfolios doesn't exist → 500 on /api/demo-portfolio
+- ❌ Leaderboard shows demo-only users — user_gamification doesn't exist
+- ❌ Public profiles empty — no gamification data
+
+**Impact once all 4 migrations run:**
+- ✅ Full core loop active: auth → bet → balance persists → positions persist → leaderboard → profiles
+- ✅ No code changes needed
 
 ---
 
@@ -205,7 +218,7 @@ No code changes needed after running.
 
 **⚠️ ACCIÓN OPERADOR REQUERIDA (2 min) — correr ANTES de hacer más apuestas:**
 Ejecutar migration 004 en Supabase SQL Editor:
-https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 
 Pegar el contenido de `supabase/migrations/004_demo_portfolios.sql`.
 

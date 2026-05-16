@@ -2,7 +2,7 @@
 -- Enables server-side category accuracy computation on public profiles.
 --
 -- Run once in the Supabase SQL Editor:
--- https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+-- https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 --
 -- WHAT THIS DOES:
 -- Recreates public_leaderboard to include the full predictions JSONB column.

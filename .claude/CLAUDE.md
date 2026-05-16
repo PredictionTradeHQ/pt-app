@@ -56,7 +56,7 @@ PT and PMS are **completely separate ecosystems**. This rule is non-negotiable.
 | **Path** | `Documents\PREDICTION TRADE\pt-infrastructure\pt-app\` | `Documents\PREDICTION MARKETS SOLUTIONS\pms-infrastructure\pms-core\` |
 | **GitHub org** | `PredictionTradeHQ` | `PredictionMarketsSolutions` |
 | **Vercel workspace** | PT workspace | PMS workspace |
-| **Supabase** | `dvevwlhshcyvnsubyvzw` | separate project |
+| **Supabase** | `vkizidrsuwsreepsbbuy` | separate project |
 | **Domain** | `predictiontrade.online` | `predictionmarkets.market` |
 | **Brand color** | social-dark UI | emerald `#10B981` |
 | **Audience** | End users / forecasters | Operators / enterprises |
@@ -77,7 +77,7 @@ PT and PMS are **completely separate ecosystems**. This rule is non-negotiable.
 | **Frontend** | Next.js 16.2 App Router + React 19 + TypeScript 5.7 strict |
 | **Styling** | Tailwind CSS 4 + shadcn/ui + Radix UI |
 | **State** | Zustand v5 with persist (localStorage) |
-| **Database** | Supabase (`dvevwlhshcyvnsubyvzw`) — Auth + PostgreSQL + RLS |
+| **Database** | Supabase (`vkizidrsuwsreepsbbuy`) — Auth + PostgreSQL + RLS |
 | **Markets data** | Polymarket Gamma API (real-time, no-store cache) |
 | **Deploy** | Vercel — auto-deploy on push to `main` |
 | **Package manager** | pnpm |
@@ -98,7 +98,7 @@ These are hardcoded throughout the codebase. Changing one breaks multiple files.
 | Gamification store key | **`pt-gamification`** (v3) | localStorage key — migration required if changed |
 | Zustand persist version | **v3** | Migrations from v1→v2→v3 already applied |
 | Demo anchor usernames | **hardcoded in `lib/demo-leaderboard.ts`** | Profile links depend on slug stability |
-| Supabase project ref | **`dvevwlhshcyvnsubyvzw`** | All API calls and env vars |
+| Supabase project ref | **`vkizidrsuwsreepsbbuy`** | All API calls and env vars |
 | Accuracy minimum | **≥5 resolved predictions** | Show accuracy% only when statistically meaningful |
 
 ---
@@ -212,7 +212,7 @@ be4158c  feat(profiles): server-side category accuracy + top calls on public pro
 1. `supabase/migrations/001_gamification.sql` — BLOCKER — creates `user_gamification` + `public_leaderboard` VIEW
 2. `supabase/migrations/003_public_leaderboard_predictions.sql` — run AFTER 001 — extends VIEW with `predictions` column
 
-URL: https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+URL: https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 
 **Other friction points (low urgency):**
 - `supabase/migrations/002_profiles_username.sql` — optional username column, not needed yet
@@ -234,16 +234,24 @@ PT stays a **virtual social forecasting platform**. No cost integrations. No gro
 
 ## PRIORITIES — next sessions
 
-### Priority 0 — Operator actions (5 min, NOT dev tasks — run in Supabase SQL Editor)
-URL: https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+### Priority 0 — Operator actions (10 min, NOT dev tasks — run in Supabase SQL Editor IN ORDER)
+URL: https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 
-**Step 1 (BLOCKER):** Run `supabase/migrations/001_gamification.sql`
+**Step 1:** `supabase/migrations/000_wallets.sql` (NEW — created 2026-05-16)
+- Creates `wallets` table (doesn't exist in new clean project)
+- Required before migration 004
+
+**Step 2:** `supabase/migrations/001_gamification.sql`
 - Creates `user_gamification` table + `public_leaderboard` VIEW
-- Required before ANY leaderboard/gamification features work for real users
+- Required before migration 003 and before ANY leaderboard/gamification features
 
-**Step 2 (after step 1):** Run `supabase/migrations/003_public_leaderboard_predictions.sql`
+**Step 3:** `supabase/migrations/003_public_leaderboard_predictions.sql`
 - Extends VIEW with `predictions` column
 - Unlocks: category accuracy bars, "Best at X", "Biggest Calls", recent predictions on profiles
+
+**Step 4:** `supabase/migrations/004_demo_portfolios.sql`
+- Creates `demo_portfolios` table + hardens wallets RLS
+- Unlocks: bet position persistence on refresh
 
 ### Priority 1 — ✅ RESOLVED: bet persistence bug (commit e9e675c)
 Root cause: `demo_portfolios` table never existed → PUT /api/demo-portfolio silently 500'd on every bet.

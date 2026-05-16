@@ -1,7 +1,7 @@
 -- PT Profiles — Phase 4b: Real Public Profiles
 -- Add username slug to profiles table for public profile URLs
 -- Run in Supabase SQL Editor:
--- https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+-- https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 
 -- ─── Add username column ───────────────────────────────────────────────────────
 

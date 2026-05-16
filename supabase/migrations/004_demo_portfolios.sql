@@ -1,6 +1,6 @@
 -- Migration 004: demo_portfolios table + wallets RLS hardening
 -- Run in Supabase SQL Editor:
--- https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+-- https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 --
 -- Fixes: bet positions and activity disappearing on page refresh
 -- Root cause: demo_portfolios table was never created → PUT /api/demo-portfolio returned 500 silently

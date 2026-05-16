@@ -22,7 +22,7 @@
 ## ⚠️ Migration 003 — Run This Next
 
 **File:** `supabase/migrations/003_public_leaderboard_predictions.sql`
-**URL:** https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+**URL:** https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 
 ```sql
 CREATE OR REPLACE VIEW public_leaderboard AS

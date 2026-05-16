@@ -51,7 +51,7 @@ npx vercel --prod
 
 ## Infrastructure
 
-- **Auth + DB:** Supabase (project `dvevwlhshcyvnsubyvzw`)
+- **Auth + DB:** Supabase (project `vkizidrsuwsreepsbbuy`)
 - **Tables:** `profiles`, `wallets`, `trades`, `activity_logs`, `game_results`, `academy_progress`, `user_gamification`
 - **Starting balance:** $100,000 virtual (hardcoded — do not change)
 - **Market data:** Polymarket Gamma API, `cache: "no-store"`, auto-refresh every 30s

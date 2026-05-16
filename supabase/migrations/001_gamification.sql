@@ -1,6 +1,6 @@
 -- PT Gamification Schema — Phase 3
 -- Run this in the Supabase SQL Editor:
--- https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+-- https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
 --
 -- After running this SQL, the sync layer in lib/supabase-sync.ts
 -- activates automatically — no code changes needed.
