@@ -15,6 +15,7 @@ import { useGamification } from "@/stores/gamification";
 import { ShareAchievementModal } from "@/components/share-achievement-modal";
 import { CategoryAccuracy } from "@/components/category-accuracy";
 import { CalledItModal } from "@/components/called-it-modal";
+import { Avatar } from "@/components/avatar";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 import { topCategoryFromPredictions } from "@/lib/share-copy";
 import type { PredictionRecord } from "@/stores/gamification";
@@ -24,11 +25,13 @@ export function ProfileClient({
   displayName,
   email,
   createdAt,
+  avatarUrl,
 }: {
   userId: string;
   displayName: string;
   email: string;
   createdAt: string | null;
+  avatarUrl?: string | null;
 }) {
   const { language } = useLanguage();
   const isEs = language === "es";
@@ -153,9 +156,7 @@ export function ProfileClient({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 pb-4 border-b border-border">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary shrink-0">
-              {displayName.charAt(0).toUpperCase()}
-            </div>
+            <Avatar size="lg" url={avatarUrl} displayName={displayName} />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-lg truncate">{displayName}</p>
               <p className="text-sm text-muted-foreground">

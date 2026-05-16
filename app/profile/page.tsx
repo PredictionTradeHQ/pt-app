@@ -21,6 +21,21 @@ export default async function ProfilePage() {
     user.user_metadata?.display_name || user.email?.split("@")[0] || "Trader";
   const createdAt = user.created_at ?? null;
 
+  // Fetch avatar from profiles. Wrapped because migration 005 may not be
+  // applied yet at the moment of deploy — in that window the SELECT errors
+  // and we fall through to null (initials render).
+  let avatarUrl: string | null = null;
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+    avatarUrl = profile?.avatar_url ?? null;
+  } catch {
+    avatarUrl = null;
+  }
+
   return (
     <AppShell>
       <ProfileClient
@@ -28,6 +43,7 @@ export default async function ProfilePage() {
         displayName={displayName}
         email={user.email ?? ""}
         createdAt={createdAt}
+        avatarUrl={avatarUrl}
       />
     </AppShell>
   );

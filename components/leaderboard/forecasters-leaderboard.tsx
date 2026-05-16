@@ -19,6 +19,7 @@ import type { ForecasterEntry } from "@/app/api/leaderboard/forecasters/route"
 import { LeaderboardClimbToast, type ClimbInfo } from "@/components/leaderboard-climb-toast"
 import { topCategoryFromPredictions } from "@/lib/share-copy"
 import { PT_CATEGORIES, getCategoryById } from "@/lib/categories"
+import { Avatar } from "@/components/avatar"
 
 type CategoryFilter = "all" | string  // "all" or a PT category id
 
@@ -27,6 +28,8 @@ type CategoryFilter = "all" | string  // "all" or a PT category id
 type RowEntry = {
   id: string
   displayName: string
+  /** Uploaded avatar URL. Null for demos and real users without an upload. */
+  avatarUrl?: string | null
   currentStreak: number
   bestStreak: number
   totalPredictions: number
@@ -119,6 +122,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
     const realRows: RowEntry[] = real.map((u) => ({
       id: `real-${u.userId}`,
       displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
       currentStreak: u.currentStreak,
       bestStreak: u.bestStreak,
       totalPredictions: u.totalPredictions,
@@ -309,8 +313,6 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       {/* #1 Spotlight */}
       {!isLoading && visible.length > 0 && (() => {
         const top = visible[0]
-        const initials = top.displayName
-          .split(" ").map((w) => w[0] ?? "").join("").toUpperCase().slice(0, 2)
         const primaryValue =
           sort === "accuracy" && top.accuracy !== null ? `${top.accuracy}%` :
           sort === "badges" ? `🏅 ${top.badgeCount}` :
@@ -332,9 +334,12 @@ export function ForecastersLeaderboard({ isEs }: Props) {
               {spotlightLabel}
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400 shrink-0">
-                {initials}
-              </div>
+              <Avatar
+                size="md"
+                url={top.avatarUrl}
+                displayName={top.displayName}
+                className="bg-amber-500/15 border-amber-500/30 text-amber-400"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">{top.displayName}</p>
                 <p className="text-[11px] text-muted-foreground truncate">
@@ -429,12 +434,6 @@ function LeaderboardRow({
   isEs: boolean
 }) {
   const name = entry.displayName
-  const initials = name
-    .split(" ")
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
 
   // Avatar color: real users get indigo, demo gets badge-rarity color
   const avatarColor = entry.isCurrentUser
@@ -511,16 +510,12 @@ function LeaderboardRow({
       </div>
 
       {/* Avatar */}
-      <div
-        className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-        style={{
-          background: avatarColor + "22",
-          color: avatarColor,
-          border: `1.5px solid ${avatarColor}40`,
-        }}
-      >
-        {initials}
-      </div>
+      <Avatar
+        size="sm"
+        url={entry.avatarUrl}
+        displayName={name}
+        accentHex={avatarColor}
+      />
 
       {/* Name + meta */}
       <div className="flex-1 min-w-0">

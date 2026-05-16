@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { BadgeCard } from "@/components/badge-card"
+import { Avatar } from "@/components/avatar"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
 import { PT_CATEGORIES } from "@/lib/categories"
 import { cn } from "@/lib/utils"
@@ -51,15 +52,8 @@ function buildHeadline(
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function RealPublicProfile({ data }: Props) {
-  const { displayName, username, gamification: gam, recentPredictions, categoryStats, topCalls } = data
+  const { displayName, username, avatarUrl, gamification: gam, recentPredictions, categoryStats, topCalls } = data
   const [copied, setCopied] = useState(false)
-
-  const initials = displayName
-    .split(" ")
-    .map((w) => w[0] ?? "")
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
 
   const earnedBadgeIds = new Set((gam?.badges ?? []).map((b) => b.id))
   const earnedBadges = (gam?.badges ?? []) as Array<{ id: string; earnedAt: string }>
@@ -102,9 +96,7 @@ export function RealPublicProfile({ data }: Props) {
 
       {/* ── Header ── */}
       <div className="flex items-start gap-4 mb-3">
-        <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-2xl font-bold text-primary shrink-0">
-          {initials}
-        </div>
+        <Avatar size="lg" url={avatarUrl} displayName={displayName} />
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold truncate">{displayName}</h1>
           <p className="text-sm text-muted-foreground">@{username}</p>
