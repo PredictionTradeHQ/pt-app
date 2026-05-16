@@ -18,6 +18,33 @@ Operador validó end-to-end en navegador real:
 
 ## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
+### Category filter chips on the leaderboard (Priority 3 shipped)
+
+**Problem:** The leaderboard was a single global list. Specialty was visible on each row ("🪙 Crypto") but you couldn't slice the board by it. A Crypto forecaster couldn't see "the leaderboard for Crypto specialists" — the tribal/niche identity layer was missing.
+
+**What changed:**
+- `components/leaderboard/forecasters-leaderboard.tsx`
+  - New `categoryFilter: "all" | <PT category id>` state, default `"all"`.
+  - New horizontal chips row above the existing sort tabs: `[All ✦] [Crypto 🪙] [AI & Tech 🤖] [Sports ⚽] [Gaming 🎮] [Entertainment 🎬] [Internet 🌐] [Global News 📰]`. Built from `PT_CATEGORIES`.
+  - `visible = useMemo(ranked.filter(r => r.topCategoryId === filter), ...)` — pure client-side filter on top of the existing global ranking. Sort + tie-break are untouched; they apply *inside* the filtered view by construction.
+  - **#1 Spotlight** label now includes the active category: `🔥 Streak leader · 🪙 Crypto`. Stays as the base label on "All".
+  - **Climb detection** still runs against the GLOBAL `ranked` list, never `visible` — flipping a category filter cannot re-fire climb toasts.
+  - **YOU injection** unchanged; user shows in any category tab whose id matches their earned `topCategoryId`. If they haven't earned a specialty yet (under the ≥3-resolved / ≥50%-accuracy threshold), they show only on "All". This is intentional — specialty is earned, not assumed.
+  - **Empty state** is category-aware: when 0 specialists exist (e.g. Global News today), surfaces `"No specialists in <Category> yet — be the first forecaster to earn the <Category> title"` with a CTA to `/markets`.
+  - New `CategoryChip` sub-component (pill styling, horizontal scroll snap on mobile).
+
+**Verification:**
+- `pnpm build` clean (TS strict).
+- Node sim (`/tmp/sim-cat-filter.mjs`) over the 12 demo anchors confirms expected slices: Crypto 3, AI & Tech 3, Sports 2, Gaming 2, Entertainment 1, Internet Culture 1, Global News 0 → empty state.
+- Prod live: literal `"No specialists in"` (only present in this commit) found in client chunk `/_next/static/chunks/0utya37dqr63e.js`.
+- Smoke 11 endpoints all 200 (incl. all four sort modes, OG profile, OG streak, polymarket).
+
+**Risk:** Very low. Purely additive — new state, new chips row, filter applied on top of the existing pipeline. No API change, no DB change, no env vars. Removing the chips row would restore byte-identical behavior to commit 46095e6.
+
+**Trade-off acknowledged:** filter is client-side. The API limits `limit(50)` real rows, so a category with many real users could be undersampled. Today realUsers=[] makes this moot; when the user base grows, the path to server-side filtering is straightforward (add `?category=crypto` param on the existing endpoint).
+
+---
+
 ### Streak leaderboard tab — fix + specialty (Priority 2 shipped)
 
 **Problem:** The "Streaks" tab existed but was silently ranking by `best_streak` while the UI surfaced `🔥 currentStreak` as the primary value. A user with `current=0 / best=30` outranked a `current=10 / best=10` user — visually deceptive. No tie-break (indeterminate order on ties). And the row gave no signal about *what kind* of forecaster the person is, breaking continuity with the OG card and share copy.
@@ -350,10 +377,11 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 - ✅ Profile OG image (commit `92f826c`) — rich link previews on X / WhatsApp / LinkedIn
 - ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
 - ✅ Streak leaderboard tab fix + specialty (commit `46095e6`) — ranking finally matches the 🔥 currentStreak that the UI shows, plus the specialty chip on every row
+- ✅ Category filter chips on leaderboard (commit `6c3402a`) — All / Crypto / AI & Tech / Sports / Gaming / Entertainment / Internet / Global News; client-side over the per-row specialty already in the API
 
 **Next recommended steps (in order):**
-1. **Leaderboard category tabs** — `Best in AI & Tech`, `Best in Crypto`, etc. filtered via the per-row `topCategoryId` already in the API response (no new server work for the filter itself). A category dropdown above the sort tabs would let users browse leaderboards scoped to their interest. Slight UX consideration: combine with current sort or replace it.
-2. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats. Reduces drop-off for new accounts.
+1. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats. Reduces drop-off for new accounts.
+2. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen. Path: add the param, filter in SQL via `topCategoryId` (could pre-compute on a generated column later for speed). Skip until base actually grows.
 3. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render on every fetch. Low priority — only matters at scale.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
