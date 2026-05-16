@@ -3,7 +3,11 @@
 import { useState } from "react"
 import { CheckCircle2, Check, X, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { generateShareCopy } from "@/lib/share-copy"
+import {
+  generateShareCopy,
+  categoryRefById,
+  type CategoryRef,
+} from "@/lib/share-copy"
 import type { PredictionRecord } from "@/stores/gamification"
 
 // X bird icon (inline SVG — no external dep)
@@ -28,10 +32,12 @@ interface Props {
   prediction: PredictionRecord
   username: string
   accuracyPct?: number | null
+  /** Optional: user's specialty category. Lets share copy say "67% in Crypto 🪙". */
+  topCategory?: CategoryRef | null
   onClose: () => void
 }
 
-export function CalledItModal({ prediction, username, accuracyPct, onClose }: Props) {
+export function CalledItModal({ prediction, username, accuracyPct, topCategory, onClose }: Props) {
   const [copied, setCopied] = useState(false)
 
   const profileUrl = `https://predictiontrade.online/profile/${username}`
@@ -40,12 +46,16 @@ export function CalledItModal({ prediction, username, accuracyPct, onClose }: Pr
     (prediction.prediction === "YES" && prediction.probAtTime < 20) ||
     (prediction.prediction === "NO" && 100 - prediction.probAtTime < 20)
 
+  const marketCategory = categoryRefById(prediction.category)
+
   const copy = generateShareCopy("called-it", {
     username,
     marketTitle: prediction.marketTitle,
     prediction: prediction.prediction,
     isContrarian,
     accuracyPct,
+    marketCategory: marketCategory ?? undefined,
+    topCategory: topCategory ?? undefined,
   })
 
   const tweetUrl     = `https://x.com/intent/tweet?text=${encodeURIComponent(copy.x)}`

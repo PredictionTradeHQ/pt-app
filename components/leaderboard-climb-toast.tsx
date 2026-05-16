@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { X } from "lucide-react"
-import { generateShareCopy } from "@/lib/share-copy"
+import { generateShareCopy, type CategoryRef } from "@/lib/share-copy"
 import { cn } from "@/lib/utils"
 
 // X bird icon (inline SVG)
@@ -28,6 +28,8 @@ export interface ClimbInfo {
   currentRank: number
   accuracyPct?: number | null
   username?: string
+  /** Optional specialty category — added to share copy when present. */
+  topCategory?: CategoryRef | null
 }
 
 interface Props {
@@ -56,6 +58,7 @@ export function LeaderboardClimbToast({ climb, onDismiss }: Props) {
     previousRank: climb.previousRank,
     currentRank: climb.currentRank,
     accuracyPct: climb.accuracyPct,
+    topCategory: climb.topCategory ?? undefined,
   })
 
   const tweetUrl    = `https://x.com/intent/tweet?text=${encodeURIComponent(copy.x)}`

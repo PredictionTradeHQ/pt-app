@@ -16,6 +16,7 @@ import { ShareAchievementModal } from "@/components/share-achievement-modal";
 import { CategoryAccuracy } from "@/components/category-accuracy";
 import { CalledItModal } from "@/components/called-it-modal";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
+import { topCategoryFromPredictions } from "@/lib/share-copy";
 import type { PredictionRecord } from "@/stores/gamification";
 
 export function ProfileClient({
@@ -342,6 +343,7 @@ export function ProfileClient({
               ? Math.round((correctCount / resolvedCount) * 100)
               : null
           }
+          topCategory={topCategoryFromPredictions(predictions)}
           onClose={() => setCalledItPrediction(null)}
         />
       )}

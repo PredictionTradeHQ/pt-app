@@ -16,6 +16,7 @@ import { RARITY_COLORS } from "@/lib/badges"
 import { slugify } from "@/lib/utils"
 import type { ForecasterEntry } from "@/app/api/leaderboard/forecasters/route"
 import { LeaderboardClimbToast, type ClimbInfo } from "@/components/leaderboard-climb-toast"
+import { topCategoryFromPredictions } from "@/lib/share-copy"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
     badges,
     resolvedCount,
     correctCount,
+    predictions,
     setLeaderboardRank,
   } = useGamification()
 
@@ -198,9 +200,10 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         previousRank: result.previousRank,
         currentRank,
         accuracyPct: localAccuracyPct,
+        topCategory: topCategoryFromPredictions(predictions),
       })
     }
-  }, [isLoading, ranked, setLeaderboardRank, localAccuracyPct])
+  }, [isLoading, ranked, setLeaderboardRank, localAccuracyPct, predictions])
 
   const dismissClimb = useCallback(() => setClimbInfo(null), [])
 
