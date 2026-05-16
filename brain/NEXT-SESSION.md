@@ -1,6 +1,6 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-16 | Read this before touching anything.
+> Last updated: 2026-05-16 (session close) | Read this before touching anything.
 
 ---
 
@@ -8,87 +8,35 @@
 
 | System | Status |
 |---|---|
-| predictiontrade.online | ✅ Live — env vars restored, Supabase connected |
-| GitHub main | ✅ Clean — last commit `b448e04` |
+| predictiontrade.online | ✅ Live — verified in incognito (login, signup, bets, profiles) |
+| GitHub main | ✅ Clean — last commit `27e9942` |
 | Vercel | ✅ Auto-deploy active (PT Vercel workspace) |
 | TypeScript build | ✅ Strict — 0 errors |
-| Supabase `demo_portfolios` | ✅ Created by migration 004 — bet persistence now works |
-| Supabase `wallets` UPDATE policy | ✅ Added by migration 004 |
-| Supabase `user_gamification` | ❌ NOT CREATED — migration 001 never run (BLOCKER) |
-| Supabase `public_leaderboard` VIEW | ❌ NOT CREATED — depends on user_gamification |
-| Public profile category accuracy | ❌ BLOCKED — needs migrations 001 then 003 |
+| Supabase project | ✅ New clean project `vkizidrsuwsreepsbbuy` |
+| Supabase `wallets` | ✅ Live + RLS (migration 000) |
+| Supabase `demo_portfolios` | ✅ Live + RLS (migration 004) |
+| Supabase `user_gamification` | ✅ Live + RLS (migration 001) |
+| Supabase `public_leaderboard` VIEW | ✅ Live WITH `predictions` column (migrations 001 + 003) |
+| Core loop | ✅ login → bet → balance persists → positions persist → leaderboard → profiles |
 
 ---
 
-## ⚠️ MIGRATIONS — BLOCKER — RUN BEFORE NEXT DEV SESSION
+## ✅ MIGRATIONS — ALL COMPLETE (2026-05-16)
 
-**URL:** https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
+New Supabase project `vkizidrsuwsreepsbbuy` — all 4 migrations applied and verified:
 
-### Step 1 — NEW CLEAN PROJECT: `supabase/migrations/000_wallets.sql`
+| Migration | Table/Object | Status |
+|---|---|---|
+| `000_wallets.sql` | `wallets` | ✅ applied |
+| `001_gamification.sql` | `user_gamification` + `public_leaderboard` VIEW | ✅ applied |
+| `003_public_leaderboard_predictions.sql` | VIEW extended with `predictions` | ✅ applied |
+| `004_demo_portfolios.sql` | `demo_portfolios` | ✅ applied |
 
-**Why it's needed:** New Supabase project has no `wallets` table. Migration 004 depends on it.
-Run this first so bet flow (/api/wallet) works correctly.
-
-**Run the full contents of `supabase/migrations/000_wallets.sql` in the SQL Editor.**
-
-### Step 2 — BLOCKER: `supabase/migrations/001_gamification.sql`
-
-**Why it's critical:** `user_gamification` table does NOT exist.
-Required for: streaks, badges, accuracy, leaderboard, public profiles.
-Migration 003 will fail without it (depends on user_gamification).
-
-**Run the full contents of `supabase/migrations/001_gamification.sql` in the SQL Editor.**
-
-### Step 3 — After 001: `supabase/migrations/003_public_leaderboard_predictions.sql`
-
-**What it does:** Recreates `public_leaderboard` VIEW to include the `predictions` JSONB column, which powers category accuracy bars and "Biggest Calls" sections on public profiles.
-
-**SQL to run:**
-```sql
-CREATE OR REPLACE VIEW public_leaderboard AS
-SELECT
-  user_id,
-  current_streak,
-  best_streak,
-  last_prediction_date,
-  total_predictions,
-  resolved_count,
-  correct_count,
-  called_it_count,
-  CASE
-    WHEN resolved_count >= 5
-    THEN ROUND((correct_count::float / resolved_count) * 100)::integer
-    ELSE NULL
-  END AS accuracy_pct,
-  jsonb_array_length(badges) AS badge_count,
-  badges,
-  category_predictions,
-  predictions,
-  updated_at
-FROM user_gamification;
-
-GRANT SELECT ON public_leaderboard TO anon, authenticated;
-```
-
-### Step 4 — After 001 and 003: `supabase/migrations/004_demo_portfolios.sql`
-
-Creates `demo_portfolios` table + ensures `wallet_update_own` UPDATE policy exists on wallets.
-If you ran 000_wallets.sql first, the DO block in 004 will detect the policy already exists and skip safely.
-
-**Impact if NO migration is run (new project):**
-- ✅ Auth, signup, profiles work (already verified)
-- ❌ Bet balance not saved — wallets table doesn't exist → 500 on /api/wallet
-- ❌ Bet positions not saved — demo_portfolios doesn't exist → 500 on /api/demo-portfolio
-- ❌ Leaderboard shows demo-only users — user_gamification doesn't exist
-- ❌ Public profiles empty — no gamification data
-
-**Impact once all 4 migrations run:**
-- ✅ Full core loop active: auth → bet → balance persists → positions persist → leaderboard → profiles
-- ✅ No code changes needed
+**No pending migrations for next session.**
 
 ---
 
-## What Was Built — 2026-05-16 Session
+## What Was Built — 2026-05-16 Session (COMPLETE)
 
 ### Core Loop Stability (commits `e9e675c`, `50e20d9`, `b448e04`)
 
@@ -197,39 +145,18 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 
 ## Pending — Priority Order
 
-### Priority 0 — Run Migration 003 (NOT a dev task — operator action, 2 minutes)
-Run SQL in Supabase dashboard (see above). Unlocks full public profile data immediately.
-No code changes needed after running.
+### Priority 0 — ✅ COMPLETE: all migrations applied (2026-05-16)
+New Supabase project `vkizidrsuwsreepsbbuy` — all tables live, core loop verified end-to-end.
 
-### Priority 1 — ✅ RESUELTO: error al hacer una predicción/apuesta (commit `e9e675c`)
-
-**Causa raíz identificada:** `demo_portfolios` table NO existía en Supabase.
-
-**Qué pasaba:**
-- `confirmBet()` actualizaba UI optimísticamente ✅
-- `PUT /api/wallet` → funcionaba, balance guardado ✅
-- `PUT /api/demo-portfolio` → 500 silencioso, posiciones NO guardadas ❌
-- `persistPortfolio()` no verificaba `response.ok` → tragaba el error
-- Al recargar: balance correcto (wallets), posiciones vacías (demo_portfolios fallaba)
-
-**Fix desplegado:**
-- `supabase/migrations/004_demo_portfolios.sql` — crea `demo_portfolios` con RLS; también añade `wallet_update_own` UPDATE policy si no existe
-- `components/markets-app.tsx` — `persistPortfolio` ahora verifica `response.ok` y loguea errores con HTTP status
-
-**⚠️ ACCIÓN OPERADOR REQUERIDA (2 min) — correr ANTES de hacer más apuestas:**
-Ejecutar migration 004 en Supabase SQL Editor:
-https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
-
-Pegar el contenido de `supabase/migrations/004_demo_portfolios.sql`.
-
-Sin esto: el código fix está desplegado pero la tabla sigue sin existir → el bug persiste.
-Con esto: posiciones, historial y balance persisten correctamente en Supabase.
+### Priority 1 — ✅ RESOLVED: bet persistence bug (commit `e9e675c`)
+Root cause: `demo_portfolios` never existed. Fix: migration 004 + `persistPortfolio()` error logging.
+Applied and verified in production.
 
 ---
 
 ### Priority 2 — Social / Profiles / Leaderboard polish
 
-After migration 003 runs, assess which areas feel incomplete. Candidates in order:
+Migrations complete — all data layers are live. Assess which areas feel incomplete. Candidates in order:
 
 **1a. Leaderboard: category tabs**
 Add "Best in [Category]" filter tabs to `/leaderboard` — top forecasters per category

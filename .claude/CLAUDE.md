@@ -172,14 +172,15 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 **Git:** `main` clean, synced with `origin/main`
 **TypeScript:** 0 errors (strict mode)
-**Vercel:** ● Ready — predictiontrade.online live (env vars restored, Supabase connected)
+**Vercel:** ● Ready — predictiontrade.online live ✅ verified in incognito
+**Supabase:** New clean project `vkizidrsuwsreepsbbuy` — all migrations applied
 
 **Last commits:**
 ```
+27e9942  chore(supabase): migrate to new clean project — replace all old project ID refs, add 000_wallets
+8aa44bd  docs(brain): session close — core loop stability, true Supabase schema state
 b448e04  fix(api): force-dynamic on stats/platform — prevents ISR caching broken build 404
-50e20d9  fix(api): remove PMS contamination from env.local.example
 e9e675c  fix(bets): add demo_portfolios migration + error logging in persistPortfolio
-e588e18  docs(claude): update CURRENT STATE checkpoint to be4158c
 be4158c  feat(profiles): server-side category accuracy + top calls on public profiles
 ```
 
@@ -199,20 +200,16 @@ be4158c  feat(profiles): server-side category accuracy + top calls on public pro
 - ✅ Phase 5c — Credibility Pass (honest stats, no fake features, social-first copy, real platform stats)
 - ✅ Phase 5d — Public Profile Identity (server-side category accuracy, top calls, shareable headline)
 - ✅ AI Skills Layer (PT-TONE-GUIDE.md, pt-called-it-post, pt-market-brief)
-- ✅ Phase 5e — Core Loop Stability (demo_portfolios table created, Vercel env vars restored, ISR fix)
+- ✅ Phase 5e — Core Loop Stability (new Supabase project, all migrations applied, verified in production)
 
-**⚠️ SUPABASE SCHEMA — verified 2026-05-16 (TRUE STATE):**
-- `profiles` — ✅ exists
-- `wallets` — ✅ exists + UPDATE policy (migration 004 ensured)
-- `demo_portfolios` — ✅ created by migration 004 (bet positions + activity persist correctly now)
-- `user_gamification` — ❌ NOT CREATED — migration 001 NEVER run
-- `public_leaderboard` VIEW — ❌ NOT CREATED — depends on user_gamification
+**✅ SUPABASE SCHEMA — verified 2026-05-16 (new project `vkizidrsuwsreepsbbuy`):**
+- `profiles` — ✅ exists (auth trigger on signup)
+- `wallets` — ✅ exists + RLS policies (migration 000)
+- `demo_portfolios` — ✅ exists + RLS policies (migration 004)
+- `user_gamification` — ✅ exists + RLS policies (migration 001)
+- `public_leaderboard` VIEW — ✅ exists WITH `predictions` column (migrations 001 + 003)
 
-**⚠️ Pending operator actions — run in Supabase SQL Editor in order:**
-1. `supabase/migrations/001_gamification.sql` — BLOCKER — creates `user_gamification` + `public_leaderboard` VIEW
-2. `supabase/migrations/003_public_leaderboard_predictions.sql` — run AFTER 001 — extends VIEW with `predictions` column
-
-URL: https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
+**No pending migrations.** All tables and views are live. Core loop verified end-to-end.
 
 **Other friction points (low urgency):**
 - `supabase/migrations/002_profiles_username.sql` — optional username column, not needed yet
@@ -234,24 +231,8 @@ PT stays a **virtual social forecasting platform**. No cost integrations. No gro
 
 ## PRIORITIES — next sessions
 
-### Priority 0 — Operator actions (10 min, NOT dev tasks — run in Supabase SQL Editor IN ORDER)
-URL: https://supabase.com/dashboard/project/vkizidrsuwsreepsbbuy/sql/new
-
-**Step 1:** `supabase/migrations/000_wallets.sql` (NEW — created 2026-05-16)
-- Creates `wallets` table (doesn't exist in new clean project)
-- Required before migration 004
-
-**Step 2:** `supabase/migrations/001_gamification.sql`
-- Creates `user_gamification` table + `public_leaderboard` VIEW
-- Required before migration 003 and before ANY leaderboard/gamification features
-
-**Step 3:** `supabase/migrations/003_public_leaderboard_predictions.sql`
-- Extends VIEW with `predictions` column
-- Unlocks: category accuracy bars, "Best at X", "Biggest Calls", recent predictions on profiles
-
-**Step 4:** `supabase/migrations/004_demo_portfolios.sql`
-- Creates `demo_portfolios` table + hardens wallets RLS
-- Unlocks: bet position persistence on refresh
+### Priority 0 — ✅ COMPLETE: all Supabase migrations applied (2026-05-16)
+All tables live in new project `vkizidrsuwsreepsbbuy`. No pending operator actions.
 
 ### Priority 1 — ✅ RESOLVED: bet persistence bug (commit e9e675c)
 Root cause: `demo_portfolios` table never existed → PUT /api/demo-portfolio silently 500'd on every bet.
