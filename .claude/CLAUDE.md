@@ -136,18 +136,18 @@ API routes:
 
 No CLI available — use Supabase dashboard for DDL. `.env.local` does **not** have `SUPABASE_SERVICE_ROLE_KEY` locally (client-side only has `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 
-**Active tables (production):**
-- `profiles` — display_name, avatar, bio — auto-created on auth.users insert
-- `wallets` — balance $100,000 initial — auto-created on signup
-- `trades` — prediction records
-- `activity_logs` — user activity feed
-- `game_results` — Prediction Flash scores
-- `academy_progress` — course completion
-- `user_gamification` — ✅ LIVE — streaks, badges, accuracy, resolved predictions
-- `public_leaderboard` — ✅ LIVE VIEW — server-side accuracy_pct, readable by anon+authenticated
+**Active tables (production) — verified 2026-05-15:**
+- `profiles` — ✅ exists (auth trigger on signup)
+- `wallets` — ✅ exists (+ UPDATE policy added by migration 004)
+- `demo_portfolios` — ✅ created by migration 004 (bet positions + activity)
+- `user_gamification` — ❌ NOT CREATED — migration 001 was never run
+- `public_leaderboard` VIEW — ❌ NOT CREATED — depends on user_gamification
+- `trades`, `activity_logs`, `game_results`, `academy_progress` — unverified (likely exist from initial setup)
 
-**Pending SQL (optional, run in Supabase dashboard):**
-- `supabase/migrations/002_profiles_username.sql` — `username` column + unique index + RLS UPDATE own
+**Pending SQL — run in this order:**
+1. `supabase/migrations/001_gamification.sql` — ⚠️ BLOCKER for leaderboard, streaks, badges, accuracy. Creates `user_gamification` + `public_leaderboard` VIEW.
+2. `supabase/migrations/003_public_leaderboard_predictions.sql` — extends VIEW with `predictions` column (run after 001)
+3. `supabase/migrations/002_profiles_username.sql` — optional, adds indexed username column
 
 ---
 
