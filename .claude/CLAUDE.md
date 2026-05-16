@@ -176,11 +176,11 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 **Last commits:**
 ```
+e588e18  docs(claude): update CURRENT STATE checkpoint to be4158c
 be4158c  feat(profiles): server-side category accuracy + top calls on public profiles
-36babf8  docs(claude): professional CLAUDE.md with session protocol + updated NEXT-SESSION
 3891faf  feat(ux): credibility pass — real stats, honest copy, social-first framing
+36babf8  docs(claude): professional CLAUDE.md with session protocol + updated NEXT-SESSION
 067e3b2  docs: infrastructure migration cleanup — canonical paths updated
-6792e77  feat: social viral loops — share engine, climb toast, onboarding guide
 ```
 
 **Completed phases:**
@@ -196,39 +196,43 @@ be4158c  feat(profiles): server-side category accuracy + top calls on public pro
 - ✅ Phase 4f — Bet Flow Stability (parallel API writes, custom amount, no auth disruption)
 - ✅ Phase 5a — UX Polish (mobile toast, balance modal, real ticker, Called It flow)
 - ✅ Phase 5b — Lightweight Onboarding (auth callback → /markets, welcome banner, nudges)
-- ✅ Phase 5c — UX Polish (removed fake tabs, honest stats, social hero reframe)
+- ✅ Phase 5c — Credibility Pass (honest stats, no fake features, social-first copy, real platform stats)
+- ✅ Phase 5d — Public Profile Identity (server-side category accuracy, top calls, shareable headline)
 - ✅ AI Skills Layer (PT-TONE-GUIDE.md, pt-called-it-post, pt-market-brief)
-- ✅ Social Viral Loops (share-copy.ts, called-it-modal, leaderboard-climb-toast, onboarding guide)
 
-**Known friction points remaining:**
-1. `CategoryAccuracy` on `/profile/[username]` — code complete (commit `be4158c`), **awaiting SQL** in Supabase dashboard (`supabase/migrations/003_public_leaderboard_predictions.sql`)
-2. Hero "4,200+ predictions made" still hardcoded (small issue)
-3. `supabase/migrations/002_profiles_username.sql` not executed (optional — username column)
-4. Real ActivityTicker returns `[]` until real users accumulate data (fallback to simulated is active)
+**⚠️ Pending operator action — NOT a dev task:**
+Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase dashboard:
+https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+
+Without it: category accuracy bars, "Best at X", "Biggest Calls" empty on public profiles (graceful fallbacks, no errors).
+With it: all new profile sections activate instantly. No code changes needed.
+
+**Other friction points (low urgency):**
+- `supabase/migrations/002_profiles_username.sql` — optional username column, not needed yet
+- Real ActivityTicker shows simulated data until real users accumulate activity
 
 ---
 
 ## PRIORITIES — next sessions
 
-### Priority 1 — Execute SQL migration 003 (5 min, unlocks live feature)
-- Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase dashboard
-- This activates CategoryAccuracy + TopCalls on all public profiles immediately
-- Code is already deployed (commit `be4158c`) — only the DB view update is missing
+### Priority 0 — Operator action (2 min): Run migration 003
+No dev needed — just run the SQL in Supabase dashboard. Unlocks full public profile identity layer.
 
-### Priority 2 — Phase 4g: AI Layer (high impact, moderate complexity)
-1. Add `ANTHROPIC_API_KEY` to `.env.local` AND Vercel env vars
+### Priority 1 — Phase 4g: AI Layer (high impact, requires ANTHROPIC_API_KEY)
+1. Add `ANTHROPIC_API_KEY` to `.env.local` AND Vercel env vars (PT workspace)
 2. Uncomment 10 lines in `app/api/ai/share-copy/route.ts` → Claude API live
-3. Add `/api/ai/market-summary` with Supabase cache table (30 min TTL)
-4. "Explain this market" button on market cards
+3. Create `/api/ai/market-summary/route.ts` with Supabase cache (30 min TTL)
+4. Add "Explain this market" button to market cards in `components/markets-app.tsx`
+Estimated cost: ~$0.002/summary (haiku-4-5). 1,000/month ≈ $2.
 
-### Priority 3 — Phase 5 Growth (longer term)
-- Trending feed dynamic in home
-- Category leaderboards in `/leaderboard`
+### Priority 2 — Phase 5 Growth (longer term, needs user base first)
+- Category leaderboards (per-category rankings on `/leaderboard`)
+- Trending feed on home (dynamic, replaces static hero when >50 users)
 - Automated content engine (Claude API → Buffer)
 
-### Priority 4 — Optional cleanup
-- Execute `supabase/migrations/002_profiles_username.sql` in Supabase dashboard
-- Add `username` field to `/profile/[username]` real user lookup
+### Priority 3 — Optional cleanup (low urgency)
+- Execute `supabase/migrations/002_profiles_username.sql` (indexed username lookup)
+- Monitor ActivityTicker — real data auto-populates as users accumulate activity
 
 ---
 

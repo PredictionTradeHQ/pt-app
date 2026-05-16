@@ -1,8 +1,8 @@
-# PT Supabase Schema — Phase 3
+# PT Supabase Schema — Phase 5d
 
 > **Document:** Database Schema & Sync Architecture
-> **Phase:** Phase 3 — Supabase Sync + Real Accuracy
-> **Date:** 2026-05-13
+> **Phase:** Phase 5d — Public Profile Identity
+> **Last updated:** 2026-05-15
 
 ---
 
@@ -10,25 +10,61 @@
 
 | Component | Status |
 |---|---|
-| SQL migration file | ✅ Ready (`supabase/migrations/001_gamification.sql`) |
-| Sync layer | ✅ Ready (`lib/supabase-sync.ts`) |
-| Tables in Supabase | ⚠️ **Pending — run SQL in Supabase dashboard** |
-| Sync activation | Auto (once tables exist) |
+| Migration 001 — `user_gamification` table | ✅ Executed in production |
+| Migration 002 — `username` column | ⏸ Optional — not executed (scan-500 works fine for now) |
+| Migration 003 — `predictions` in VIEW | ⚠️ **NOT YET RUN — partial blocker for public profile sections** |
+| `public_leaderboard` VIEW | ✅ Live — but WITHOUT `predictions` column until migration 003 |
+| Sync layer | ✅ Live (`lib/supabase-sync.ts`) |
+| Profile helpers | ✅ Live (`lib/profile-helpers.ts`) |
 
 ---
 
-## Setup Instructions (One Time)
+## ⚠️ Migration 003 — Run This Next
 
-1. Go to Supabase SQL Editor:
-   `https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new`
+**File:** `supabase/migrations/003_public_leaderboard_predictions.sql`
+**URL:** https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
 
-2. Paste the entire contents of `supabase/migrations/001_gamification.sql`
+```sql
+CREATE OR REPLACE VIEW public_leaderboard AS
+SELECT
+  user_id,
+  current_streak,
+  best_streak,
+  last_prediction_date,
+  total_predictions,
+  resolved_count,
+  correct_count,
+  called_it_count,
+  CASE
+    WHEN resolved_count >= 5
+    THEN ROUND((correct_count::float / resolved_count) * 100)::integer
+    ELSE NULL
+  END AS accuracy_pct,
+  jsonb_array_length(badges) AS badge_count,
+  badges,
+  category_predictions,
+  predictions,
+  updated_at
+FROM user_gamification;
 
-3. Click **Run**
+GRANT SELECT ON public_leaderboard TO anon, authenticated;
+```
 
-4. Done — sync activates automatically on next user login.
+**Without it:** category accuracy bars, "Best at X", "Biggest Calls", and recent predictions on public profiles will be empty (graceful fallbacks — no errors).
+**With it:** all new profile sections activate automatically. No code changes needed.
 
-**No code changes needed after running the SQL.**
+---
+
+## Setup Instructions
+
+### Migration 001 — Already Done ✅
+`supabase/migrations/001_gamification.sql` — creates `user_gamification` table + RLS + `public_leaderboard` VIEW.
+
+### Migration 003 — Pending ⚠️
+`supabase/migrations/003_public_leaderboard_predictions.sql` — recreates `public_leaderboard` VIEW to include `predictions` JSONB column. See section above.
+
+### Migration 002 — Optional ⏸
+`supabase/migrations/002_profiles_username.sql` — adds indexed `username` column to `profiles` table. Current slug matching scans up to 500 rows — sufficient until >200 real users.
 
 ---
 
@@ -183,16 +219,28 @@ calledItCount = predictions.filter(p =>
 
 ---
 
-## Phase 4 Roadmap
+## Profile Data Flow (Phase 5d)
 
-### Real Public Leaderboard
-Once SQL runs, the `public_leaderboard` view is live. Upgrade `ForecastersLeaderboard` to:
-1. Fetch from `/api/leaderboard/forecasters` (reads `public_leaderboard` view)
-2. Merge with demo data if fewer than 10 real users
-3. Show real usernames (display_name from `user_metadata`)
+```
+user_gamification.predictions (JSONB array)
+  ↓ exposed via public_leaderboard VIEW (after migration 003)
+  ↓ fetched server-side in /profile/[username]/page.tsx
+  ↓ processed by lib/profile-helpers.ts
+    → computeCategoryStats()  — accuracy by category (min 3 resolved, sorted desc)
+    → computeTopCalls()       — contrarian correct predictions (prob <30%), top 3
+    → normalizeRecentPredictions() — last 10 by date
+  ↓ passed as props to RealPublicProfile component
+    → buildHeadline()         — "63% accurate · 🔥 7-day streak · Best at Crypto 🤖"
+    → CategoryAccuracySection — "Best at X" + progress bars
+    → TopCallRow              — contrarian big calls
+    → PredictionRow           — recent predictions with category tags
+```
 
-### Category Accuracy Breakdown
-Per-category accuracy stored in `category_predictions` — extend to include `correct` per category for deeper analytics.
+Also available via API: `/api/profile/[username]` returns same `RealProfileData` shape.
 
-### Prediction Timelines
-Full public prediction history on `/profile/[username]` when user opts in.
+## What NOT to Build Next (in Supabase)
+
+- Service role key exposure to client — anon key only in browser
+- Storing real money or financial data
+- Complex analytics tables — compute from existing JSONB arrays instead
+- Per-market resolution cache — Polymarket Gamma API is the source of truth

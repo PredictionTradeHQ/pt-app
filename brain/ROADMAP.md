@@ -2,7 +2,7 @@
 
 > **Document:** Execution Roadmap — Strategic Expansion
 > **Phase:** v2.1
-> **Last updated:** 2026-05-14
+> **Last updated:** 2026-05-15
 
 ---
 
@@ -132,6 +132,32 @@ Supabase middleware `getUser()`. If JWT was near expiry, token refresh + `Set-Co
 - [x] Confirmation modal summary: `toLocaleString()`, `Math.max(0, balance-amount)`, price=0 guard
 - [x] `type="button"` on all modal buttons (prevent accidental form submit)
 
+#### Phase 5c — Credibility Pass (DONE ✅ — commit `3891faf`)
+- [x] `/api/stats/platform` — real forecaster + prediction counts from `public_leaderboard`
+- [x] Hero dynamic stat: real count from Supabase, honest fallback when empty
+- [x] Community section: removed fake support cards, replaced with real platform feature cards
+- [x] Features grid: reframed from "trading tools" to "forecasting reputation" language
+- [x] Onboarding guide: social identity framing, "track record from day one"
+
+#### Phase 5d — Public Profile Identity (DONE ✅ — commit `be4158c`)
+- [x] `lib/profile-helpers.ts` — shared server-side helpers (no route.ts/page.tsx duplication)
+  - `computeCategoryStats()` — groups by category, min 3 resolved, sorted by accuracy %
+  - `computeTopCalls()` — contrarian correct predictions (prob <30%), top 3 most contrarian
+  - `normalizeRecentPredictions()` — last 10 by date desc
+- [x] `/api/profile/[username]` updated — returns `categoryStats` and `topCalls`
+- [x] `/profile/[username]/page.tsx` updated — uses shared helpers, same data shape
+- [x] `RealPublicProfile` full rebuild:
+  - `buildHeadline()` — auto one-liner: "63% accurate · 🔥 7-day streak · Best at Crypto 🤖"
+  - Stats grid with accuracy highlight (green when ≥60%)
+  - Category accuracy bars ("Best at X" + per-category progress)
+  - Biggest Calls section (top 3 contrarian correct predictions)
+  - Category tags on each prediction row
+  - Share on X + Copy Link with dynamic copy text
+- [x] `supabase/migrations/003_public_leaderboard_predictions.sql` — VIEW includes `predictions`
+- ⚠️ Migration 003 NOT YET RUN IN SUPABASE — sections have graceful empty fallbacks until then
+
+---
+
 #### Phase 4g — AI Layer (NOT STARTED — requires ANTHROPIC_API_KEY)
 - [ ] Market summary generator (`/api/ai/market-summary`)
 - [ ] "Explain this market" button on market cards
@@ -173,6 +199,8 @@ Supabase middleware `getUser()`. If JWT was near expiry, token refresh + `Set-Co
 | Activity ticker + live feeling | 4d | Medium | Low | ✅ Done |
 | Milestone celebration + share profile | 4e | High | Low | ✅ Done |
 | Bet flow stability + UX polish | 4f | Critical | Medium | ✅ Done |
+| Credibility pass — honest copy + real stats | 5c | High | Low | ✅ Done |
+| Public profile identity (category acc, top calls) | 5d | Very High | Medium | ✅ Done (needs migration 003) |
 | Market summary AI | 4g | High | Medium | 🔲 Not started |
 | "Explain this market" | 4g | High | Low | 🔲 Not started |
 | Pre-prediction advisor | 4g | Medium | Medium | 🔲 Not started |
