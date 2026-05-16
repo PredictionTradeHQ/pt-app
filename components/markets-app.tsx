@@ -597,7 +597,7 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
     }) => {
       if (!authUser) return;
       try {
-        await Promise.all([
+        const [walletRes, portfolioRes] = await Promise.all([
           fetch("/api/wallet", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -614,8 +614,14 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
             }),
           }),
         ]);
+        if (!walletRes.ok) {
+          console.error("[MarketsApp] wallet persist failed:", walletRes.status, await walletRes.text().catch(() => ""));
+        }
+        if (!portfolioRes.ok) {
+          console.error("[MarketsApp] portfolio persist failed:", portfolioRes.status, await portfolioRes.text().catch(() => ""));
+        }
       } catch (e) {
-        console.warn("[MarketsApp] persist failed:", e);
+        console.warn("[MarketsApp] persist network error:", e);
       }
     },
     [authUser]
