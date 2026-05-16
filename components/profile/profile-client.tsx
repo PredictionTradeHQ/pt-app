@@ -15,7 +15,7 @@ import { useGamification } from "@/stores/gamification";
 import { ShareAchievementModal } from "@/components/share-achievement-modal";
 import { CategoryAccuracy } from "@/components/category-accuracy";
 import { CalledItModal } from "@/components/called-it-modal";
-import { Avatar } from "@/components/avatar";
+import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 import { topCategoryFromPredictions } from "@/lib/share-copy";
 import type { PredictionRecord } from "@/stores/gamification";
@@ -156,7 +156,12 @@ export function ProfileClient({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 pb-4 border-b border-border">
-            <Avatar size="lg" url={avatarUrl} displayName={displayName} />
+            <AvatarUploader
+              userId={userId}
+              displayName={displayName}
+              initialUrl={avatarUrl}
+              size="lg"
+            />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-lg truncate">{displayName}</p>
               <p className="text-sm text-muted-foreground">
