@@ -10,6 +10,7 @@ Officially in observation mode after Follow System v1 shipped. Disciplined scope
 
 **Polish shipped this phase:**
 - **F1 (commit `a1c1060`):** owner now sees their own follower count on `/profile` Account card. `getFollowerCount(userId)` on mount, chip renders only when count > 0 (no zero-noise). Closes a loop that was silently broken (followers grew, owner never saw it because `/profile/[mi-slug]` redirects to `/profile`). 1 file touched, 33 lines added, no schema, no API, no migration.
+- **Tech debt resolved:** stale anon key in `.env.local` refreshed to the new Supabase publishable-key format (`sb_publishable_*`). Now points at the active project (`vkizidrsuwsreepsbbuy`). `pnpm dev` locally will connect to the correct DB. No commit (gitignored), no production change.
 
 **Active frictions deferred (do not touch without operator confirmation):**
 - F2 — Mobile header on RealPublicProfile (3 inline buttons) — defer until real mobile signal.
@@ -82,8 +83,9 @@ These are *deliberate* cuts. The thesis is: ship the primitive, observe whether 
 - ✅ Migration `007_follows.sql` applied in production Supabase (`vkizidrsuwsreepsbbuy`) — operator confirmed `Success. No rows returned.`
 - ✅ Post-deploy smoke (12 public + 3 auth-gated endpoints): all green, no regressions.
 - ✅ Pipeline live end-to-end: FollowButton → `lib/follows` → RLS guard → `public.follows` row → next render reads updated count.
+- ✅ Independent REST verification (2026-05-17 post-anon-key-refresh): direct `GET /rest/v1/follows?limit=0` returns `200` + `Content-Range: */0`. Table live, RLS SELECT public works, response header `sb-project-ref: vkizidrsuwsreepsbbuy` matches active project.
 
-**Note on local dev:** `.env.local` currently contains the anon key of an older Supabase project (`ref: dvevwlhshcyvnsubyvzw`), not the active project (`vkizidrsuwsreepsbbuy`). Production is unaffected (Vercel env vars are set correctly). If you run `pnpm dev` locally and Supabase calls fail, refresh `NEXT_PUBLIC_SUPABASE_ANON_KEY` from the active project's API settings.
+**Local dev keys (refreshed 2026-05-17):** `.env.local` now uses the new Supabase publishable-key format (`sb_publishable_*`). The previous JWT-format anon key was stale (referenced an older project `dvevwlhshcyvnsubyvzw`). Production Vercel env vars are independent and were never affected. `.env.local` is gitignored — values never enter the repo.
 
 ### Files touched
 
