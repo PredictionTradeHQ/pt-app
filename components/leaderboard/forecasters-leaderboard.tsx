@@ -18,7 +18,9 @@ import { slugify } from "@/lib/utils"
 import type { ForecasterEntry } from "@/app/api/leaderboard/forecasters/route"
 import { LeaderboardClimbToast, type ClimbInfo } from "@/components/leaderboard-climb-toast"
 import { topCategoryFromPredictions } from "@/lib/share-copy"
-import { getCategoryById } from "@/lib/categories"
+import { PT_CATEGORIES, getCategoryById } from "@/lib/categories"
+
+type CategoryFilter = "all" | string  // "all" or a PT category id
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,6 +69,7 @@ interface Props {
 
 export function ForecastersLeaderboard({ isEs }: Props) {
   const [sort, setSort] = useState<LeaderboardSortKey>("streak")
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [climbInfo, setClimbInfo] = useState<ClimbInfo | null>(null)
   const hasCheckedClimb = useRef(false)
@@ -206,7 +209,9 @@ export function ForecastersLeaderboard({ isEs }: Props) {
     localTopCategoryId,
   ])
 
-  // Detect leaderboard rank improvement on initial data load (once per session)
+  // Detect leaderboard rank improvement on initial data load (once per session).
+  // Climb detection always runs against the GLOBAL ranking, never the filtered
+  // view — otherwise switching the category filter would re-trigger toasts.
   useEffect(() => {
     if (isLoading || !ranked.length || hasCheckedClimb.current) return
     hasCheckedClimb.current = true
@@ -228,10 +233,40 @@ export function ForecastersLeaderboard({ isEs }: Props) {
 
   const dismissClimb = useCallback(() => setClimbInfo(null), [])
 
+  // Apply category filter on top of the globally-ranked list. Rows without
+  // a topCategoryId (real users below the ≥3-resolved threshold) are hidden
+  // when a specific category is active — specialty is earned, not assumed.
+  const visible = useMemo(() => {
+    if (categoryFilter === "all") return ranked
+    return ranked.filter((r) => r.topCategoryId === categoryFilter)
+  }, [ranked, categoryFilter])
+
+  const activeCategory =
+    categoryFilter === "all" ? null : getCategoryById(categoryFilter)
+
   return (
     <>
       <LeaderboardClimbToast climb={climbInfo} onDismiss={dismissClimb} />
     <div>
+      {/* Category filter chips */}
+      <div className="flex gap-1.5 overflow-x-auto mb-3 -mx-1 px-1 pb-1 snap-x snap-mandatory scrollbar-none">
+        <CategoryChip
+          active={categoryFilter === "all"}
+          onClick={() => setCategoryFilter("all")}
+          label={isEs ? "Todas" : "All"}
+          emoji="✦"
+        />
+        {PT_CATEGORIES.map((c) => (
+          <CategoryChip
+            key={c.id}
+            active={categoryFilter === c.id}
+            onClick={() => setCategoryFilter(c.id)}
+            label={c.label}
+            emoji={c.emoji}
+          />
+        ))}
+      </div>
+
       {/* Sort tabs */}
       <div className="flex gap-1 p-1 bg-muted/50 rounded-xl overflow-x-auto mb-2">
         {SORT_TABS.map((tab) => (
@@ -272,8 +307,8 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       </div>
 
       {/* #1 Spotlight */}
-      {!isLoading && ranked.length > 0 && (() => {
-        const top = ranked[0]
+      {!isLoading && visible.length > 0 && (() => {
+        const top = visible[0]
         const initials = top.displayName
           .split(" ").map((w) => w[0] ?? "").join("").toUpperCase().slice(0, 2)
         const primaryValue =
@@ -281,11 +316,14 @@ export function ForecastersLeaderboard({ isEs }: Props) {
           sort === "badges" ? `🏅 ${top.badgeCount}` :
           sort === "activity" ? `${top.totalPredictions} pred.` :
           `🔥 ${top.currentStreak}d`
-        const spotlightLabel =
+        const baseLabel =
           sort === "streak"   ? (isEs ? "🔥 Líder de racha"     : "🔥 Streak leader") :
           sort === "accuracy" ? (isEs ? "🎯 Líder en precisión" : "🎯 Accuracy leader") :
           sort === "badges"   ? (isEs ? "🏅 Más insignias"      : "🏅 Most badges") :
                                 (isEs ? "🏆 Más activo"         : "🏆 Most active")
+        const spotlightLabel = activeCategory
+          ? `${baseLabel} · ${activeCategory.emoji} ${activeCategory.label}`
+          : baseLabel
         const topCat = top.topCategoryId ? getCategoryById(top.topCategoryId) : null
         return (
           <div className="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 relative overflow-hidden">
@@ -332,10 +370,10 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
         {isLoading ? (
           <SkeletonRows count={MIN_ROWS} />
-        ) : ranked.length === 0 ? (
-          <EmptyState isEs={isEs} />
+        ) : visible.length === 0 ? (
+          <EmptyState isEs={isEs} category={activeCategory} />
         ) : (
-          ranked.map((entry, i) => {
+          visible.map((entry, i) => {
             const rank = i + 1
             const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null
             return (
@@ -565,7 +603,37 @@ function SkeletonRows({ count }: { count: number }) {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ isEs }: { isEs: boolean }) {
+function EmptyState({
+  isEs,
+  category,
+}: {
+  isEs: boolean
+  category?: { id: string; label: string; emoji: string } | null
+}) {
+  if (category) {
+    return (
+      <div className="py-12 text-center">
+        <span className="text-3xl block mb-3" aria-hidden>{category.emoji}</span>
+        <p className="text-sm font-semibold text-foreground mb-1">
+          {isEs
+            ? `Aún nadie destaca en ${category.label}`
+            : `No specialists in ${category.label} yet`}
+        </p>
+        <p className="text-xs text-muted-foreground mb-4">
+          {isEs
+            ? `Sé el primer predictor que se gane el título de ${category.label}.`
+            : `Be the first forecaster to earn the ${category.label} title.`}
+        </p>
+        <a
+          href="/markets"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors"
+        >
+          {category.emoji} {isEs ? "Predecir en esta categoría" : "Predict in this category"}
+        </a>
+      </div>
+    )
+  }
+
   return (
     <div className="py-12 text-center">
       <Trophy className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -582,5 +650,32 @@ function EmptyState({ isEs }: { isEs: boolean }) {
         🎯 {isEs ? "Empezar ahora" : "Start predicting"}
       </a>
     </div>
+  )
+}
+
+function CategoryChip({
+  active,
+  onClick,
+  label,
+  emoji,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+  emoji: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 snap-start border transition-all",
+        active
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-muted/40 text-muted-foreground border-border hover:text-foreground hover:border-foreground/30"
+      )}
+    >
+      <span className="leading-none">{emoji}</span>
+      <span>{label}</span>
+    </button>
   )
 }
