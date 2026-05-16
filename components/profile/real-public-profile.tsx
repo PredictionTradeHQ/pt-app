@@ -28,7 +28,10 @@ function buildHeadline(
   gam: RealProfileData["gamification"],
   categoryStats: CategoryStat[]
 ): string {
-  if (!gam || gam.totalPredictions === 0) return "Forecaster on PredictionTrade"
+  // Empty profile: aspirational, not "abandoned". Same 🎯 emoji used by the
+  // private EmptyProfileHero so share previews of brand-new forecasters
+  // still read as identity-in-progress, not dead account.
+  if (!gam || gam.totalPredictions === 0) return "🎯 New forecaster"
 
   const parts: string[] = []
 
@@ -132,18 +135,14 @@ export function RealPublicProfile({ data }: Props) {
         </div>
       </div>
 
-      {/* ── Headline ── */}
-      <p className="text-sm text-muted-foreground mb-6 pl-1">{headline}</p>
+      {/* ── Headline ── (only when stats exist; empty hero carries the identity copy otherwise) */}
+      {hasStats && (
+        <p className="text-sm text-muted-foreground mb-6 pl-1">{headline}</p>
+      )}
 
-      {/* ── No stats yet ── */}
+      {/* ── New-forecaster hero ── */}
       {!hasStats && (
-        <Card className="mb-6">
-          <CardContent className="pt-6 text-center text-sm text-muted-foreground">
-            <Trophy className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
-            <p className="font-medium mb-1">No predictions yet</p>
-            <p className="text-xs">Once {displayName} makes their first prediction, their track record will appear here.</p>
-          </CardContent>
-        </Card>
+        <EmptyPublicProfileHero displayName={displayName} />
       )}
 
       {hasStats && gam && (
@@ -290,6 +289,77 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
       {children}
     </p>
+  )
+}
+
+// Third-person aspirational empty state for a public profile that has zero
+// predictions. Same triad (Streak / Specialty / Leaderboard) as the private
+// EmptyProfileHero on /profile — but phrased as observation, not instruction.
+// The page-level "Make your own predictions" CTA already serves the viewer,
+// so this hero stays presentational on purpose.
+function EmptyPublicProfileHero({ displayName }: { displayName: string }) {
+  const firstName = displayName.split(/\s+/)[0] || displayName
+  return (
+    <Card className="mb-6 border-primary/25 bg-gradient-to-br from-primary/[0.06] via-transparent to-amber-500/[0.04] relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+      <CardContent className="pt-6 pb-6">
+        {/* Headline */}
+        <div className="text-center mb-5">
+          <span className="text-3xl block mb-2 leading-none" aria-hidden>✨</span>
+          <h2 className="text-lg font-bold mb-1.5">
+            Every top predictor starts with a first call.
+          </h2>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+            Once {firstName} makes their first prediction, their streak, specialty,
+            and leaderboard climb will build right here.
+          </p>
+        </div>
+
+        {/* Three pillars — same vocabulary as the private hero */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <PublicPillar
+            emoji="🔥"
+            accentClass="text-orange-400"
+            title="Streak"
+            body="Builds day by day from the first prediction."
+          />
+          <PublicPillar
+            emoji="🪙"
+            accentClass="text-amber-400"
+            title="Specialty"
+            body="Earned after 3 correct calls in any one category."
+          />
+          <PublicPillar
+            emoji="🏆"
+            accentClass="text-primary"
+            title="Leaderboard"
+            body="Appears from the very first correct call."
+          />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PublicPillar({
+  emoji,
+  accentClass,
+  title,
+  body,
+}: {
+  emoji: string
+  accentClass: string
+  title: string
+  body: string
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card/60 p-3.5 text-center">
+      <span className="text-xl block mb-1 leading-none" aria-hidden>{emoji}</span>
+      <p className={`text-[11px] font-bold uppercase tracking-wider mb-1 ${accentClass}`}>
+        {title}
+      </p>
+      <p className="text-[11px] text-muted-foreground leading-snug">{body}</p>
+    </div>
   )
 }
 
