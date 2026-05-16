@@ -1,6 +1,6 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-16 (infra-restore session) | Read this before touching anything.
+> Last updated: 2026-05-16 (OG profile shareability session) | Read this before touching anything.
 
 ---
 
@@ -13,6 +13,34 @@ Operador validó end-to-end en navegador real:
 - ✅ Navegación estable, console limpia
 
 **PT core social está oficialmente cerrado.** Próxima fase es social/profile polish + reputation loops, no más bug-fixing del core.
+
+---
+
+## 🆕 What was built — 2026-05-16 (OG profile shareability)
+
+### Profile OG image — `/api/og/profile/[username]` (Priority 1b shipped)
+
+**Problem:** Sharing a profile link to X / WhatsApp / LinkedIn produced a plain title-only card. No visual identity, no accuracy, no streak — nothing that conveys "this person is a real forecaster". Lowest-cost lever to lift share-driven traffic was missing.
+
+**What changed:**
+- New edge route `app/api/og/profile/[username]/route.tsx` — Satori `ImageResponse`, 1200×630, same pattern as `/api/og/streak/route.tsx`.
+  - Accepts query overrides (`n`, `a`, `s`, `b`, `t`, `c`) so demo anchors (whose data is local) skip the round-trip; real users fall through to an internal `fetch` to `/api/profile/[username]`.
+  - Renders: PT logo + brand, large initials avatar (category-colored border), display name, `@username`, accuracy headline (`X% accurate · 🔥 N-day streak · Best at <Category> <emoji>`), 4-stat row (Accuracy / Streak / Best / Predictions), footer `predictiontrade.online`.
+  - Category accent color is pulled from a 7-category map matching `lib/categories.ts` (AI&Tech indigo, Crypto amber, Sports emerald, Gaming violet, Entertainment pink, Internet cyan, Global News slate).
+  - **Twemoji gotcha**: `next/og` uses Twemoji, which does not cover `₿` (U+20BF). The OG route remaps Crypto to `🪙` for render only. The rest of the product keeps `₿`.
+- `app/profile/[username]/page.tsx` — `generateMetadata` now emits `openGraph` and `twitter` (`summary_large_image`) tags pointing at the new route. Demo users get fully pre-populated query params (no DB hit); real users use the bare endpoint (OG route fetches its own data).
+
+**Verification (local dev server, three variants):**
+- ✅ `alex-m` (demo, crypto, amber) — full headline, stats, 🪙 renders
+- ✅ `sarah-t` (demo, ai-tech, indigo) — full headline, stats, 🤖 renders
+- ✅ `nobody-real` (no data) — graceful fallback: avatar with first initial, "Forecaster on PredictionTrade", em-dashes in stats
+
+**Risk:** Very low. New isolated route, no edits to existing components, no DB changes, no env vars. Edge runtime ($0 marginal cost). Cannot break the core loop because nothing calls it from the rendering tree — only crawlers pull it via meta tags.
+
+**Files touched:**
+- `app/api/og/profile/[username]/route.tsx` (new, ~280 lines)
+- `app/profile/[username]/page.tsx` (generateMetadata expanded)
+- `.claude/launch.json` (new, preview-tool config — not user-facing)
 
 ---
 
@@ -264,7 +292,16 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 ## Pending — Priority Order
 
 ### 🚀 ACTIVE FOCUS — Next session
-Social/profile polish + reputation loops. Operator explicitly chose this path after PT core stabilization on 2026-05-16. Concrete candidates listed in Priority 2 below — recommended start with **1b (Profile OG image)** for maximum shareability leverage at $0 cost.
+Social/profile polish + reputation loops. Operator explicitly chose this path after PT core stabilization on 2026-05-16.
+
+**Next recommended steps (in order):**
+1. **Share copy w/ category specialty** — bake top category into `lib/share-copy.ts` outputs so "63% accurate in Crypto · predictiontrade.online/@user" replaces the generic line. Tiny touch, big payoff alongside the new OG card.
+2. **Called It modal: surface category** — pull `prediction.category` into the share text. Same lib, same surface.
+3. **Leaderboard streak tab** — separate "🔥 Streak" ranking sorted by `current_streak` (already in `public_leaderboard` VIEW). No new data needed.
+4. **Leaderboard category tabs** — "Best in AI&Tech", "Best in Crypto" filtered via `category_predictions` JSONB on the VIEW.
+5. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats.
+
+Priority 1b (**Profile OG image**) shipped this session — see "What was built" above.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.

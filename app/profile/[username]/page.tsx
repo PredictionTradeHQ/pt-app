@@ -17,20 +17,89 @@ interface Props {
   params: Promise<{ username: string }>
 }
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  "https://www.predictiontrade.online"
+
+const DEMO_CATEGORY_ID: Record<string, string> = {
+  "AI & Tech": "ai-tech",
+  "Crypto": "crypto",
+  "Sports": "sports",
+  "Gaming": "gaming",
+  "Entertainment": "entertainment",
+  "Internet Culture": "internet-culture",
+  "Global News": "global-news",
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
+  const profileUrl = `${SITE_URL}/profile/${username}`
 
   const demoUser = getDemoUser(username)
   if (demoUser) {
+    const catId = DEMO_CATEGORY_ID[demoUser.favoriteCategory] ?? ""
+    const ogParams = new URLSearchParams({
+      n: demoUser.displayName,
+      a: String(demoUser.accuracy),
+      s: String(demoUser.currentStreak),
+      b: String(demoUser.bestStreak),
+      t: String(demoUser.totalPredictions),
+    })
+    if (catId) ogParams.set("c", catId)
+    const ogUrl = `${SITE_URL}/api/og/profile/${username}?${ogParams.toString()}`
+
+    const desc = `${demoUser.accuracy}% accurate · 🔥 ${demoUser.currentStreak}-day streak · Best at ${demoUser.favoriteCategory} ${demoUser.favoriteCategoryEmoji}`
+
     return {
       title: `${demoUser.displayName} (@${demoUser.username}) — PredictionTrade`,
       description: `${demoUser.displayName} has a ${demoUser.currentStreak}-day streak and ${demoUser.badgeCount} badges on PredictionTrade.`,
+      openGraph: {
+        title: `${demoUser.displayName} on PredictionTrade`,
+        description: desc,
+        url: profileUrl,
+        type: "profile",
+        images: [
+          {
+            url: ogUrl,
+            width: 1200,
+            height: 630,
+            alt: `${demoUser.displayName} — forecaster profile`,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${demoUser.displayName} on PredictionTrade`,
+        description: desc,
+        images: [ogUrl],
+      },
     }
   }
 
+  const ogUrl = `${SITE_URL}/api/og/profile/${username}`
   return {
     title: `@${username} — PredictionTrade`,
     description: `Forecaster profile on PredictionTrade.`,
+    openGraph: {
+      title: `@${username} on PredictionTrade`,
+      description: `Forecaster reputation, accuracy, and streak.`,
+      url: profileUrl,
+      type: "profile",
+      images: [
+        {
+          url: ogUrl,
+          width: 1200,
+          height: 630,
+          alt: `@${username} — forecaster profile`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `@${username} on PredictionTrade`,
+      description: `Forecaster on PredictionTrade.`,
+      images: [ogUrl],
+    },
   }
 }
 

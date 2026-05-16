@@ -13,3 +13,6 @@ node_modules
 # TypeScript incremental build cache (auto-generated)
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+
+# Local Claude Code tooling
+.claude/launch.json
