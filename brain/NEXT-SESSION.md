@@ -153,25 +153,29 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 Run SQL in Supabase dashboard (see above). Unlocks full public profile data immediately.
 No code changes needed after running.
 
-### Priority 1 — Fix: error al hacer una predicción/apuesta
+### Priority 1 — ✅ RESUELTO: error al hacer una predicción/apuesta (commit `e9e675c`)
 
-**Síntoma reportado:** Aparece un error al intentar hacer una predicción.
-**Impacto:** Directo sobre el flujo principal del producto — bloquea la experiencia core.
+**Causa raíz identificada:** `demo_portfolios` table NO existía en Supabase.
 
-**Al inicio de la sesión:**
-1. Reproducir el error en producción (predictiontrade.online) con una cuenta real
-2. Revisar logs en Vercel (PT workspace) → Functions → `/api/wallet` y `/api/demo-portfolio`
-3. Revisar consola del browser al hacer una apuesta
-4. Candidatos más probables (por arquitectura actual):
-   - Supabase JWT expirado → falla PUT /api/wallet
-   - RLS policy bloqueando escritura en `wallets` o `trades`
-   - `persistPortfolio()` silenciando un error de red sin surfacearlo en UI
-   - Validación de balance que devuelve error en edge case (balance = 0 o monto > balance)
+**Qué pasaba:**
+- `confirmBet()` actualizaba UI optimísticamente ✅
+- `PUT /api/wallet` → funcionaba, balance guardado ✅
+- `PUT /api/demo-portfolio` → 500 silencioso, posiciones NO guardadas ❌
+- `persistPortfolio()` no verificaba `response.ok` → tragaba el error
+- Al recargar: balance correcto (wallets), posiciones vacías (demo_portfolios fallaba)
 
-**Files a revisar:**
-- `app/api/wallet/route.ts`
-- `app/api/demo-portfolio/route.ts`
-- `components/markets-app.tsx` → `confirmBet()` y `persistPortfolio()`
+**Fix desplegado:**
+- `supabase/migrations/004_demo_portfolios.sql` — crea `demo_portfolios` con RLS; también añade `wallet_update_own` UPDATE policy si no existe
+- `components/markets-app.tsx` — `persistPortfolio` ahora verifica `response.ok` y loguea errores con HTTP status
+
+**⚠️ ACCIÓN OPERADOR REQUERIDA (2 min) — correr ANTES de hacer más apuestas:**
+Ejecutar migration 004 en Supabase SQL Editor:
+https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+
+Pegar el contenido de `supabase/migrations/004_demo_portfolios.sql`.
+
+Sin esto: el código fix está desplegado pero la tabla sigue sin existir → el bug persiste.
+Con esto: posiciones, historial y balance persisten correctamente en Supabase.
 
 ---
 
