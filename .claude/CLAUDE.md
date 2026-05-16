@@ -168,26 +168,26 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 ---
 
-## CURRENT STATE — checkpoint 2026-05-15 ✅ STABLE
+## CURRENT STATE — checkpoint 2026-05-16 ✅ STABLE
 
 **Git:** `main` clean, synced with `origin/main`
 **TypeScript:** 0 errors (strict mode)
-**Vercel:** ● Ready — predictiontrade.online live
+**Vercel:** ● Ready — predictiontrade.online live (env vars restored, Supabase connected)
 
 **Last commits:**
 ```
+b448e04  fix(api): force-dynamic on stats/platform — prevents ISR caching broken build 404
+50e20d9  fix(api): remove PMS contamination from env.local.example
+e9e675c  fix(bets): add demo_portfolios migration + error logging in persistPortfolio
 e588e18  docs(claude): update CURRENT STATE checkpoint to be4158c
 be4158c  feat(profiles): server-side category accuracy + top calls on public profiles
-3891faf  feat(ux): credibility pass — real stats, honest copy, social-first framing
-36babf8  docs(claude): professional CLAUDE.md with session protocol + updated NEXT-SESSION
-067e3b2  docs: infrastructure migration cleanup — canonical paths updated
 ```
 
 **Completed phases:**
 - ✅ Phase 0 — Foundation (Next.js, Supabase, Vercel, TypeScript strict)
 - ✅ Phase 1 — Social Foundation (streaks, badges, shareable cards, categories, public profiles)
 - ✅ Phase 2 — Social Identity Layer (leaderboard, demo anchors, home widgets, OG images)
-- ✅ Phase 3 — Supabase Sync + Real Accuracy (user_gamification live, accuracy engine, Called It)
+- ✅ Phase 3 — Supabase Sync + Real Accuracy (gamification store, accuracy engine, Called It)
 - ✅ Phase 4a — Real Leaderboard (Supabase VIEW, #1 Spotlight, real user merge)
 - ✅ Phase 4b — Real Public Profiles (slugify, RealPublicProfile, /api/profile/[username])
 - ✅ Phase 4c — Market Intelligence Signals (lib/market-signals.ts, 9 signal types, $0 cost)
@@ -199,13 +199,20 @@ be4158c  feat(profiles): server-side category accuracy + top calls on public pro
 - ✅ Phase 5c — Credibility Pass (honest stats, no fake features, social-first copy, real platform stats)
 - ✅ Phase 5d — Public Profile Identity (server-side category accuracy, top calls, shareable headline)
 - ✅ AI Skills Layer (PT-TONE-GUIDE.md, pt-called-it-post, pt-market-brief)
+- ✅ Phase 5e — Core Loop Stability (demo_portfolios table created, Vercel env vars restored, ISR fix)
 
-**⚠️ Pending operator action — NOT a dev task:**
-Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase dashboard:
-https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+**⚠️ SUPABASE SCHEMA — verified 2026-05-16 (TRUE STATE):**
+- `profiles` — ✅ exists
+- `wallets` — ✅ exists + UPDATE policy (migration 004 ensured)
+- `demo_portfolios` — ✅ created by migration 004 (bet positions + activity persist correctly now)
+- `user_gamification` — ❌ NOT CREATED — migration 001 NEVER run
+- `public_leaderboard` VIEW — ❌ NOT CREATED — depends on user_gamification
 
-Without it: category accuracy bars, "Best at X", "Biggest Calls" empty on public profiles (graceful fallbacks, no errors).
-With it: all new profile sections activate instantly. No code changes needed.
+**⚠️ Pending operator actions — run in Supabase SQL Editor in order:**
+1. `supabase/migrations/001_gamification.sql` — BLOCKER — creates `user_gamification` + `public_leaderboard` VIEW
+2. `supabase/migrations/003_public_leaderboard_predictions.sql` — run AFTER 001 — extends VIEW with `predictions` column
+
+URL: https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
 
 **Other friction points (low urgency):**
 - `supabase/migrations/002_profiles_username.sql` — optional username column, not needed yet
@@ -227,18 +234,27 @@ PT stays a **virtual social forecasting platform**. No cost integrations. No gro
 
 ## PRIORITIES — next sessions
 
-### Priority 0 — Operator action (2 min, not a dev task)
-Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase dashboard.
+### Priority 0 — Operator actions (5 min, NOT dev tasks — run in Supabase SQL Editor)
 URL: https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
-Unlocks: category accuracy bars, "Best at X", "Biggest Calls", recent predictions on public profiles.
 
-### Priority 1 — Fix: error al hacer una predicción/apuesta
-Reproducir en producción → revisar Vercel logs (Functions: /api/wallet, /api/demo-portfolio)
-y consola del browser. Candidatos: JWT expirado, RLS bloqueando escritura, error silenciado
-en `persistPortfolio()`, edge case de balance.
-Files: `app/api/wallet/route.ts`, `app/api/demo-portfolio/route.ts`, `components/markets-app.tsx`
+**Step 1 (BLOCKER):** Run `supabase/migrations/001_gamification.sql`
+- Creates `user_gamification` table + `public_leaderboard` VIEW
+- Required before ANY leaderboard/gamification features work for real users
 
-### Priority 2 — Social / Profiles / Leaderboard polish
+**Step 2 (after step 1):** Run `supabase/migrations/003_public_leaderboard_predictions.sql`
+- Extends VIEW with `predictions` column
+- Unlocks: category accuracy bars, "Best at X", "Biggest Calls", recent predictions on profiles
+
+### Priority 1 — ✅ RESOLVED: bet persistence bug (commit e9e675c)
+Root cause: `demo_portfolios` table never existed → PUT /api/demo-portfolio silently 500'd on every bet.
+Fix: migration 004 creates `demo_portfolios` + RLS; `persistPortfolio()` now logs errors.
+Operator must confirm migration 004 was applied (user confirmed ✅ 2026-05-15).
+
+### Priority 2 — Full end-to-end verification (do this at next session start)
+Login → make a prediction → refresh page → confirm balance + positions persisted → leaderboard → public profiles.
+Goal: confirm the full core loop is stable after the Vercel env var restore + bet fix.
+
+### Priority 3 — Social / Profiles / Leaderboard polish
 After migration 003 runs, evaluate what still feels incomplete in:
 - Public profiles (`/profile/[username]`) — does it feel like a real identity artifact?
 - Leaderboard (`/leaderboard`) — are forecasters tabs engaging and competitive?

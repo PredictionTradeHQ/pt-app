@@ -1,6 +1,6 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-15 | Read this before touching anything.
+> Last updated: 2026-05-16 | Read this before touching anything.
 
 ---
 
@@ -8,23 +8,33 @@
 
 | System | Status |
 |---|---|
-| predictiontrade.online | ✅ Live and healthy |
-| GitHub main | ✅ Clean — last commit `e588e18` |
+| predictiontrade.online | ✅ Live — env vars restored, Supabase connected |
+| GitHub main | ✅ Clean — last commit `b448e04` |
 | Vercel | ✅ Auto-deploy active (PT Vercel workspace) |
 | TypeScript build | ✅ Strict — 0 errors |
-| Supabase `user_gamification` | ✅ Live in production |
-| Supabase `public_leaderboard` VIEW | ✅ Live — but WITHOUT `predictions` column yet |
-| Public profile category accuracy | ⚠️ PARTIAL — needs migration 003 (see below) |
+| Supabase `demo_portfolios` | ✅ Created by migration 004 — bet persistence now works |
+| Supabase `wallets` UPDATE policy | ✅ Added by migration 004 |
+| Supabase `user_gamification` | ❌ NOT CREATED — migration 001 never run (BLOCKER) |
+| Supabase `public_leaderboard` VIEW | ❌ NOT CREATED — depends on user_gamification |
+| Public profile category accuracy | ❌ BLOCKED — needs migrations 001 then 003 |
 
 ---
 
-## ⚠️ MIGRATION 003 — PARTIAL BLOCKER — RUN BEFORE NEXT DEV SESSION
-
-**File:** `supabase/migrations/003_public_leaderboard_predictions.sql`
-
-**What it does:** Recreates `public_leaderboard` VIEW to include the `predictions` JSONB column, which powers category accuracy bars and "Biggest Calls" sections on public profiles.
+## ⚠️ MIGRATIONS — BLOCKER — RUN BEFORE NEXT DEV SESSION
 
 **URL:** https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+
+### Step 1 — BLOCKER: `supabase/migrations/001_gamification.sql`
+
+**Why it's critical:** `user_gamification` table does NOT exist. Migration 001 was never run.
+This table is required for: streaks, badges, accuracy, leaderboard, public profiles.
+Without it: migration 003 will also fail (depends on user_gamification).
+
+**Run the full contents of `supabase/migrations/001_gamification.sql` in the SQL Editor.**
+
+### Step 2 — After 001: `supabase/migrations/003_public_leaderboard_predictions.sql`
+
+**What it does:** Recreates `public_leaderboard` VIEW to include the `predictions` JSONB column, which powers category accuracy bars and "Biggest Calls" sections on public profiles.
 
 **SQL to run:**
 ```sql
@@ -53,17 +63,42 @@ FROM user_gamification;
 GRANT SELECT ON public_leaderboard TO anon, authenticated;
 ```
 
-**Impact if NOT run:**
+**Impact if neither migration runs:**
 - ✅ Nothing breaks — all graceful fallbacks in place
-- ✅ General profile stats (streak, accuracy %, badge count) still show correctly
-- ❌ "Best at [Category]" section empty on public profiles
-- ❌ "Biggest Calls" section empty on public profiles
-- ❌ Category accuracy bars empty on public profiles
-- ❌ Recent predictions list empty on public profiles
+- ✅ Core loop (bet, balance, positions) now works correctly (migration 004 fixed this)
+- ❌ Leaderboard shows demo-only users (no real user data)
+- ❌ Streaks/badges don't sync to Supabase (only localStorage)
+- ❌ Public profiles show no category accuracy, no top calls, no recent predictions
 
-**Impact once run:**
-- ✅ All new profile sections activate automatically — no code changes needed
-- ✅ Works for all real Supabase users with predictions stored in `user_gamification`
+**Impact once both migrations run:**
+- ✅ All leaderboard, gamification, and profile sections activate — no code changes needed
+
+---
+
+## What Was Built — 2026-05-16 Session
+
+### Core Loop Stability (commits `e9e675c`, `50e20d9`, `b448e04`)
+
+**Problem:** Multiple production failures discovered after credibility pass:
+1. Bet positions silently lost on refresh → `demo_portfolios` table never existed
+2. "Supabase no está configurado" error → Vercel missing `NEXT_PUBLIC_*` env vars
+3. `/api/stats/platform` persistent 404 → ISR cache from broken build without env vars
+
+**Fixes shipped:**
+- `supabase/migrations/004_demo_portfolios.sql` — creates `demo_portfolios` table + RLS policies; also adds `wallet_update_own` UPDATE policy to `wallets` if missing
+- `components/markets-app.tsx` — `persistPortfolio()` now checks `response.ok` and logs errors
+- `.env.local.example` — removed PMS contamination (PMS_API_KEY, PMS_BASE_URL, PMS_WS_URL)
+- `app/api/stats/platform/route.ts` — changed from `revalidate = 300` (ISR) to `dynamic = "force-dynamic"` to prevent 404 caching
+- Vercel env vars: user added `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` to Production + Preview; force-redeploy triggered via empty git commit
+
+**Critical discovery:** CLAUDE.md incorrectly stated `user_gamification` was "live in production since 2026-05-13". This was false — migration 001 was never run. All gamification data lives only in localStorage. Docs corrected to reflect true state.
+
+**Status after this session:**
+- ✅ `/api/wallet` → 401 (correct — auth required, Supabase connected)
+- ✅ `/api/stats/platform` → fix deployed, should return 200 after next Vercel build
+- ✅ Bet flow: balance → wallets table, positions → demo_portfolios table (both work with migration 004)
+- ✅ Auth flow: login, signup, magic link all functional
+- ❌ Leaderboard gamification: needs migration 001 → 003 (operator action)
 
 ---
 
