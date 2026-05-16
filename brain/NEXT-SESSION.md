@@ -1,6 +1,88 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-16 (OG profile shareability session) | Read this before touching anything.
+> Last updated: 2026-05-17 (Follow System v1 session) | Read this before touching anything.
+
+---
+
+## 🆕 What was built — 2026-05-17 (Follow System v1 — "watching forecasters" primitive)
+
+PT graduates from identity artifacts (avatars, OG cards, specialty headlines) to a real social primitive: **a forecaster can follow another forecaster.** Single edge table, ownership-safe RLS, no notifications, no feed, no recommendations. Build primitive → observe → iterate.
+
+### Scope shipped end-to-end
+
+**1) Migration `007_follows.sql`** (pending operator apply in Supabase SQL Editor)
+- Table `public.follows (follower_id uuid, followee_id uuid, created_at timestamptz)`.
+- PK composite `(follower_id, followee_id)` — idempotent inserts, dupes return PK-conflict (handled as success in `lib/follows.ts`).
+- FK to `auth.users(id) ON DELETE CASCADE` — account deletion cleans up.
+- `CHECK (follower_id <> followee_id)` — DB-level no-self-follow.
+- 2 indexes: `follows_followee_idx` (count followers, list followers), `follows_follower_idx` (count following, list following).
+- RLS: SELECT public · INSERT only as `auth.uid() = follower_id` · DELETE only `auth.uid() = follower_id`.
+- Grants: `SELECT` to `anon, authenticated`; `INSERT, DELETE` to `authenticated`.
+
+**2) `lib/follows.ts` — minimal client helpers (~85 lines)**
+- `followUser(followeeId)` — insert; treats PK-conflict (`23505`) as success.
+- `unfollowUser(followeeId)` — delete by `(follower, followee)`.
+- `getFollowerCount(userId)`, `getFollowingCount(userId)` — `count: 'exact', head: true` (no payload).
+- `isFollowing(followerId, followeeId)` — same headcount, returns boolean.
+- All four wrap `createClient()` from `@/lib/supabase/client`. No API routes. RLS is the guardrail.
+
+**3) `components/profile/follow-button.tsx` — single primitive (~140 lines)**
+- Self (viewer === followee): renders a passive `<Users /> N followers` chip, no button.
+- Logged out: clicking the button bounces to `/auth/login?next=<current path>`.
+- Logged in non-self: optimistic toggle + rollback on error. Sonner toast fires ONLY on failure (UI flip is the success signal).
+- States: `loading skeleton (h=30 w=110)` → `Follow · N` / `Following · N` (with `UserPlus` / `UserCheck` icons; `Loader2` while pending).
+- Self-contained: does its own `isFollowing` fetch on mount so callers only pass `followeeId` + server-rendered `initialCount`.
+
+**4) `RealPublicProfile` header integration**
+- `RealProfileData` extended with `userId: string` and `followerCount: number` (both required, additive). Server-side count via single indexed `count(*)` on `follows.followee_id`, wrapped in try/catch so pre-migration the route stays serviceable.
+- Both `app/api/profile/[username]/route.ts` and the page-local `fetchRealProfile()` in `app/profile/[username]/page.tsx` updated in lockstep.
+- `<FollowButton followeeId={userId} initialCount={followerCount} />` rendered next to the existing Share / Copy buttons in the profile header.
+
+**5) Leaderboard social-proof chip on top 1–10 rows**
+- `ForecasterEntry` extended with `followerCount: number` (required, additive).
+- `/api/leaderboard/forecasters/route.ts` adds a **single batched query** — `select followee_id from follows where followee_id in (top-50 user_ids)` — and aggregates in memory. O(N) where N = total follow rows pointing at the top 50; fine for v1. When the graph gets large, swap for SQL RPC `get_follower_counts(uuid[])`. Wrapped in try/catch so pre-migration the API stays serviceable (counts all default to 0).
+- `LeaderboardRow` accepts new `showFollowerChip: boolean` prop. Chip renders only when `rank ≤ 10 && !isDemo && !isCurrentUser && followerCount > 0`. Style: tiny `<Users />` icon + tabular-nums count, muted pill next to the existing "Real" badge. Signal/noise stays high — no zero-follower spam, no chip on demos or on YOU.
+
+### What v1 explicitly does NOT include (deferred — do not start without operator confirmation)
+
+- ❌ Feed / timeline of any kind
+- ❌ Notifications (in-app or email) — no infrastructure for this exists or should exist yet
+- ❌ Recommendations / "people you may follow"
+- ❌ Mutual-follow indicator
+- ❌ Following list page (`/profile/[username]/following`) or followers list page
+- ❌ Sortable leaderboard column by follower count
+- ❌ Denormalized count columns / triggers / materialized views (counts stay on-demand)
+- ❌ Avatar System Phase 4 (OG card avatars) — still deferred
+
+These are *deliberate* cuts. The thesis is: ship the primitive, observe whether real users use it, then expand only where actual usage justifies it. Premature feed-building is the single highest-risk failure mode for a small social product.
+
+### Verification
+
+- ✅ `pnpm build` clean (TS strict, 0 errors). Three new files, three edited files compiled without complaints.
+- ⚠️ **Operator action required:** apply `supabase/migrations/007_follows.sql` in the Supabase SQL Editor (project `vkizidrsuwsreepsbbuy`) before the Follow button does anything. The UI is **safe pre-migration** — both the API and page wrap the follower-count query in try/catch and fall back to 0; the FollowButton renders normally and any toggle attempt will surface a Sonner error (`relation "follows" does not exist`) without crashing the page.
+
+### Files touched
+
+New:
+- `supabase/migrations/007_follows.sql`
+- `lib/follows.ts`
+- `components/profile/follow-button.tsx`
+
+Edited:
+- `app/api/profile/[username]/route.ts` (added `userId`, `followerCount` to `RealProfileData`)
+- `app/profile/[username]/page.tsx` (added `userId`, `followerCount` to local `fetchRealProfile`)
+- `components/profile/real-public-profile.tsx` (header destructures `userId` + `followerCount`, renders `<FollowButton />`)
+- `app/api/leaderboard/forecasters/route.ts` (`ForecasterEntry.followerCount`, batched query)
+- `components/leaderboard/forecasters-leaderboard.tsx` (`RowEntry.followerCount`, `showFollowerChip` prop, `Users` icon chip)
+
+### Next major (in roadmap order — do not jump ahead)
+
+1. **Observe Follow System usage.** Wait until at least one real user follows another before iterating. The whole point of v1 is to *see* whether the primitive matters before building on top of it.
+2. **Lightweight activity feed** — *only* "X followed Y", "X earned badge Z", "X called it on market M". Bounded list, no infinite scroll, no posting. Forecasting-events only.
+3. Weekly challenges / events.
+4. Squads / alliances.
+
+⚠️ **Avoid the social-media trap.** No DMs, no stories, no generic posting, no reposts, no comments. PT is a *forecasting reputation network*; every social surface must reinforce prediction identity (Chess.com / Strava / Letterboxd, not Instagram / TikTok / Reddit).
 
 ---
 
