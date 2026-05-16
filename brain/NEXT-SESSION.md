@@ -18,6 +18,32 @@ Operador validó end-to-end en navegador real:
 
 ## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
+### Streak leaderboard tab — fix + specialty (Priority 2 shipped)
+
+**Problem:** The "Streaks" tab existed but was silently ranking by `best_streak` while the UI surfaced `🔥 currentStreak` as the primary value. A user with `current=0 / best=30` outranked a `current=10 / best=10` user — visually deceptive. No tie-break (indeterminate order on ties). And the row gave no signal about *what kind* of forecaster the person is, breaking continuity with the OG card and share copy.
+
+**What changed:**
+- `app/api/leaderboard/forecasters/route.ts`
+  - `SORT_COLUMNS.streak` flipped from `best_streak` → `current_streak`. UI and ranking now agree.
+  - Deterministic tie-break chain on every sort: primary → `accuracy_pct DESC` (nulls last) → `total_predictions DESC`.
+  - SELECT extended with `predictions` JSONB. Server computes `topCategoryId` per row via the existing `topCategoryFromPredictions` helper. New optional field on `ForecasterEntry`.
+- `lib/demo-leaderboard.ts` — new `demoCategoryIdFromLabel()` so demo anchors map to PT category ids the same way real users do.
+- `components/leaderboard/forecasters-leaderboard.tsx`
+  - `RowEntry` gains `topCategoryId`. Populated from `realUsers[i].topCategoryId` and from demo anchors via the new label-to-id helper.
+  - Client `compare()` mirrors the server tie-break. `YOU` injection stays coherent with the merged demo+real ordering.
+  - Streak row secondary: `Best: 35d · 🪙 Crypto` (or `Best: 35d · 67% accuracy` when specialty isn't earned yet).
+  - `#1 Spotlight` now has a sort-aware label (`🔥 Streak leader` / `🎯 Accuracy leader` / `🏅 Most badges` / `🏆 Most active`) and shows `Best at X · 71% accuracy` + `Best: Nd` sub-line when sort=streak. Vocabulary matches the OG profile cards and the share copy.
+
+**Verification:**
+- Local `pnpm build` clean (TS strict).
+- Node sim of the demo-only sort (`/tmp/sim-streak.mjs`) reproduces the expected order — `#1 Alex M. 🔥 42d / Best at Crypto 🪙`, `#2 Sarah T. 🔥 28d / 71% acc / AI & Tech`, etc.
+- Prod smoke: `/api/leaderboard/forecasters?sort=streak|accuracy|badges|activity` all 200. `/leaderboard` page 200. OG profile route 200.
+- Deploy confirmed live: the new `"Streak leader"` literal is present in production client chunk `/_next/static/chunks/0zm_oqg8p3fip.js`.
+
+**Risk:** Low. API field is additive; the only behavior change is the `streak` column flip (which is the *intended* fix). Tie-break chain is purely a refinement. Demo merging logic preserved.
+
+---
+
 ### Share copy with category specialty (Priority 1 shipped)
 
 **Problem:** OG cards now show "Best at Crypto 🪙" but the actual share string in Called It / Climb / Streak modals was still generic — `"67% accuracy"` with no signal about what the user is *strong at*. Reading the post in someone else's feed told you nothing about the sharer's identity.
@@ -323,12 +349,12 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 **Already shipped this day:**
 - ✅ Profile OG image (commit `92f826c`) — rich link previews on X / WhatsApp / LinkedIn
 - ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
+- ✅ Streak leaderboard tab fix + specialty (commit `46095e6`) — ranking finally matches the 🔥 currentStreak that the UI shows, plus the specialty chip on every row
 
 **Next recommended steps (in order):**
-1. **Streak leaderboard tab** — separate "🔥 Streak" ranking sorted by `current_streak` (already in `public_leaderboard` VIEW). No new data needed. Just a new tab on `/leaderboard`.
-2. **Leaderboard category tabs** — "Best in AI&Tech", "Best in Crypto" filtered via `category_predictions` JSONB on the VIEW. Slightly bigger than #1 because filtering+display logic.
-3. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats. Reduces drop-off for new accounts.
-4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Could add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render every fetch. Low priority — only matters at scale.
+1. **Leaderboard category tabs** — `Best in AI & Tech`, `Best in Crypto`, etc. filtered via the per-row `topCategoryId` already in the API response (no new server work for the filter itself). A category dropdown above the sort tabs would let users browse leaderboards scoped to their interest. Slight UX consideration: combine with current sort or replace it.
+2. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats. Reduces drop-off for new accounts.
+3. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render on every fetch. Low priority — only matters at scale.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
