@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TrendingUp, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,10 +18,12 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { t } = useLanguage();
+  // Use the shared AuthProvider supabase instance so onAuthStateChange fires
+  // on the same client, guaranteeing user state is updated before navigation.
+  const { supabase, refresh } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
@@ -31,6 +33,9 @@ export default function LoginPage() {
         password,
       });
       if (error) throw error;
+      // Sync AuthProvider state before navigating so AppShell sees the user
+      // immediately and doesn't redirect back to login.
+      await refresh();
       const params = new URLSearchParams(window.location.search);
       router.push(params.get("next") ?? "/dashboard");
     } catch (error: unknown) {

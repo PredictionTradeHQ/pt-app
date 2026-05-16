@@ -558,7 +558,11 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
           if (p?.data) {
             if (typeof p.data.balance === "number") setBalance(p.data.balance);
             if (Array.isArray(p.data.positions)) {
-              const positions = p.data.positions as UserPosition[];
+              // JSON serialisation turns Date → string; convert back so formatTimeAgo works
+              const positions = (p.data.positions as UserPosition[]).map((pos) => ({
+                ...pos,
+                timestamp: new Date(pos.timestamp as unknown as string),
+              }));
               setUserBets(positions);
               setTotalBets(positions.length);
               const tally = positions.reduce(
@@ -786,9 +790,10 @@ export function MarketsApp({ isNewUser = false }: { isNewUser?: boolean }) {
     return () => clearInterval(interval);
   }, [markets]);
 
-  // Format time ago helper
-  const formatTimeAgo = (date: Date) => {
-    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  // Format time ago helper — handles Date objects and ISO strings from Supabase JSON
+  const formatTimeAgo = (date: Date | string) => {
+    const d = date instanceof Date ? date : new Date(date);
+    const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
