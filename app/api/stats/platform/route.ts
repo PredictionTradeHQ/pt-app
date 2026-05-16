@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-// Revalidate every 5 minutes — no need for real-time accuracy here
-export const revalidate = 300
+// Force dynamic — prevents ISR caching a 404 if Supabase is unavailable at build time
+export const dynamic = "force-dynamic"
 
 export async function GET() {
   try {
