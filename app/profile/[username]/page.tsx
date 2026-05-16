@@ -131,10 +131,25 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
 
     const rawPreds = Array.isArray(gam?.predictions) ? gam.predictions : []
 
+    // Follower count — single indexed count(*). Falls back to 0 on any error
+    // (e.g. migration 007 not yet applied) so the page stays serviceable.
+    let followerCount = 0
+    try {
+      const { count } = await supabase
+        .from("follows")
+        .select("follower_id", { count: "exact", head: true })
+        .eq("followee_id", match.id)
+      followerCount = count ?? 0
+    } catch {
+      followerCount = 0
+    }
+
     return {
+      userId: match.id,
       displayName: match.display_name,
       username,
       avatarUrl: match.avatar_url ?? null,
+      followerCount,
       gamification: gam
         ? {
             currentStreak: gam.current_streak ?? 0,

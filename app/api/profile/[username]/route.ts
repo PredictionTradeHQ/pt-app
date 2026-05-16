@@ -36,10 +36,14 @@ export type TopCall = {
 }
 
 export type RealProfileData = {
+  /** Supabase auth.user.id of the profile owner. Needed by FollowButton (follows.followee_id). */
+  userId: string
   displayName: string
   username: string
   /** Public URL of the uploaded avatar (Supabase Storage `avatars` bucket). NULL → render initials. */
   avatarUrl: string | null
+  /** Follower count at render time. Updated optimistically by FollowButton. */
+  followerCount: number
   gamification: {
     currentStreak: number
     bestStreak: number
@@ -94,10 +98,25 @@ export async function GET(
 
     const rawPreds = Array.isArray(gam?.predictions) ? gam.predictions : []
 
+    // Follower count — single indexed count(*). Falls back to 0 on any error
+    // (e.g. migration 007 not yet applied) so the API stays serviceable.
+    let followerCount = 0
+    try {
+      const { count } = await supabase
+        .from("follows")
+        .select("follower_id", { count: "exact", head: true })
+        .eq("followee_id", match.id)
+      followerCount = count ?? 0
+    } catch {
+      followerCount = 0
+    }
+
     const result: RealProfileData = {
+      userId: match.id,
       displayName: match.display_name,
       username,
       avatarUrl: match.avatar_url ?? null,
+      followerCount,
       gamification: gam
         ? {
             currentStreak: gam.current_streak ?? 0,

@@ -9,6 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { BadgeCard } from "@/components/badge-card"
 import { Avatar } from "@/components/avatar"
+import { FollowButton } from "@/components/profile/follow-button"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
 import { PT_CATEGORIES } from "@/lib/categories"
 import { cn } from "@/lib/utils"
@@ -52,7 +53,7 @@ function buildHeadline(
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function RealPublicProfile({ data }: Props) {
-  const { displayName, username, avatarUrl, gamification: gam, recentPredictions, categoryStats, topCalls } = data
+  const { userId, displayName, username, avatarUrl, followerCount, gamification: gam, recentPredictions, categoryStats, topCalls } = data
   const [copied, setCopied] = useState(false)
 
   const earnedBadgeIds = new Set((gam?.badges ?? []).map((b) => b.id))
@@ -103,6 +104,7 @@ export function RealPublicProfile({ data }: Props) {
           <p className="text-xs text-muted-foreground/60 mt-0.5">PredictionTrade Forecaster</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <FollowButton followeeId={userId} initialCount={followerCount} />
           <button
             onClick={shareOnX}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-muted/40 transition-colors text-xs font-semibold"

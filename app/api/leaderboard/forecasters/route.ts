@@ -15,6 +15,8 @@ export type ForecasterEntry = {
   calledItCount: number
   /** Specialty category id (≥3 resolved, ≥50% accuracy). Optional. */
   topCategoryId?: string
+  /** Follower count (Follow System v1). 0 when nobody follows or pre-migration 007. */
+  followerCount: number
 }
 
 // "streak" tab ranks by the *active* streak (current_streak), matching the UI
@@ -80,6 +82,24 @@ export async function GET(req: NextRequest) {
       avatarMap[p.id] = p.avatar_url ?? null
     }
 
+    // Follower counts — single batched query, in-memory aggregation. O(N) where
+    // N = total follow rows pointing at any of the top-50 forecasters. Fine for
+    // v1; if/when the graph gets large, swap for a SQL RPC `get_follower_counts(uuid[])`.
+    // Wrapped in try/catch so pre-migration 007 the endpoint stays serviceable.
+    const followerCountMap: Record<string, number> = {}
+    try {
+      const { data: followRows } = await supabase
+        .from("follows")
+        .select("followee_id")
+        .in("followee_id", userIds)
+      for (const row of followRows ?? []) {
+        const k = row.followee_id as string
+        followerCountMap[k] = (followerCountMap[k] ?? 0) + 1
+      }
+    } catch {
+      // leave map empty → all counts default to 0 below
+    }
+
     const result: ForecasterEntry[] = rows.map((r) => {
       const rawPreds = Array.isArray(r.predictions) ? r.predictions : []
       const topCat = topCategoryFromPredictions(rawPreds)
@@ -94,6 +114,7 @@ export async function GET(req: NextRequest) {
         badgeCount: r.badge_count ?? 0,
         calledItCount: r.called_it_count ?? 0,
         topCategoryId: topCat?.id,
+        followerCount: followerCountMap[r.user_id] ?? 0,
       }
     })
 

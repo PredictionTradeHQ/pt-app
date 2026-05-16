@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import useSWR from "swr"
-import { Flame, Trophy, Activity, Medal } from "lucide-react"
+import { Flame, Trophy, Activity, Medal, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGamification } from "@/stores/gamification"
 import { createClient } from "@/lib/supabase/client"
@@ -42,6 +42,8 @@ type RowEntry = {
   categoryEmoji?: string
   /** Resolved PT category id ("crypto", "ai-tech", ...). Drives specialty chip. */
   topCategoryId?: string
+  /** Follower count (Follow System v1). 0 for demos, real number for real users. */
+  followerCount: number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -132,6 +134,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       isDemo: false,
       profileSlug: slugify(u.displayName),
       topCategoryId: u.topCategoryId,
+      followerCount: u.followerCount ?? 0,
     }))
 
     // Fill with demo anchors if fewer than MIN_ROWS real users
@@ -150,6 +153,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       category: u.favoriteCategory,
       categoryEmoji: u.favoriteCategoryEmoji,
       topCategoryId: demoCategoryIdFromLabel(u.favoriteCategory),
+      followerCount: 0,
     }))
 
     // Merge: real users first, then demo anchors to reach MIN_ROWS
@@ -192,6 +196,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         isCurrentUser: true,
         isDemo: false,
         topCategoryId: localTopCategoryId,
+        followerCount: 0,
       }
       let insertAt = combined.findIndex((u) => compare(u, youRow) > 0)
       if (insertAt === -1) insertAt = combined.length
@@ -381,6 +386,9 @@ export function ForecastersLeaderboard({ isEs }: Props) {
           visible.map((entry, i) => {
             const rank = i + 1
             const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null
+            // Social proof — render a small followers chip ONLY for the top 10
+            // rows, and only when the count is non-zero. Demos always show 0.
+            const showFollowerChip = rank <= 10
             return (
               <LeaderboardRow
                 key={entry.id}
@@ -389,6 +397,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
                 entry={entry}
                 sort={sort}
                 isEs={isEs}
+                showFollowerChip={showFollowerChip}
               />
             )
           })
@@ -426,14 +435,23 @@ function LeaderboardRow({
   entry,
   sort,
   isEs,
+  showFollowerChip,
 }: {
   rank: number
   medal: string | null
   entry: RowEntry
   sort: LeaderboardSortKey
   isEs: boolean
+  showFollowerChip: boolean
 }) {
   const name = entry.displayName
+  // Chip only shows for real, non-self forecasters with at least one follower.
+  // Demos and "YOU" never carry the chip — keeps signal/noise high.
+  const renderFollowerChip =
+    showFollowerChip &&
+    !entry.isDemo &&
+    !entry.isCurrentUser &&
+    entry.followerCount > 0
 
   // Avatar color: real users get indigo, demo gets badge-rarity color
   const avatarColor = entry.isCurrentUser
@@ -536,6 +554,15 @@ function LeaderboardRow({
           {!entry.isDemo && !entry.isCurrentUser && (
             <span className="text-[10px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20 shrink-0">
               {isEs ? "Real" : "Real"}
+            </span>
+          )}
+          {renderFollowerChip && (
+            <span
+              className="inline-flex items-center gap-0.5 text-[10px] font-semibold bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded-full border border-border shrink-0 tabular-nums"
+              title={`${entry.followerCount} ${entry.followerCount === 1 ? "follower" : "followers"}`}
+            >
+              <Users className="w-2.5 h-2.5" />
+              {entry.followerCount}
             </span>
           )}
         </div>
