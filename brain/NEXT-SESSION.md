@@ -8,9 +8,11 @@
 
 | System | Status |
 |---|---|
-| predictiontrade.online | ✅ Live — bet crash + login loop fixed (commit `ffa1de2`) |
-| GitHub main | ✅ Clean — last commit `ffa1de2` |
-| Vercel | ✅ Auto-deploy triggered — awaiting completion |
+| predictiontrade.online | ✅ Live — bet crash + login loop fixed (commit `ffa1de2`), CLI redeploy `dpl_6zqD4XsxATRX4meJ2YxMeE1RP5qa` |
+| GitHub main | ✅ Clean — last commit `cb33bdc` (this commit will be the next) |
+| Vercel project | ✅ `prj_WyzqTDsMjGaCD8cLifn3Oga9utkq` in team `predictiontrade1-1298s-projects` (`prediction.trade1@gmail.com`) |
+| Vercel Git link | ✅ Re-linked to `PredictionTradeHQ/pt-app` (was incorrectly pointing at `PredictionMarketsSolutions/pt-app`) |
+| Auto-deploy | 🧪 Verifying with this commit |
 | TypeScript build | ✅ Strict — 0 errors |
 | Supabase project | ✅ New clean project `vkizidrsuwsreepsbbuy` |
 | Supabase `wallets` | ✅ Live + RLS (migration 000) |
