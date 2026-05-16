@@ -16,7 +16,48 @@ Operador validó end-to-end en navegador real:
 
 ---
 
-## 🆕 What was built — 2026-05-16 (shareability identity loop)
+## 🆕 What was built — 2026-05-16 (identity artifacts begin)
+
+### Avatar / Profile Photo System — Phases 1 + 3 shipped (commits 29a6a9b + 654908d)
+
+PT graduates from "identity polish" to "identity-bearing artifacts". Every circular avatar across the product is now driven by a single component and the data layer is ready to receive uploads.
+
+**Phase 1 — Data layer (commit `29a6a9b`):**
+- Migration `005_profiles_avatar_url.sql` — adds `avatar_url text NULL` to `public.profiles`.
+- Migration `006_avatars_storage_setup.sql` — creates the `avatars` public Storage bucket (5 MB cap; jpeg/png/webp only) plus four RLS policies on `storage.objects`: public read; authed-owner insert/update/delete bound by `auth.uid()::text = split_part(name, '.', 1)`. Path convention: `<user_id>.<ext>`.
+- API extensions (additive, backward-compat):
+  - `RealProfileData.avatarUrl: string | null` on `/api/profile/[username]` + `app/profile/[username]/page.tsx`.
+  - `ForecasterEntry.avatarUrl: string | null` on `/api/leaderboard/forecasters`.
+
+**Phase 3 — Single source of truth: `<Avatar />` (commit `654908d`):**
+- New `components/avatar.tsx`. Props: `{ url?, displayName, size?, className?, accentHex? }`.
+- Size presets pixel-fixed (no layout shift): `sm 36px / md 44px / lg 64px / xl 96px`.
+- Initials derivation centralized (first letter of first two words, uppercase, "?" fallback).
+- Image `loading="lazy" decoding="async"`, `object-cover`, initials sit underneath as load + error fallback (`onError` hides the broken img element).
+- Accent: tailwind primary by default; `className` overrides via `twMerge`; `accentHex` for runtime colors (badge-rarity-tier on leaderboard rows).
+- Replaces four inline circles:
+  - `RealPublicProfile` header (size `lg`, default primary accent)
+  - `ProfileClient` Account card (size `lg`, default primary accent)
+  - `LeaderboardRow` (size `sm`, `accentHex` from badge rarity)
+  - `#1 Spotlight` (size `md`, amber accent via className)
+- `PublicProfileClient` (demo anchors) intentionally NOT touched — it's a `rounded-2xl` squircle by design and demos will never carry an `avatar_url`.
+- Backward-compat: until anyone uploads an avatar, every surface renders initials pixel-tight to the previous version.
+
+**Window-safety note on Phase 1:**
+The SELECT `avatar_url` from `profiles` would error if migration 005 isn't applied yet. The current safety:
+- `/api/leaderboard/forecasters` already returns `[]` (no real users) and `/api/profile/[username]` returns `null` for non-demo lookups, so the missing-column error never reaches user-visible state.
+- `app/profile/page.tsx` wraps the new SELECT in try/catch and falls through to `avatarUrl = null` (initials).
+Result: zero practical regression during the pre-migration window.
+
+**⏳ Phase 2 — AvatarUploader (pending):**
+Waiting on the operator to apply migrations 005 + 006 in the Supabase Dashboard (SQL provided in the previous session message). Once confirmed, Phase 2 ships:
+- New `components/profile/avatar-uploader.tsx`: file input → optional client-side WebP transcode (if browser supports `canvas.toBlob("image/webp")`) → upload to `avatars/<user_id>.<ext>` with `upsert: true` → UPDATE `profiles.avatar_url` with the resulting public URL.
+- Integration into `ProfileClient` Account card: clicking the avatar opens the file picker; preview before commit; sonner toast on success/failure.
+- No new route, no new endpoint — 100% client-side using `supabase.storage.from('avatars')` and `supabase.from('profiles').update(...)`.
+
+**Phase 4 (deferred):** OG profile card avatar rendering inside Satori. Requires fetch + base64 inline. Skip until upload adoption justifies the complexity.
+
+---
 
 ### Activation funnel — last leak closed: 0-pred sign-ins land on /markets (Priority 7 shipped)
 
@@ -522,13 +563,15 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 
 **Activation funnel is now end-to-end coherent.** Every entry path (sign-up confirm, sign-in, returning visit to /profile, public profile of a brand-new forecaster, share preview) speaks the same identity language: 🔥 streak / 🪙 specialty / 🏆 leaderboard.
 
-**Next major direction:** PT graduates from "identity polish" to **identity-bearing artifacts**. The biggest missing piece is the **Avatar / Profile Photo System** — currently every surface renders bare initials in a colored circle. Real photos make the same surfaces (leaderboard / profile / OG cards / future follow lists) read as a *community of forecasters* instead of generic avatars.
+**Avatar System status:** Phases 1 + 3 shipped. Phase 2 (uploader) blocked on operator action (apply migrations 005 + 006 in Supabase). Phase 4 (OG card rendering) deferred.
 
 **Next recommended steps (in order):**
-1. **Avatar / Profile Photo System** — minimal upload → Supabase storage → public URL → consistent render across `RealPublicProfile`, `ProfileClient`, leaderboard rows, `#1 Spotlight`, and OG profile cards. Initials remain as fallback. Scope intentionally tight (no cropper, no banner, no gallery). Detailed architecture proposal pending operator approval.
-2. **Welcome modal on /markets first visit** — only if activation data shows the banner+guide aren't enough.
-3. **Server-side category filter** — once realUsers > a few dozen.
-4. **OG profile cache strategy** — explicit `s-maxage=300`. Low priority.
+1. **⏳ Operator action: apply migrations 005 + 006** — SQL was provided in the last session message. Idempotent. ~30 seconds in Supabase SQL Editor. Unblocks Phase 2.
+2. **Phase 2 — AvatarUploader** — ships immediately after operator confirms. Client-side upload to `avatars/<user_id>.<ext>` + update `profiles.avatar_url`. Integration into `ProfileClient` Account card.
+3. **Follow System foundation (next major)** — once avatars are real, the visual ground is fertile for follower counts + follow button. Probable shape: new `follows` table (`follower_id`, `followee_id`, `created_at`, PK composite), one row per relationship, RLS read public + write own. Surfaces `RealPublicProfile` (follow button + count), `LeaderboardRow` (tiny follow chip on hover/long-press), eventually a `/feed` for "predictions from people you follow". Detailed proposal when operator gives the go.
+4. **Welcome modal on /markets first visit** — only if activation data shows the banner+guide aren't enough.
+5. **Server-side category filter** — once realUsers > a few dozen.
+6. **OG profile cache strategy** — explicit `s-maxage=300`. Low priority.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
