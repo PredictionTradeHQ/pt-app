@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2 } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2, ArrowRight, Trophy } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
 import { StreakWidget } from "@/components/streak-widget";
@@ -198,6 +198,11 @@ export function ProfileClient({
         </CardContent>
       </Card>
 
+      {/* Empty-state hero — only when the user has zero predictions */}
+      {totalPredictions === 0 && (
+        <EmptyProfileHero isEs={isEs} />
+      )}
+
       {/* Accuracy stats */}
       {totalPredictions > 0 && (
         <Card className="mb-6">
@@ -232,44 +237,48 @@ export function ProfileClient({
         </Card>
       )}
 
-      {/* Streak card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-400" />
-              {isEs ? "Racha de predicciones" : "Prediction Streak"}
-            </CardTitle>
-            {currentStreak > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 h-8 text-xs"
-                onClick={() => setShareOpen(true)}
-              >
-                <Share2 className="w-3 h-3" />
-                {isEs ? "Compartir" : "Share"}
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <StreakWidget variant="profile" />
-        </CardContent>
-      </Card>
+      {/* Streak card — hidden until the user has made a prediction */}
+      {totalPredictions > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-400" />
+                {isEs ? "Racha de predicciones" : "Prediction Streak"}
+              </CardTitle>
+              {currentStreak > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-8 text-xs"
+                  onClick={() => setShareOpen(true)}
+                >
+                  <Share2 className="w-3 h-3" />
+                  {isEs ? "Compartir" : "Share"}
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <StreakWidget variant="profile" />
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Badges card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Medal className="w-5 h-5 text-primary" />
-            {isEs ? "Insignias" : "Badges"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BadgesGrid />
-        </CardContent>
-      </Card>
+      {/* Badges card — hidden until the user has made a prediction */}
+      {totalPredictions > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Medal className="w-5 h-5 text-primary" />
+              {isEs ? "Insignias" : "Badges"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BadgesGrid />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Prediction history */}
       {predictions.length > 0 && (
@@ -349,4 +358,98 @@ export function ProfileClient({
       )}
     </main>
   );
+}
+
+// ─── EmptyProfileHero ─────────────────────────────────────────────────────────
+// Rendered on /profile when the user has zero predictions. Replaces the empty
+// stats cards (Accuracy/Streak/Badges/History) with an identity-onboarding hero
+// that mirrors the vocabulary of the OG cards, leaderboard spotlight, and share
+// copy: streak, specialty, leaderboard. Pure UI, no state, no network.
+
+function EmptyProfileHero({ isEs }: { isEs: boolean }) {
+  return (
+    <Card className="mb-6 border-primary/25 bg-gradient-to-br from-primary/[0.06] via-transparent to-amber-500/[0.04] relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+      <CardContent className="pt-6 pb-7">
+        {/* Headline */}
+        <div className="text-center mb-6">
+          <span className="text-4xl block mb-3 leading-none" aria-hidden>🎯</span>
+          <h2 className="text-2xl font-bold mb-2">
+            {isEs ? "Haz tu primera predicción." : "Make your first call."}
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+            {isEs
+              ? "Empieza tu racha, gana tu especialidad y sube en el ranking."
+              : "Start your streak, earn your specialty, and climb the leaderboard."}
+          </p>
+        </div>
+
+        {/* Three identity pillars — same vocabulary as OG cards + leaderboard */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <PillarCard
+            emoji="🔥"
+            accentClass="text-orange-400"
+            title={isEs ? "Racha" : "Streak"}
+            body={isEs
+              ? "Día 1 cuando hagas tu primera predicción hoy."
+              : "Day 1 the moment you predict today."}
+          />
+          <PillarCard
+            emoji="🪙"
+            accentClass="text-amber-400"
+            title={isEs ? "Especialidad" : "Specialty"}
+            body={isEs
+              ? "Gánala con 3 predicciones acertadas en una categoría."
+              : "Earned after 3 correct calls in any one category."}
+          />
+          <PillarCard
+            emoji="🏆"
+            accentClass="text-primary"
+            title={isEs ? "Ranking" : "Leaderboard"}
+            body={isEs
+              ? "Apareces ahí desde tu primera predicción."
+              : "You appear on it from your very first call."}
+          />
+        </div>
+
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
+          <Button asChild className="gap-1.5 font-semibold">
+            <Link href="/markets">
+              {isEs ? "Explorar mercados" : "Explore Markets"}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-1.5 font-semibold">
+            <Link href="/leaderboard">
+              <Trophy className="w-4 h-4" />
+              {isEs ? "Ver el ranking" : "Browse leaderboard"}
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PillarCard({
+  emoji,
+  accentClass,
+  title,
+  body,
+}: {
+  emoji: string
+  accentClass: string
+  title: string
+  body: string
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card/60 p-4 text-center">
+      <span className="text-2xl block mb-1.5 leading-none" aria-hidden>{emoji}</span>
+      <p className={`text-xs font-bold uppercase tracking-wider mb-1.5 ${accentClass}`}>
+        {title}
+      </p>
+      <p className="text-[11px] text-muted-foreground leading-relaxed">{body}</p>
+    </div>
+  )
 }
