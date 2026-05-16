@@ -10,6 +10,7 @@ import { useState } from "react";
 import { TrendingUp, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
+import { useGamification } from "@/stores/gamification";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -36,8 +37,19 @@ export default function LoginPage() {
       // Sync AuthProvider state before navigating so AppShell sees the user
       // immediately and doesn't redirect back to login.
       await refresh();
+
+      // Honor explicit ?next= first (e.g. user was bounced here from a private
+      // route). Otherwise default by activation state: a user with zero
+      // predictions belongs on /markets (where they can make their first call),
+      // not on /dashboard (which is built for analyzing existing activity).
       const params = new URLSearchParams(window.location.search);
-      router.push(params.get("next") ?? "/dashboard");
+      const explicitNext = params.get("next");
+      if (explicitNext) {
+        router.push(explicitNext);
+      } else {
+        const { totalPredictions } = useGamification.getState();
+        router.push(totalPredictions === 0 ? "/markets" : "/dashboard");
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : t("authUnexpectedError"));
     } finally {
