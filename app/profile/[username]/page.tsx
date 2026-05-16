@@ -109,7 +109,7 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, display_name")
+      .select("id, display_name, avatar_url")
       .not("display_name", "is", null)
       .limit(500)
 
@@ -134,6 +134,7 @@ async function fetchRealProfile(username: string): Promise<RealProfileData | nul
     return {
       displayName: match.display_name,
       username,
+      avatarUrl: match.avatar_url ?? null,
       gamification: gam
         ? {
             currentStreak: gam.current_streak ?? 0,

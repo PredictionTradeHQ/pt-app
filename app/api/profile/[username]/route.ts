@@ -38,6 +38,8 @@ export type TopCall = {
 export type RealProfileData = {
   displayName: string
   username: string
+  /** Public URL of the uploaded avatar (Supabase Storage `avatars` bucket). NULL → render initials. */
+  avatarUrl: string | null
   gamification: {
     currentStreak: number
     bestStreak: number
@@ -68,7 +70,7 @@ export async function GET(
     // 1. Find the profile whose display_name slug matches the URL param.
     const { data: profiles, error: profilesErr } = await supabase
       .from("profiles")
-      .select("id, display_name")
+      .select("id, display_name, avatar_url")
       .not("display_name", "is", null)
       .limit(500)
 
@@ -95,6 +97,7 @@ export async function GET(
     const result: RealProfileData = {
       displayName: match.display_name,
       username,
+      avatarUrl: match.avatar_url ?? null,
       gamification: gam
         ? {
             currentStreak: gam.current_streak ?? 0,

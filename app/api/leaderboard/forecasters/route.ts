@@ -5,6 +5,8 @@ import { topCategoryFromPredictions } from "@/lib/share-copy"
 export type ForecasterEntry = {
   userId: string
   displayName: string
+  /** Public avatar URL from Supabase Storage `avatars` bucket. Null → initials. */
+  avatarUrl: string | null
   currentStreak: number
   bestStreak: number
   totalPredictions: number
@@ -64,16 +66,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json([])
     }
 
-    // Fetch display names from profiles (publicly readable)
+    // Fetch display names + avatars from profiles (publicly readable)
     const userIds = rows.map((r) => r.user_id)
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, display_name")
+      .select("id, display_name, avatar_url")
       .in("id", userIds)
 
     const nameMap: Record<string, string> = {}
+    const avatarMap: Record<string, string | null> = {}
     for (const p of profiles ?? []) {
       nameMap[p.id] = p.display_name ?? "Forecaster"
+      avatarMap[p.id] = p.avatar_url ?? null
     }
 
     const result: ForecasterEntry[] = rows.map((r) => {
@@ -82,6 +86,7 @@ export async function GET(req: NextRequest) {
       return {
         userId: r.user_id,
         displayName: nameMap[r.user_id] ?? "Forecaster",
+        avatarUrl: avatarMap[r.user_id] ?? null,
         currentStreak: r.current_streak ?? 0,
         bestStreak: r.best_streak ?? 0,
         totalPredictions: r.total_predictions ?? 0,
