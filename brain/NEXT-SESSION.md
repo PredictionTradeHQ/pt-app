@@ -16,9 +16,35 @@ Operador validó end-to-end en navegador real:
 
 ---
 
-## 🆕 What was built — 2026-05-16 (OG profile shareability)
+## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
-### Profile OG image — `/api/og/profile/[username]` (Priority 1b shipped)
+### Share copy with category specialty (Priority 1 shipped)
+
+**Problem:** OG cards now show "Best at Crypto 🪙" but the actual share string in Called It / Climb / Streak modals was still generic — `"67% accuracy"` with no signal about what the user is *strong at*. Reading the post in someone else's feed told you nothing about the sharer's identity.
+
+**What changed:**
+- `lib/share-copy.ts`
+  - New `CategoryRef = { id; label; emoji }` type.
+  - Optional fields added to all three data interfaces: `marketCategory` + `topCategory` on `CalledItData`, `topCategory` on `StreakMilestoneData` and `LeaderboardClimbData`. All optional — call sites that don't pass them get **byte-identical** output to the previous version (backward-compat verified in prod).
+  - New helper `topCategoryFromPredictions(preds)` — mirrors server-side `computeCategoryStats` thresholds (≥3 resolved, ≥50% accuracy) so X/WhatsApp copy claims match what the profile UI claims.
+  - New helper `categoryRefById(id)` for inline resolution from a `PredictionRecord.category` id.
+- `components/called-it-modal.tsx` — resolves `marketCategory` inline; accepts optional `topCategory` prop.
+- `components/profile/profile-client.tsx` — passes `topCategory` computed from the store's `predictions`.
+- `components/leaderboard-climb-toast.tsx` — `ClimbInfo` gains optional `topCategory`.
+- `components/leaderboard/forecasters-leaderboard.tsx` — populates `topCategory` when constructing the climb event.
+
+**Copy variants shipped (verified live via `POST /api/ai/share-copy`):**
+- Called It w/ specialty: `🎯 YES on "<title>" when 80% disagreed 🎲. 67% in Crypto 🪙.`
+- Called It w/ per-call tag (no specialty yet): `🎯 NO on "<title>". 🤖 AI & Tech.`
+- Leaderboard Climb: `Up 5 spots. Now #7 on @PredictionTrade. 71% in AI & Tech 🤖.`
+- Streak Milestone: `⚡ 18-day streak — one full week. Top Sports ⚽ forecaster.`
+- Baseline (no category passed): identical to pre-change output.
+
+**Risk:** Very low. Pure additive type changes, all new fields optional, no UI changes, no DB changes, no env vars. Backward-compat proven in prod with a no-category POST.
+
+---
+
+### Profile OG image — `/api/og/profile/[username]` (Priority 1b shipped earlier today)
 
 **Problem:** Sharing a profile link to X / WhatsApp / LinkedIn produced a plain title-only card. No visual identity, no accuracy, no streak — nothing that conveys "this person is a real forecaster". Lowest-cost lever to lift share-driven traffic was missing.
 
@@ -294,14 +320,15 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 ### 🚀 ACTIVE FOCUS — Next session
 Social/profile polish + reputation loops. Operator explicitly chose this path after PT core stabilization on 2026-05-16.
 
-**Next recommended steps (in order):**
-1. **Share copy w/ category specialty** — bake top category into `lib/share-copy.ts` outputs so "63% accurate in Crypto · predictiontrade.online/@user" replaces the generic line. Tiny touch, big payoff alongside the new OG card.
-2. **Called It modal: surface category** — pull `prediction.category` into the share text. Same lib, same surface.
-3. **Leaderboard streak tab** — separate "🔥 Streak" ranking sorted by `current_streak` (already in `public_leaderboard` VIEW). No new data needed.
-4. **Leaderboard category tabs** — "Best in AI&Tech", "Best in Crypto" filtered via `category_predictions` JSONB on the VIEW.
-5. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats.
+**Already shipped this day:**
+- ✅ Profile OG image (commit `92f826c`) — rich link previews on X / WhatsApp / LinkedIn
+- ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
 
-Priority 1b (**Profile OG image**) shipped this session — see "What was built" above.
+**Next recommended steps (in order):**
+1. **Streak leaderboard tab** — separate "🔥 Streak" ranking sorted by `current_streak` (already in `public_leaderboard` VIEW). No new data needed. Just a new tab on `/leaderboard`.
+2. **Leaderboard category tabs** — "Best in AI&Tech", "Best in Crypto" filtered via `category_predictions` JSONB on the VIEW. Slightly bigger than #1 because filtering+display logic.
+3. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats. Reduces drop-off for new accounts.
+4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Could add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render every fetch. Low priority — only matters at scale.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
