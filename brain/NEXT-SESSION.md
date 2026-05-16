@@ -1,10 +1,16 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Follow System v1 session) | Read this before touching anything.
+> Last updated: 2026-05-17 (Follow System v1 — migration applied) | Read this before touching anything.
 
 ---
 
-## 🆕 What was built — 2026-05-17 (Follow System v1 — "watching forecasters" primitive)
+## ✅ Follow System v1 — LIVE end-to-end (2026-05-17)
+
+Migration `007_follows.sql` applied in production Supabase (`vkizidrsuwsreepsbbuy`). Operator confirmation: `Success. No rows returned.` The follows table exists, RLS active, public read + ownership-safe writes. Full pipeline live: button click → `lib/follows` insert → RLS guard → Supabase row → next render reads new count.
+
+Post-deploy smoke (12 endpoints, 3 auth gates): all green. No regressions. `/api/leaderboard/forecasters` still returns `[]` (zero real users in `public_leaderboard`) — the new batched follows query executes cleanly against the (now-existing) empty `follows` table. No try/catch fallback firing.
+
+### 🆕 What was built — 2026-05-17 (Follow System v1 — "watching forecasters" primitive)
 
 PT graduates from identity artifacts (avatars, OG cards, specialty headlines) to a real social primitive: **a forecaster can follow another forecaster.** Single edge table, ownership-safe RLS, no notifications, no feed, no recommendations. Build primitive → observe → iterate.
 
@@ -59,7 +65,11 @@ These are *deliberate* cuts. The thesis is: ship the primitive, observe whether 
 ### Verification
 
 - ✅ `pnpm build` clean (TS strict, 0 errors). Three new files, three edited files compiled without complaints.
-- ⚠️ **Operator action required:** apply `supabase/migrations/007_follows.sql` in the Supabase SQL Editor (project `vkizidrsuwsreepsbbuy`) before the Follow button does anything. The UI is **safe pre-migration** — both the API and page wrap the follower-count query in try/catch and fall back to 0; the FollowButton renders normally and any toggle attempt will surface a Sonner error (`relation "follows" does not exist`) without crashing the page.
+- ✅ Migration `007_follows.sql` applied in production Supabase (`vkizidrsuwsreepsbbuy`) — operator confirmed `Success. No rows returned.`
+- ✅ Post-deploy smoke (12 public + 3 auth-gated endpoints): all green, no regressions.
+- ✅ Pipeline live end-to-end: FollowButton → `lib/follows` → RLS guard → `public.follows` row → next render reads updated count.
+
+**Note on local dev:** `.env.local` currently contains the anon key of an older Supabase project (`ref: dvevwlhshcyvnsubyvzw`), not the active project (`vkizidrsuwsreepsbbuy`). Production is unaffected (Vercel env vars are set correctly). If you run `pnpm dev` locally and Supabase calls fail, refresh `NEXT_PUBLIC_SUPABASE_ANON_KEY` from the active project's API settings.
 
 ### Files touched
 
