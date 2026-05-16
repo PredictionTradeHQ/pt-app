@@ -18,6 +18,30 @@ Operador validó end-to-end en navegador real:
 
 ## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
+### Activation funnel — last leak closed: 0-pred sign-ins land on /markets (Priority 7 shipped)
+
+**Problem:** The sign-up funnel already routed new users to `/markets?new=1` via the auth callback (and now showed the identity-triad welcome banner there). But returning sign-ins through the email/password form on `/auth/login` went to `/dashboard` unconditionally — including users who had verified their email at some point but never made a single prediction. For those users, `/dashboard` reads as an empty analytics screen instead of the first-call moment the rest of the product now hammers.
+
+**What changed:**
+- `app/auth/login/page.tsx`
+  - `?next=` still wins (a user bounced from a protected route stays bounced to that route).
+  - Otherwise, read `totalPredictions` synchronously from the Zustand gamification store via `useGamification.getState()` and:
+    - `0 predictions` → `/markets`  (welcome triad + FirstPredictionGuide are right there)
+    - `> 0 predictions` → `/dashboard`  (unchanged behavior)
+- Zero other surfaces touched.
+
+**Edge-case note:** for a returning user on a fresh device (empty localStorage, store hydrates with 0), this routes them to `/markets`. That is strictly better than `/dashboard` pre-sync — `/markets` is always meaningful, and gamification sync kicks in on the next profile visit. No data loss, no destructive action.
+
+**Verification:**
+- `pnpm build` clean (TS strict).
+- Deploy live: the new `totalPredictions === 0 ? "/markets" : "/dashboard"` branch found in the login chunk `/_next/static/chunks/06j14oeefa90..js`.
+- Smoke 7 endpoints all 200 (incl. `/auth/login`, `/markets?new=1`, leaderboard, OG profile).
+- Sign-up callback path unchanged (still goes through `/auth/callback` → `/markets?new=1`).
+
+**Risk:** Minimal. Pure client-side branch on existing data already in the store. Single file touched. No backend, no env vars. Reversible by removing the ternary.
+
+---
+
 ### Identity-aligned first-prediction nudge (Priority 6 shipped)
 
 **Problem:** The signup→markets pipeline existed (callback already redirected to `/markets?new=1`, `MarketsApp` already rendered a welcome banner, `FirstPredictionGuide` already nudged users with `totalPredictions === 0`). But the copy on both surfaces lagged behind the rest of the product:
@@ -487,19 +511,24 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 Social/profile polish + reputation loops. Operator explicitly chose this path after PT core stabilization on 2026-05-16.
 
 **Already shipped this day:**
-- ✅ Profile OG image (commit `92f826c`) — rich link previews on X / WhatsApp / LinkedIn
-- ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
-- ✅ Streak leaderboard tab fix + specialty (commit `46095e6`) — ranking finally matches the 🔥 currentStreak that the UI shows, plus the specialty chip on every row
-- ✅ Category filter chips on leaderboard (commit `6c3402a`) — All / Crypto / AI & Tech / Sports / Gaming / Entertainment / Internet / Global News
-- ✅ Profile empty-state hero — private (commit `f21d018`) — first-call identity onboarding on `/profile` with the 🔥/🪙/🏆 triad
-- ✅ Public profile empty state polish (commit `428f642`) — `/profile/[username]` for new forecasters reads "🎯 New forecaster" + the same triad phrased third-person
-- ✅ Identity-aligned first-prediction nudge (commit `553b9b9`) — welcome banner + FirstPredictionGuide both refreshed to the triad; double-narrative suppressed when both would fire
+- ✅ Profile OG image (commit `92f826c`)
+- ✅ Share copy with category specialty (commit `045b2b6`)
+- ✅ Streak leaderboard tab fix + specialty (commit `46095e6`)
+- ✅ Category filter chips on leaderboard (commit `6c3402a`)
+- ✅ Profile empty-state hero — private (commit `f21d018`)
+- ✅ Public profile empty state polish (commit `428f642`)
+- ✅ Identity-aligned first-prediction nudge (commit `553b9b9`)
+- ✅ Sign-in routes 0-pred users to /markets (commit `9f39678`) — last activation-funnel leak closed
+
+**Activation funnel is now end-to-end coherent.** Every entry path (sign-up confirm, sign-in, returning visit to /profile, public profile of a brand-new forecaster, share preview) speaks the same identity language: 🔥 streak / 🪙 specialty / 🏆 leaderboard.
+
+**Next major direction:** PT graduates from "identity polish" to **identity-bearing artifacts**. The biggest missing piece is the **Avatar / Profile Photo System** — currently every surface renders bare initials in a colored circle. Real photos make the same surfaces (leaderboard / profile / OG cards / future follow lists) read as a *community of forecasters* instead of generic avatars.
 
 **Next recommended steps (in order):**
-1. **Sign-in (not sign-up) flow → 0-pred users land in /markets, not /dashboard** — `app/auth/login/page.tsx` currently routes to `/dashboard` after sign-in. For an existing user who has 0 predictions (verified email but never bet), `/dashboard` is the wrong place. Cheap fix: check `totalPredictions === 0` post-`refresh()` and redirect to `/markets` instead. Closes the last leak in the activation funnel.
-2. **Welcome modal on /markets first visit** — one-time soft overlay highlighting the triad before they scroll. localStorage-gated, no backend. The lightweight banner+guide may be enough; revisit only if activation data shows it isn't.
-3. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen.
-4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params). Low priority.
+1. **Avatar / Profile Photo System** — minimal upload → Supabase storage → public URL → consistent render across `RealPublicProfile`, `ProfileClient`, leaderboard rows, `#1 Spotlight`, and OG profile cards. Initials remain as fallback. Scope intentionally tight (no cropper, no banner, no gallery). Detailed architecture proposal pending operator approval.
+2. **Welcome modal on /markets first visit** — only if activation data shows the banner+guide aren't enough.
+3. **Server-side category filter** — once realUsers > a few dozen.
+4. **OG profile cache strategy** — explicit `s-maxage=300`. Low priority.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
