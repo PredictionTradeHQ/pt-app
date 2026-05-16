@@ -168,21 +168,25 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 ---
 
-## CURRENT STATE — checkpoint 2026-05-16 ✅ STABLE
+## CURRENT STATE — checkpoint 2026-05-16 ✅ STABLE (post bug-fix)
 
 **Git:** `main` clean, synced with `origin/main`
 **TypeScript:** 0 errors (strict mode)
-**Vercel:** ● Ready — predictiontrade.online live ✅ verified in incognito
+**Vercel:** ● Deploying — predictiontrade.online (commit `ffa1de2`)
 **Supabase:** New clean project `vkizidrsuwsreepsbbuy` — all migrations applied
 
 **Last commits:**
 ```
+ffa1de2  fix(core): resolve bet crash and login redirect loop
+9f9ee9b  docs(brain): session close — all migrations complete, production verified, PT stable
 27e9942  chore(supabase): migrate to new clean project — replace all old project ID refs, add 000_wallets
 8aa44bd  docs(brain): session close — core loop stability, true Supabase schema state
 b448e04  fix(api): force-dynamic on stats/platform — prevents ISR caching broken build 404
-e9e675c  fix(bets): add demo_portfolios migration + error logging in persistPortfolio
-be4158c  feat(profiles): server-side category accuracy + top calls on public profiles
 ```
+
+**Bugs fixed in this session:**
+- ✅ Bet/positions crash: `formatTimeAgo` TypeError on string timestamp from Supabase JSON
+- ✅ Login redirect loop: login page used separate Supabase instance from AuthProvider
 
 **Completed phases:**
 - ✅ Phase 0 — Foundation (Next.js, Supabase, Vercel, TypeScript strict)
@@ -241,7 +245,8 @@ Operator must confirm migration 004 was applied (user confirmed ✅ 2026-05-15).
 
 ### Priority 2 — Full end-to-end verification (do this at next session start)
 Login → make a prediction → refresh page → confirm balance + positions persisted → leaderboard → public profiles.
-Goal: confirm the full core loop is stable after the Vercel env var restore + bet fix.
+Goal: confirm the full core loop is stable after bet crash fix + login fix.
+**Specific test:** user with existing bets → login → make new bet → positions tab renders without crash.
 
 ### Priority 3 — Social / Profiles / Leaderboard polish
 After migration 003 runs, evaluate what still feels incomplete in:

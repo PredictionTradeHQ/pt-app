@@ -1,6 +1,6 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-16 (session close) | Read this before touching anything.
+> Last updated: 2026-05-16 (bug-fix session) | Read this before touching anything.
 
 ---
 
@@ -8,9 +8,9 @@
 
 | System | Status |
 |---|---|
-| predictiontrade.online | ✅ Live — verified in incognito (login, signup, bets, profiles) |
-| GitHub main | ✅ Clean — last commit `27e9942` |
-| Vercel | ✅ Auto-deploy active (PT Vercel workspace) |
+| predictiontrade.online | ✅ Live — bet crash + login loop fixed (commit `ffa1de2`) |
+| GitHub main | ✅ Clean — last commit `ffa1de2` |
+| Vercel | ✅ Auto-deploy triggered — awaiting completion |
 | TypeScript build | ✅ Strict — 0 errors |
 | Supabase project | ✅ New clean project `vkizidrsuwsreepsbbuy` |
 | Supabase `wallets` | ✅ Live + RLS (migration 000) |
@@ -151,6 +151,23 @@ New Supabase project `vkizidrsuwsreepsbbuy` — all tables live, core loop verif
 ### Priority 1 — ✅ RESOLVED: bet persistence bug (commit `e9e675c`)
 Root cause: `demo_portfolios` never existed. Fix: migration 004 + `persistPortfolio()` error logging.
 Applied and verified in production.
+
+### ✅ RESOLVED (2026-05-16): Bet crash — TypeError in formatTimeAgo (commit `ffa1de2`)
+Root cause: `UserPosition.timestamp` is stored as `Date` but JSON serialisation converts it to ISO string.
+After Supabase hydration, old positions have string timestamps. When the user makes a new bet,
+`setActiveTab("positions")` renders old positions and `formatTimeAgo(pos.timestamp)` calls
+`string.getTime()` → TypeError → React tree crash. The write to Supabase works fine (fire-and-forget
+runs before the crash), which is why the bet appears on reload.
+Fix: `formatTimeAgo` now accepts `Date | string` (using `instanceof Date` check). Hydration also
+converts timestamps with `new Date()` as a second layer of defence.
+
+### ✅ RESOLVED (2026-05-16): Login redirect loop (commit `ffa1de2`)
+Root cause: Login page created its own `createClient()` instance, separate from AuthProvider's.
+`signInWithPassword` on one Supabase instance does NOT synchronously notify a different instance's
+`onAuthStateChange`; propagation is via storage events (async). `router.push()` fired before the
+storage event arrived, so AppShell saw `user: null, isLoading: false` → redirected back to `/auth/login`.
+Fix: login page now uses `useAuth().supabase` (same instance as AuthProvider) and `await refresh()`
+before navigating — guarantees user state is in context before the next route renders.
 
 ---
 
