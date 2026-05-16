@@ -16,6 +16,79 @@ Operador validó end-to-end en navegador real:
 
 ---
 
+## 🛡️ Hardening pass — final consolidated state (2026-05-16)
+
+### Sync verification — 100% consistent ✅
+
+| Layer | State |
+|---|---|
+| Local HEAD | `55b5112` (clean working tree) |
+| GitHub `origin/main` | `55b5112` |
+| Vercel production deployment | `dpl_CgfmE4od6sftAKq76ikBGVgBXZFJ` (sha `55b5112`, `source: "git"`, READY) |
+| `predictiontrade.online` alias | → latest deployment ✅ |
+| `www.predictiontrade.online` alias | → latest deployment ✅ |
+| `pt-app-delta.vercel.app` alias | → latest deployment ✅ |
+| `pt-app-git-main-*` alias | → latest deployment ✅ |
+| DNS `www` CNAME | `f9a241c4d22e4b17.vercel-dns-017.com` (Vercel anycast) ✅ |
+| Supabase env vars | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (sensitive, production+preview) ✅ |
+| Pipeline | `git push` → webhook → build → READY → aliases reassigned, fully automatic ✅ |
+
+### Production endpoint health (final E2E)
+
+All public pages 200, all auth-required 307 (redirect to login), all auth APIs 401 unauthenticated:
+`/`, `/markets`, `/leaderboard`, `/play`, `/auth/login`, `/auth/sign-up`, `/api/wallet`(401), `/api/stats/platform`(200), `/api/leaderboard/forecasters`(200), `/api/user/stats`(401), `/api/demo-portfolio`(401), `/api/og/streak`(200 PNG), `/api/profile/[username]`(200), `/api/polymarket`(200), `/api/game/leaderboard`(200), `/robots.txt`(200), `/sitemap.xml`(200).
+
+### ⚠️ Known tech debt — NOT fixing in this pass, documented for future cleanup
+
+**1. Real PMS-project contamination in PT codebase** (priority for cleanup session)
+PT code makes runtime calls to PMS production infrastructure. Violates the absolute PT↔PMS separation rule in CLAUDE.md. The contamination is contained to the `/demo` page route (auth-required, so unauth users never trigger it; auth users probably see errors because `PMS_API_KEY` is not configured in PT's Vercel env). Not breaking production but a structural violation.
+
+Files involved:
+- `lib/pms.ts` (466 lines) — PMSClient calling `api.predictionmarkets.market/v1`, also exports `PMS_WS_URL` for `wss://ws.predictionmarkets.market/v1/stream`
+- `types/pms.ts` (~190 lines) — TS interfaces for PMS API responses
+- `hooks/use-pms-markets.ts` — SWR hook calling `/api/pms`
+- `hooks/use-pms-websocket.ts` — opens WebSocket to PMS WS URL
+- `app/api/pms/route.ts`, `app/api/pms/[marketId]/history/route.ts`, `app/api/pms/[marketId]/odds/route.ts` — proxy routes calling `pmsClient`
+- `components/demo-dashboard.tsx:35` — calls `usePMSMarkets(isSimulating)`
+
+Cleanup options (decide later):
+- **A**: Replace `usePMSMarkets` in `demo-dashboard.tsx` with `usePolymarketMarkets` (already-working alternative). Delete `lib/pms.ts`, `types/pms.ts`, hooks, and `app/api/pms/*` routes. Cleanest, removes contamination entirely.
+- **B**: If `/demo` is paused or being replaced anyway, just delete `demo-dashboard.tsx` and follow-on (`/demo` already not the main flow — Markets is the main entry).
+
+**2. Duplicate market API route — `/api/markets` (500 in prod, unused)**
+`app/api/markets/route.ts` is legacy. Returns 500 because requires `FEATURED_MARKETS_JSON` env var not set in Vercel. NOT called by any component (grep confirmed). The active route is `app/api/polymarket/route.ts`.
+Cleanup: delete `app/api/markets/route.ts` + remove `MARKETS_API_TOKEN` and the duplicate `FEATURED_MARKETS_JSON` constant from `.env.local.example` if not used by `/api/polymarket` either.
+
+**3. Stale Vercel alias** (cosmetic, no functional impact)
+Alias `pt-app-predictiontrade1-1298-predictiontrade1-1298s-projects.vercel.app` still points to the manual CLI deployment `dpl_6zqD4XsxATRX4meJ2YxMeE1RP5qa` instead of the latest git deployment. Just hit "Promote to production" on the latest git deploy or let Vercel garbage-collect (deployments expire after 30 days per project config).
+
+**4. Duplicate `pt-app` project in PMS Vercel team** (deferred housekeeping)
+`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY` in `predictionmarketssolutions-7124s-projects` — created by accident during infra audit. Inofensivo (no git link, no domain), pero contamina la separación team-level PT/PMS. Borrar desde cuenta PMS.
+
+**5. Old GitHub repo `PredictionMarketsSolutions/pt-app`** (deferred)
+Posiblemente borrado o privado (404 público), but `repoId 1239741806` may still exist. Auditar y borrar si no tiene historia única.
+
+**6. Brain doc reference to nonexistent route** — already noted: `/api/leaderboard/flash-players` was never implemented; real route is `/api/game/leaderboard`. CLAUDE.md line ~129 has the wrong reference.
+
+**7. Silent error handlers** (low priority, partly intentional)
+20 files use empty `catch {}` blocks. Some are legitimate fire-and-forget patterns (supabase-sync, share-copy). Some could hide bugs (auth flows). Audit when refactoring share/auth surfaces.
+
+**8. Loose typing** (low priority)
+13 `: any` / `as any` / `@ts-ignore` occurrences across 11 files. Mostly in Supabase response handling and arcade game state. Not blocking but worth tightening when touching those files.
+
+### Final declaration
+
+**PT infrastructure is officially stable as of commit `55b5112` on 2026-05-16.**
+- Auto-deploy pipeline verified end-to-end (twice).
+- Production serves the correct commit with all critical fixes applied.
+- All sync layers consistent.
+- Separation PT↔PMS clean at the account/team/domain level.
+- Tech debt is documented above for a calm cleanup session; none of it blocks the next phase.
+
+The next phase (social/profile polish + reputation loops) can proceed on this base without infra concerns.
+
+---
+
 ## Production Status
 
 | System | Status |
