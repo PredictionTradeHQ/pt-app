@@ -18,6 +18,49 @@ Operador validó end-to-end en navegador real:
 
 ## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
+### Public profile empty-state polish (Priority 5 shipped)
+
+**Problem:** A real Supabase user with `display_name` slug-matched on `/profile/[username]` but zero predictions rendered as: avatar + "Forecaster on PredictionTrade" headline + a flat "No predictions yet" card + the standard viewer CTA. Reading the page felt abandoned, not aspirational — and any share preview of that state produced a dead-account impression. The OG card for the same user is graceful (`@username` + "Forecaster on PredictionTrade" fallback) — but the landing page lagged behind.
+
+**What changed:**
+- `components/profile/real-public-profile.tsx`
+  - `buildHeadline()` now returns `"🎯 New forecaster"` (was `"Forecaster on PredictionTrade"`) when `gam === null || totalPredictions === 0`. Same 🎯 emoji as the private `EmptyProfileHero` so the share text `${displayName} on @PredictionTrade — 🎯 New forecaster` reads identity-in-progress.
+  - The visible headline `<p>` is hidden when there are no stats — the new hero carries the identity copy, removing redundancy.
+  - The placeholder "No predictions yet" card is replaced with a new in-file `EmptyPublicProfileHero` sub-component:
+
+    ```
+    ✨ Every top predictor starts with a first call.
+    Once <FirstName> makes their first prediction, their streak,
+    specialty, and leaderboard climb will build right here.
+
+    [🔥 STREAK]            [🪙 SPECIALTY]            [🏆 LEADERBOARD]
+    Builds day by day      Earned after 3 correct    Appears from the
+    from the first         calls in any one          very first correct
+    prediction.            category.                 call.
+    ```
+
+  - No CTA inside the hero — the page-level "Make your own predictions / Browse Markets" card at the bottom already serves the *viewer*. The hero stays presentational (about the absent owner), not actionable (about the viewer). Clean separation of audiences.
+
+**Vocabulary now consistent across 6 surfaces:**
+- OG profile card                  (🪙 Crypto, 🔥 N-day streak)
+- Profile headline (with stats)    ("67% accurate · 🔥 7-day streak")
+- Profile empty state — **private**(🔥 / 🪙 / 🏆 pillars, second-person)
+- Profile empty state — **public** (🔥 / 🪙 / 🏆 pillars, third-person)  ← new
+- Leaderboard #1 Spotlight         ("🔥 Streak leader · 🪙 Crypto")
+- Share copy generators            ("67% in Crypto 🪙")
+
+**Verification:**
+- `pnpm build` clean (TS strict).
+- Real-public-profile chunk is only reachable from `/profile/<x>` pages (not from `/`, `/leaderboard`, etc.). Confirmed deploy live by scanning chunks pulled by `/profile/alex-m`, `/profile/marcus-w`, `/profile/some-random-nonexistent`: literal `"Every top predictor starts"` found in `/_next/static/chunks/0n5qd8cxi4xg0.js`.
+- Smoke 10 endpoints all 200 (incl. existing demo profile `alex-m`, leaderboard sorts, OG profile, OG streak, polymarket). `/profile/marcus-w` returns 404 — expected, that username is not a demo anchor and no real Supabase user matches the slug.
+- Auth gate on `/profile` intact (`307 → /auth/login?next=/profile`).
+
+**Note on visual verification:** the new hero only renders for a real Supabase user whose `display_name` slug-matches the URL AND who has zero predictions. realUsers ≈ 0 today, so a true end-to-end visual check requires creating a Supabase test user. Logic is provably exercised by the bundle marker; structural review confirms behavior is purely additive — no risk to existing flows.
+
+**Risk:** Very low. Pure presentation. No backend, no env vars, no schema, no new files (sub-component lives at the bottom of the same file). Behavior for profiles with `totalPredictions > 0` is byte-identical to before.
+
+---
+
 ### Profile empty-state hero (Priority 4 shipped)
 
 **Problem:** A logged-in user with zero predictions landed on `/profile` and saw four nearly-empty cards (Accuracy/Streak/Badges/History) plus an Activity Overview link to /dashboard. Nothing explained what the platform rewards. The first call felt like a bet, not the start of a public reputation.
@@ -400,12 +443,13 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 - ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
 - ✅ Streak leaderboard tab fix + specialty (commit `46095e6`) — ranking finally matches the 🔥 currentStreak that the UI shows, plus the specialty chip on every row
 - ✅ Category filter chips on leaderboard (commit `6c3402a`) — All / Crypto / AI & Tech / Sports / Gaming / Entertainment / Internet / Global News; client-side over the per-row specialty already in the API
-- ✅ Profile empty-state hero (commit `f21d018`) — first-call identity onboarding: "🎯 Make your first call." + Streak/Specialty/Leaderboard pillars + CTA to /markets
+- ✅ Profile empty-state hero — private (commit `f21d018`) — first-call identity onboarding on `/profile` with the 🔥/🪙/🏆 triad
+- ✅ Public profile empty state polish (commit `428f642`) — `/profile/[username]` for new forecasters reads "🎯 New forecaster" + the same triad phrased third-person; abandoned-account vibe gone
 
 **Next recommended steps (in order):**
-1. **Public-profile empty state polish** — `/profile/[username]` for a real user with no predictions currently renders `RealPublicProfile` with empty headline + zeroed stats. Reuse the same vocabulary (3 pillars + first-call CTA) so the public-facing profile of a brand-new user reads as aspirational, not abandoned. Touches `RealPublicProfile` only.
-2. **Sign-up flow → first-prediction nudge** — after `/auth/sign-up-success`, route or banner that lands the user on `/markets` already framed as "Make your first call." Reuses the new EmptyProfileHero copy. Tiny change, big leverage on activation.
-3. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen. Path: add the param, filter in SQL via `topCategoryId` (could pre-compute on a generated column later for speed). Skip until base actually grows.
+1. **Sign-up flow → first-prediction nudge** — after `/auth/sign-up-success`, banner or auto-route that lands the user on `/markets` already framed as "Make your first call." Reuses the EmptyProfileHero copy. Tiny change, big leverage on activation.
+2. **Welcome modal on /markets first visit** — when an authed user arrives at `/markets` and has 0 predictions, one-time soft overlay highlighting the triad (Streak / Specialty / Leaderboard) before they start scrolling. localStorage-gated, no backend.
+3. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen.
 4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render on every fetch. Low priority — only matters at scale.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
