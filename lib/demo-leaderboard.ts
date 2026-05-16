@@ -188,6 +188,21 @@ export function getDemoUser(username: string): DemoUser | null {
   return DEMO_USERS.find((u) => u.username === username) ?? null
 }
 
+/** Maps DemoUser.favoriteCategory (display label) to PT category id. */
+const DEMO_LABEL_TO_ID: Record<string, string> = {
+  "AI & Tech": "ai-tech",
+  "Crypto": "crypto",
+  "Sports": "sports",
+  "Gaming": "gaming",
+  "Entertainment": "entertainment",
+  "Internet Culture": "internet-culture",
+  "Global News": "global-news",
+}
+
+export function demoCategoryIdFromLabel(label: string): string | undefined {
+  return DEMO_LABEL_TO_ID[label]
+}
+
 export type LeaderboardSortKey = "streak" | "accuracy" | "badges" | "activity"
 
 export function getSortedLeaderboard(sort: LeaderboardSortKey): DemoUser[] {

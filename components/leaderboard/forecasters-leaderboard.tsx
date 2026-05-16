@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import {
   getSortedLeaderboard,
+  demoCategoryIdFromLabel,
   type LeaderboardSortKey,
 } from "@/lib/demo-leaderboard"
 import { RARITY_COLORS } from "@/lib/badges"
@@ -17,6 +18,7 @@ import { slugify } from "@/lib/utils"
 import type { ForecasterEntry } from "@/app/api/leaderboard/forecasters/route"
 import { LeaderboardClimbToast, type ClimbInfo } from "@/components/leaderboard-climb-toast"
 import { topCategoryFromPredictions } from "@/lib/share-copy"
+import { getCategoryById } from "@/lib/categories"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,8 @@ type RowEntry = {
   profileSlug?: string    // only demo users have navigable profiles for now
   category?: string
   categoryEmoji?: string
+  /** Resolved PT category id ("crypto", "ai-tech", ...). Drives specialty chip. */
+  topCategoryId?: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -100,6 +104,11 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       ? Math.round((correctCount / resolvedCount) * 100)
       : null
 
+  const localTopCategoryId = useMemo(
+    () => topCategoryFromPredictions(predictions)?.id,
+    [predictions]
+  )
+
   const ranked = useMemo(() => {
     const real = Array.isArray(realUsers) ? realUsers : []
 
@@ -115,6 +124,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       isCurrentUser: u.userId === currentUserId,
       isDemo: false,
       profileSlug: slugify(u.displayName),
+      topCategoryId: u.topCategoryId,
     }))
 
     // Fill with demo anchors if fewer than MIN_ROWS real users
@@ -132,6 +142,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
       profileSlug: u.username,
       category: u.favoriteCategory,
       categoryEmoji: u.favoriteCategoryEmoji,
+      topCategoryId: demoCategoryIdFromLabel(u.favoriteCategory),
     }))
 
     // Merge: real users first, then demo anchors to reach MIN_ROWS
@@ -140,8 +151,9 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         ? realRows
         : [...realRows, ...demoRows.slice(0, MIN_ROWS - realRows.length)]
 
-    // Sort combined list by active sort key
-    const getScore = (u: RowEntry): number => {
+    // Sort combined list by active sort key, with deterministic tie-break:
+    // primary by sort key, then accuracy DESC (nulls last), then total DESC.
+    const primary = (u: RowEntry): number => {
       switch (sort) {
         case "streak":   return u.currentStreak
         case "accuracy": return u.accuracy ?? -1  // nulls last
@@ -149,7 +161,15 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         case "activity": return u.totalPredictions
       }
     }
-    combined.sort((a, b) => getScore(b) - getScore(a))
+    const compare = (a: RowEntry, b: RowEntry): number => {
+      const p = primary(b) - primary(a)
+      if (p !== 0) return p
+      const accA = a.accuracy ?? -1
+      const accB = b.accuracy ?? -1
+      if (accB !== accA) return accB - accA
+      return b.totalPredictions - a.totalPredictions
+    }
+    combined.sort(compare)
 
     // Inject "YOU" from local state if user is not already in real list
     const currentUserInReal = realRows.some((u) => u.isCurrentUser)
@@ -164,9 +184,9 @@ export function ForecastersLeaderboard({ isEs }: Props) {
         badgeCount: badges.length,
         isCurrentUser: true,
         isDemo: false,
+        topCategoryId: localTopCategoryId,
       }
-      const score = getScore(youRow)
-      let insertAt = combined.findIndex((u) => getScore(u) <= score)
+      let insertAt = combined.findIndex((u) => compare(u, youRow) > 0)
       if (insertAt === -1) insertAt = combined.length
       combined.splice(insertAt, 0, youRow)
     }
@@ -183,6 +203,7 @@ export function ForecastersLeaderboard({ isEs }: Props) {
     localAccuracyPct,
     badges.length,
     isEs,
+    localTopCategoryId,
   ])
 
   // Detect leaderboard rank improvement on initial data load (once per session)
@@ -260,11 +281,17 @@ export function ForecastersLeaderboard({ isEs }: Props) {
           sort === "badges" ? `🏅 ${top.badgeCount}` :
           sort === "activity" ? `${top.totalPredictions} pred.` :
           `🔥 ${top.currentStreak}d`
+        const spotlightLabel =
+          sort === "streak"   ? (isEs ? "🔥 Líder de racha"     : "🔥 Streak leader") :
+          sort === "accuracy" ? (isEs ? "🎯 Líder en precisión" : "🎯 Accuracy leader") :
+          sort === "badges"   ? (isEs ? "🏅 Más insignias"      : "🏅 Most badges") :
+                                (isEs ? "🏆 Más activo"         : "🏆 Most active")
+        const topCat = top.topCategoryId ? getCategoryById(top.topCategoryId) : null
         return (
           <div className="mb-4 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70 mb-3">
-              🏆 {isEs ? "Mejor predictor" : "Top Predictor"}
+              {spotlightLabel}
             </p>
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400 shrink-0">
@@ -272,15 +299,29 @@ export function ForecastersLeaderboard({ isEs }: Props) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate">{top.displayName}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {top.totalPredictions} {isEs ? "predicciones" : "predictions"} · {top.badgeCount} {isEs ? "insignias" : "badges"}
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {sort === "streak" && topCat ? (
+                    <>
+                      {isEs ? "Mejor en" : "Best at"} {topCat.label} {topCat.emoji}
+                      {top.accuracy !== null && (
+                        <> · {top.accuracy}% {isEs ? "precisión" : "accuracy"}</>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {top.totalPredictions} {isEs ? "predicciones" : "predictions"} · {top.badgeCount} {isEs ? "insignias" : "badges"}
+                    </>
+                  )}
                 </p>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xl font-bold text-amber-400">{primaryValue}</p>
-                {top.accuracy !== null && sort !== "accuracy" && (
-                  <p className="text-[11px] text-muted-foreground">{top.accuracy}% {isEs ? "precisión" : "accuracy"}</p>
-                )}
+                {sort === "streak"
+                  ? <p className="text-[11px] text-muted-foreground">{isEs ? "Mejor" : "Best"}: {top.bestStreak}d</p>
+                  : top.accuracy !== null && sort !== "accuracy" && (
+                      <p className="text-[11px] text-muted-foreground">{top.accuracy}% {isEs ? "precisión" : "accuracy"}</p>
+                    )
+                }
               </div>
             </div>
           </div>
@@ -382,12 +423,23 @@ function LeaderboardRow({
     }
   })()
 
+  const topCat = entry.topCategoryId ? getCategoryById(entry.topCategoryId) : null
   const secondaryValue = (() => {
     switch (sort) {
-      case "streak":
-        return isEs ? `Mejor: ${entry.bestStreak}d` : `Best: ${entry.bestStreak}d`
+      case "streak": {
+        const best = isEs ? `Mejor: ${entry.bestStreak}d` : `Best: ${entry.bestStreak}d`
+        if (topCat) return `${best} · ${topCat.emoji} ${topCat.label}`
+        if (entry.accuracy !== null) {
+          return isEs
+            ? `${best} · ${entry.accuracy}% precisión`
+            : `${best} · ${entry.accuracy}% accuracy`
+        }
+        return best
+      }
       case "accuracy":
-        return `${entry.totalPredictions} ${isEs ? "pred." : "pred."}`
+        return topCat
+          ? `${topCat.emoji} ${topCat.label}`
+          : `${entry.totalPredictions} ${isEs ? "pred." : "pred."}`
       case "badges":
         return `${entry.totalPredictions} ${isEs ? "predicciones" : "predictions"}`
       case "activity":
