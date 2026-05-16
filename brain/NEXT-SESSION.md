@@ -1,6 +1,20 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Follow System v1 — migration applied) | Read this before touching anything.
+> Last updated: 2026-05-17 (Observation phase F1 — follower count on /profile owner view) | Read this before touching anything.
+
+---
+
+## 🟢 Active phase: observation/polish (2026-05-17)
+
+Officially in observation mode after Follow System v1 shipped. Disciplined scope: no Activity Feed, no notifications, no recommendations, no following pages, no mutual indicator, no posts/timelines/DMs/stories. Only quirurgical polish that closes existing reputation loops counts. Resolve tech debt only when it blocks observation quality.
+
+**Polish shipped this phase:**
+- **F1 (commit `a1c1060`):** owner now sees their own follower count on `/profile` Account card. `getFollowerCount(userId)` on mount, chip renders only when count > 0 (no zero-noise). Closes a loop that was silently broken (followers grew, owner never saw it because `/profile/[mi-slug]` redirects to `/profile`). 1 file touched, 33 lines added, no schema, no API, no migration.
+
+**Active frictions deferred (do not touch without operator confirmation):**
+- F2 — Mobile header on RealPublicProfile (3 inline buttons) — defer until real mobile signal.
+- F3 — Demos non-followable confusion — defer; recommendation is "no surface added".
+- F4 — Generic FollowButton error toast — marginal, defer.
 
 ---
 
