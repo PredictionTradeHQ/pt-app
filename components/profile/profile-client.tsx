@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2, ArrowRight, Trophy } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2, ArrowRight, Trophy, Users } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
 import { StreakWidget } from "@/components/streak-widget";
@@ -16,6 +16,7 @@ import { ShareAchievementModal } from "@/components/share-achievement-modal";
 import { CategoryAccuracy } from "@/components/category-accuracy";
 import { CalledItModal } from "@/components/called-it-modal";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
+import { getFollowerCount } from "@/lib/follows";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 import { topCategoryFromPredictions } from "@/lib/share-copy";
 import type { PredictionRecord } from "@/stores/gamification";
@@ -46,6 +47,11 @@ export function ProfileClient({
   const [newBadgesFromResolution, setNewBadgesFromResolution] = useState<string[]>([]);
   const [calledItPrediction, setCalledItPrediction] = useState<PredictionRecord | null>(null);
   const [copiedProfile, setCopiedProfile] = useState(false);
+  // Follower count — closes the reputation loop for the owner. Without this,
+  // followers grow but the owner never sees it because /profile/[mi-slug]
+  // redirects to /profile (RealPublicProfile chip is never shown to self).
+  // Renders only when count > 0 (no "0 followers" noise on the owner's own view).
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
 
   const username = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const profileUrl = `https://predictiontrade.online/profile/${username}`;
@@ -65,6 +71,19 @@ export function ProfileClient({
         day: "numeric",
       })
     : "—";
+
+  // On mount: fetch follower count from Supabase. Single indexed count(*).
+  // Fire-and-forget — failure leaves followerCount as null and the chip
+  // simply doesn't render (graceful: looks identical to a 0-followers user).
+  useEffect(() => {
+    let active = true;
+    void getFollowerCount(userId).then((n) => {
+      if (active) setFollowerCount(n);
+    });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   // On mount: sync with Supabase (pull remote, merge, push merged back)
   useEffect(() => {
@@ -167,6 +186,19 @@ export function ProfileClient({
               <p className="text-sm text-muted-foreground">
                 @{username} · {isEs ? "Miembro de PredictionTrade" : "PredictionTrade Forecaster"}
               </p>
+              {followerCount !== null && followerCount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  <span className="tabular-nums font-semibold text-foreground/80">
+                    {followerCount}
+                  </span>
+                  <span>
+                    {followerCount === 1
+                      ? (isEs ? "seguidor" : "follower")
+                      : (isEs ? "seguidores" : "followers")}
+                  </span>
+                </p>
+              )}
             </div>
             <button
               onClick={handleCopyProfile}
