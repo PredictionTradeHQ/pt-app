@@ -134,41 +134,58 @@ GRANT SELECT ON public_leaderboard TO anon, authenticated;
 
 ---
 
+## Strategic Direction — Decided 2026-05-15
+
+**Active focus:** Social identity — profiles, leaderboard, shareability artifacts.
+
+**Explicitly paused (do not open without operator confirmation):**
+- Phase 4g: AI Layer (no ANTHROPIC_API_KEY, no AI costs)
+- Phase 5: Growth / content engine / Product Hunt
+- Any real-money, financial, or enterprise features
+
+PT stays a **virtual social forecasting platform**. Zero cost integrations for now.
+
+---
+
 ## Pending — Priority Order
 
 ### Priority 0 — Run Migration 003 (NOT a dev task — operator action, 2 minutes)
 Run SQL in Supabase dashboard (see above). Unlocks full public profile data immediately.
 No code changes needed after running.
 
-### Priority 1 — Phase 4g: AI Layer (high impact, requires ANTHROPIC_API_KEY)
+### Priority 1 — Social / Profiles / Leaderboard polish
 
-**What:** Activate Claude API features already stubbed.
+After migration 003 runs, assess which areas feel incomplete. Candidates in order:
 
-**Steps:**
-1. Add `ANTHROPIC_API_KEY` to `.env.local` AND Vercel env vars (PT Vercel workspace)
-2. Uncomment 10 lines in `app/api/ai/share-copy/route.ts` → AI share copy live
-3. Create `/api/ai/market-summary/route.ts` — Claude API call + Supabase cache table (30 min TTL)
-4. Add "Explain this market" button on market cards in `components/markets-app.tsx`
+**1a. Leaderboard: category tabs**
+Add "Best in [Category]" filter tabs to `/leaderboard` — top forecasters per category
+using `category_predictions` JSONB keys already in `public_leaderboard` VIEW.
+Files: `components/leaderboard/forecasters-leaderboard.tsx`, `app/api/leaderboard/forecasters/route.ts`
 
-**Files to edit:**
-- `app/api/ai/share-copy/route.ts` (already stubbed — minimal change)
-- `app/api/ai/market-summary/route.ts` (new file)
-- `components/markets-app.tsx` (add button)
+**1b. Profile OG image**
+`/api/og/profile/[username]` — edge runtime PNG with username, accuracy %, streak, top category.
+Reuse the Satori pattern from `/api/og/streak/route.tsx`. Makes shared profile links
+get a rich card on X and WhatsApp — highest shareability leverage, $0 cost.
+Files: new `app/api/og/profile/[username]/route.tsx`; update share button in `RealPublicProfile`.
 
-**Cost estimate:** ~$0.002 per market summary (claude-haiku-4-5). 1,000 summaries/month ≈ $2.
+**1c. Own profile empty state**
+When a logged-in user visits `/profile` with 0 predictions, show a "Make your first call" CTA
+instead of empty stats. Reduces friction for new users.
 
-### Priority 2 — ActivityTicker with real data
-Currently shows simulated activity because no real users have prediction history yet.
-Once real users accumulate data, the ticker will auto-populate from `activity_logs` table.
-No immediate action needed — monitor as user base grows.
+**1d. Streak leaderboard tab**
+Separate "🔥 Streak" ranking tab in `/leaderboard` sorted by `current_streak` (already in VIEW).
 
-### Priority 3 — Category leaderboards (medium term)
-Add a "Best in Category" tab to `/leaderboard` reading from `public_leaderboard` and
-filtering by `category_predictions` JSONB keys. Useful once >20 real users exist.
+### Priority 2 — Shareability artifacts
 
-### Priority 4 — Migration 002 (optional, low urgency)
-`supabase/migrations/002_profiles_username.sql` — adds `username` column for indexed slug lookup.
-Current slug matching works fine (scans 500 rows max). Not urgent until >200 users.
+- Profile share copy: include top category specialty ("63% accurate in Crypto")
+- Called It modal: pull category from prediction and include in share text
+- `/api/og/profile/[username]` OG image (see 1b above) — highest leverage
+
+### ⏸ PAUSED — Do not open without operator confirmation
+
+- Phase 4g: AI Layer (ANTHROPIC_API_KEY, market summaries, AI share copy) — no costs yet
+- Phase 5: Growth (trending feed, content engine, Product Hunt)
+- Migration 002: username column (not needed yet)
 
 ---
 

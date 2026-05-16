@@ -213,26 +213,46 @@ With it: all new profile sections activate instantly. No code changes needed.
 
 ---
 
+## STRATEGIC DIRECTION — decided 2026-05-15
+
+**Active focus:** Social identity platform — profiles, leaderboard, shareability.
+**Paused until further notice:**
+- Phase 4g (AI Layer / ANTHROPIC_API_KEY) — no AI costs yet
+- Phase 5 Growth — no growth push until user base is established
+- Any real-money, financial, or enterprise features
+
+PT stays a **virtual social forecasting platform**. No cost integrations. No growth hacks.
+
+---
+
 ## PRIORITIES — next sessions
 
-### Priority 0 — Operator action (2 min): Run migration 003
-No dev needed — just run the SQL in Supabase dashboard. Unlocks full public profile identity layer.
+### Priority 0 — Operator action (2 min, not a dev task)
+Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase dashboard.
+URL: https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
+Unlocks: category accuracy bars, "Best at X", "Biggest Calls", recent predictions on public profiles.
 
-### Priority 1 — Phase 4g: AI Layer (high impact, requires ANTHROPIC_API_KEY)
-1. Add `ANTHROPIC_API_KEY` to `.env.local` AND Vercel env vars (PT workspace)
-2. Uncomment 10 lines in `app/api/ai/share-copy/route.ts` → Claude API live
-3. Create `/api/ai/market-summary/route.ts` with Supabase cache (30 min TTL)
-4. Add "Explain this market" button to market cards in `components/markets-app.tsx`
-Estimated cost: ~$0.002/summary (haiku-4-5). 1,000/month ≈ $2.
+### Priority 1 — Social / Profiles / Leaderboard polish
+After migration 003 runs, evaluate what still feels incomplete in:
+- Public profiles (`/profile/[username]`) — does it feel like a real identity artifact?
+- Leaderboard (`/leaderboard`) — are forecasters tabs engaging and competitive?
+- Own profile (`/profile`) — does it motivate sharing and returning?
 
-### Priority 2 — Phase 5 Growth (longer term, needs user base first)
-- Category leaderboards (per-category rankings on `/leaderboard`)
-- Trending feed on home (dynamic, replaces static hero when >50 users)
-- Automated content engine (Claude API → Buffer)
+Concrete candidates (evaluate in order):
+1. **Leaderboard: category tabs** — "Best in AI&Tech", "Best in Crypto" — filter by top forecasters per category using `category_predictions` from `public_leaderboard`
+2. **Profile: OG image for sharing** — generate `/api/og/profile/[username]` (reuse edge runtime pattern from `/api/og/streak`) so shared profile links get a rich card on X/WhatsApp
+3. **Profile: empty state nudge** — when a real user's profile has no predictions yet, show a specific CTA to make their first call
+4. **Leaderboard: streak leaderboard tab** — separate ranking by `current_streak` (already available in VIEW)
 
-### Priority 3 — Optional cleanup (low urgency)
-- Execute `supabase/migrations/002_profiles_username.sql` (indexed username lookup)
-- Monitor ActivityTicker — real data auto-populates as users accumulate activity
+### Priority 2 — Shareability artifacts
+- Profile share copy should include category specialty: "63% accurate in Crypto · predictiontrade.online/@username"
+- Called It modal: pull category from prediction record and mention it in the share copy
+- Consider `/api/og/profile/[username]` OG image (see above)
+
+### ⏸ PAUSED — Do not start
+- Phase 4g: AI Layer (ANTHROPIC_API_KEY, market summaries, "Explain this market")
+- Phase 5: Growth (trending feed, content engine, Product Hunt)
+- Migration 002: username column (not needed yet)
 
 ---
 
