@@ -472,7 +472,7 @@ Alias `pt-app-predictiontrade1-1298-predictiontrade1-1298s-projects.vercel.app` 
 **5. Old GitHub repo `PredictionMarketsSolutions/pt-app`** (deferred)
 Posiblemente borrado o privado (404 público), but `repoId 1239741806` may still exist. Auditar y borrar si no tiene historia única.
 
-**6. Brain doc reference to nonexistent route** — already noted: `/api/leaderboard/flash-players` was never implemented; real route is `/api/game/leaderboard`. CLAUDE.md line ~129 has the wrong reference.
+**6. ~~CLAUDE.md drift `/api/leaderboard/flash-players`~~** — ✅ resolved 2026-05-17. Line removed from `.claude/CLAUDE.md` route list. Real route `/api/game/leaderboard` exists (used by `/play`) and is intentionally not in the user-facing route list.
 
 **7. Silent error handlers** (low priority, partly intentional)
 20 files use empty `catch {}` blocks. Some are legitimate fire-and-forget patterns (supabase-sync, share-copy). Some could hide bugs (auth flows). Audit when refactoring share/auth surfaces.
@@ -703,7 +703,6 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 - Cleanup old GitHub repo `PredictionMarketsSolutions/pt-app` (repoId `1239741806`) — desconectado de Vercel, posiblemente privado o ya borrado (404 público). Verify no unique history then delete in GitHub UI.
 - Rename `lib/pms` → `lib/polymarket-sample` or similar — internal abbreviation that misleadingly suggests PMS-project contamination (it's not, but the name is confusing).
 - Remove `/api/markets` route if confirmed unused — currently 500 due to missing `FEATURED_MARKETS_JSON` env var, not called by frontend.
-- Update CLAUDE.md reference to `/api/leaderboard/flash-players` — that route was never implemented; real route is `/api/game/leaderboard`.
 
 ### Priority 0 — ✅ COMPLETE: all migrations applied (2026-05-16)
 New Supabase project `vkizidrsuwsreepsbbuy` — all tables live, core loop verified end-to-end.

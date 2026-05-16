@@ -122,7 +122,6 @@ These are hardcoded throughout the codebase. Changing one breaks multiple files.
 
 API routes:
 /api/leaderboard/forecasters  — reads public_leaderboard view
-/api/leaderboard/flash-players — game leaderboard
 /api/wallet                   — PUT wallet balance
 /api/demo-portfolio            — PUT demo portfolio
 /api/ai/share-copy             — edge: share copy (templates now, Claude API when key set)
