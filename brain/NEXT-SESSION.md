@@ -18,6 +18,28 @@ Operador validó end-to-end en navegador real:
 
 ## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
+### Profile empty-state hero (Priority 4 shipped)
+
+**Problem:** A logged-in user with zero predictions landed on `/profile` and saw four nearly-empty cards (Accuracy/Streak/Badges/History) plus an Activity Overview link to /dashboard. Nothing explained what the platform rewards. The first call felt like a bet, not the start of a public reputation.
+
+**What changed:**
+- `components/profile/profile-client.tsx`
+  - New in-file `EmptyProfileHero` sub-component. Rendered only when `totalPredictions === 0`.
+  - Streak card and Badges card now gated behind `totalPredictions > 0` (Accuracy and History already were).
+  - Account card, Activity Overview, and Session card remain unconditional.
+- Hero layout: emoji headline (`🎯 Make your first call.`) + identity subcopy ("Start your streak, earn your specialty, and climb the leaderboard.") + three pillar mini-cards (🔥 Streak / 🪙 Specialty / 🏆 Leaderboard) explaining what each prediction builds, then two CTAs (Explore Markets primary, Browse leaderboard secondary).
+- Vocabulary is deliberately the same noun set used in: OG profile cards, leaderboard #1 spotlight, and share copy generators. A new user sees the same identity language in every surface.
+- Bilingual EN/ES.
+
+**Verification:**
+- `pnpm build` clean (TS strict).
+- `/profile` is auth-gated (307 → `/auth/login?next=/profile`), so the chunk isn't reachable from a logged-out probe of `/profile` itself. Confirmed live by scanning chunks referenced from public pages (`/`, `/auth/login`, `/leaderboard`, `/markets`, `/help`): literal `"Make your first call"` found in `/_next/static/chunks/15j6p9n0n63e~.js` — a prefetched common chunk pulled in by App Router on those pages.
+- Smoke 9 endpoints all 200; `/profile` auth-gate intact (`Location: /auth/login?next=/profile`).
+
+**Risk:** Very low. Pure presentation change — no state, no network, no env vars. Behavior for users with `totalPredictions > 0` is unchanged. Path back to previous behavior is removing the `EmptyProfileHero` render and unwrapping the two new gates.
+
+---
+
 ### Category filter chips on the leaderboard (Priority 3 shipped)
 
 **Problem:** The leaderboard was a single global list. Specialty was visible on each row ("🪙 Crypto") but you couldn't slice the board by it. A Crypto forecaster couldn't see "the leaderboard for Crypto specialists" — the tribal/niche identity layer was missing.
@@ -378,11 +400,13 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 - ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
 - ✅ Streak leaderboard tab fix + specialty (commit `46095e6`) — ranking finally matches the 🔥 currentStreak that the UI shows, plus the specialty chip on every row
 - ✅ Category filter chips on leaderboard (commit `6c3402a`) — All / Crypto / AI & Tech / Sports / Gaming / Entertainment / Internet / Global News; client-side over the per-row specialty already in the API
+- ✅ Profile empty-state hero (commit `f21d018`) — first-call identity onboarding: "🎯 Make your first call." + Streak/Specialty/Leaderboard pillars + CTA to /markets
 
 **Next recommended steps (in order):**
-1. **Profile empty-state CTA** — when authenticated user visits `/profile` with 0 predictions, surface "Make your first call" instead of empty stats. Reduces drop-off for new accounts.
-2. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen. Path: add the param, filter in SQL via `topCategoryId` (could pre-compute on a generated column later for speed). Skip until base actually grows.
-3. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render on every fetch. Low priority — only matters at scale.
+1. **Public-profile empty state polish** — `/profile/[username]` for a real user with no predictions currently renders `RealPublicProfile` with empty headline + zeroed stats. Reuse the same vocabulary (3 pillars + first-call CTA) so the public-facing profile of a brand-new user reads as aspirational, not abandoned. Touches `RealPublicProfile` only.
+2. **Sign-up flow → first-prediction nudge** — after `/auth/sign-up-success`, route or banner that lands the user on `/markets` already framed as "Make your first call." Reuses the new EmptyProfileHero copy. Tiny change, big leverage on activation.
+3. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen. Path: add the param, filter in SQL via `topCategoryId` (could pre-compute on a generated column later for speed). Skip until base actually grows.
+4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render on every fetch. Low priority — only matters at scale.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
