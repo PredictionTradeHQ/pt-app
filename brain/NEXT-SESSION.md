@@ -18,6 +18,54 @@ Operador validó end-to-end en navegador real:
 
 ## 🆕 What was built — 2026-05-16 (shareability identity loop)
 
+### Identity-aligned first-prediction nudge (Priority 6 shipped)
+
+**Problem:** The signup→markets pipeline existed (callback already redirected to `/markets?new=1`, `MarketsApp` already rendered a welcome banner, `FirstPredictionGuide` already nudged users with `totalPredictions === 0`). But the copy on both surfaces lagged behind the rest of the product:
+- Welcome banner talked about "$100,000 virtual balance" and "first badge" — trading-app tone.
+- `FirstPredictionGuide` was a generic 3-step "How it works" educational strip (Find / Make / Share).
+
+Neither surface read as the start of a *public reputation*. The user who just confirmed their email landed on something that felt like a casino tutorial instead of "you are now a forecaster, here's what you build."
+
+**What changed:**
+- `components/markets-app.tsx`
+  - Welcome banner re-copy: `🎯 Welcome, <name>. Make your first call.` + sub-line that names the triad inline (🔥 streak / 🪙 specialty / 🏆 leaderboard).
+  - `<FirstPredictionGuide />` now suppressed when the welcome banner is visible (`!showWelcomeBanner`). Avoids two competing first-call narratives stacked on each other for users arriving via `/markets?new=1`. Returning logged-in users with zero predictions still see the guide.
+- `components/onboarding/first-prediction-guide.tsx`
+  - Full re-do. Was "How it works" / Find / Make / Share. Now reads as identity onboarding:
+
+    ```
+    🎯 Make your first call.
+    Start your streak, earn your specialty, and appear on the
+    leaderboard from your very first prediction.
+
+    [🔥 STREAK]   [🪙 SPECIALTY]   [🏆 LEADERBOARD]
+
+    Virtual only. Your reputation is real.        Explore markets →
+    ```
+
+  - Removed unused `next/link` import.
+  - `localStorage` key bumped `pt-onboarding-v1` → `pt-first-call-v2` so previously-dismissed users see the refreshed nudge once.
+  - Self-dismiss on first prediction preserved.
+
+**Vocabulary coverage — now 7 surfaces use the same triad:**
+- OG profile card                       (🪙 Crypto, 🔥 N-day streak)
+- Profile headline w/ stats             ("67% accurate · 🔥 7-day streak")
+- Profile empty state — private         (🔥 / 🪙 / 🏆 pillars)
+- Profile empty state — public          (🔥 / 🪙 / 🏆 pillars, third-person)
+- Leaderboard #1 Spotlight              ("🔥 Streak leader · 🪙 Crypto")
+- Share copy generators                 ("67% in Crypto 🪙")
+- First-call nudge (banner + guide)     (🔥 / 🪙 / 🏆 pillars, post-signup) ← new
+
+**Verification:**
+- `pnpm build` clean (TS strict).
+- Smoke 10 endpoints all 200 (incl. `/markets?new=1`, sign-up flow, leaderboard sorts, OG profile).
+- `/auth/callback` with a fake code → 307 → `/auth/error` (correct — invalid code shouldn't redirect to /markets).
+- Deploy live: literal `"appear on the leaderboard from your very first prediction"` (only in this commit) found in `/_next/static/chunks/0v1vb1l68rp_9.js`.
+
+**Risk:** Very low. No backend, no env vars, no schema, no new files, no new route. Pure presentation refresh on top of infra that was already wired end-to-end. The only stateful change is the localStorage key bump, which intentionally re-shows the nudge once for users who dismissed the old version (desired behavior — the new copy is materially different).
+
+---
+
 ### Public profile empty-state polish (Priority 5 shipped)
 
 **Problem:** A real Supabase user with `display_name` slug-matched on `/profile/[username]` but zero predictions rendered as: avatar + "Forecaster on PredictionTrade" headline + a flat "No predictions yet" card + the standard viewer CTA. Reading the page felt abandoned, not aspirational — and any share preview of that state produced a dead-account impression. The OG card for the same user is graceful (`@username` + "Forecaster on PredictionTrade" fallback) — but the landing page lagged behind.
@@ -442,15 +490,16 @@ Social/profile polish + reputation loops. Operator explicitly chose this path af
 - ✅ Profile OG image (commit `92f826c`) — rich link previews on X / WhatsApp / LinkedIn
 - ✅ Share copy with category specialty (commit `045b2b6`) — "67% in Crypto 🪙" identity line
 - ✅ Streak leaderboard tab fix + specialty (commit `46095e6`) — ranking finally matches the 🔥 currentStreak that the UI shows, plus the specialty chip on every row
-- ✅ Category filter chips on leaderboard (commit `6c3402a`) — All / Crypto / AI & Tech / Sports / Gaming / Entertainment / Internet / Global News; client-side over the per-row specialty already in the API
+- ✅ Category filter chips on leaderboard (commit `6c3402a`) — All / Crypto / AI & Tech / Sports / Gaming / Entertainment / Internet / Global News
 - ✅ Profile empty-state hero — private (commit `f21d018`) — first-call identity onboarding on `/profile` with the 🔥/🪙/🏆 triad
-- ✅ Public profile empty state polish (commit `428f642`) — `/profile/[username]` for new forecasters reads "🎯 New forecaster" + the same triad phrased third-person; abandoned-account vibe gone
+- ✅ Public profile empty state polish (commit `428f642`) — `/profile/[username]` for new forecasters reads "🎯 New forecaster" + the same triad phrased third-person
+- ✅ Identity-aligned first-prediction nudge (commit `553b9b9`) — welcome banner + FirstPredictionGuide both refreshed to the triad; double-narrative suppressed when both would fire
 
 **Next recommended steps (in order):**
-1. **Sign-up flow → first-prediction nudge** — after `/auth/sign-up-success`, banner or auto-route that lands the user on `/markets` already framed as "Make your first call." Reuses the EmptyProfileHero copy. Tiny change, big leverage on activation.
-2. **Welcome modal on /markets first visit** — when an authed user arrives at `/markets` and has 0 predictions, one-time soft overlay highlighting the triad (Streak / Specialty / Leaderboard) before they start scrolling. localStorage-gated, no backend.
+1. **Sign-in (not sign-up) flow → 0-pred users land in /markets, not /dashboard** — `app/auth/login/page.tsx` currently routes to `/dashboard` after sign-in. For an existing user who has 0 predictions (verified email but never bet), `/dashboard` is the wrong place. Cheap fix: check `totalPredictions === 0` post-`refresh()` and redirect to `/markets` instead. Closes the last leak in the activation funnel.
+2. **Welcome modal on /markets first visit** — one-time soft overlay highlighting the triad before they scroll. localStorage-gated, no backend. The lightweight banner+guide may be enough; revisit only if activation data shows it isn't.
 3. **Server-side category filter** — graduate the chips from client-side to a `?category=` query param on `/api/leaderboard/forecasters`. Only matters once realUsers > a few dozen.
-4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params) and crawlers don't re-render on every fetch. Low priority — only matters at scale.
+4. **OG profile cache strategy** — currently `Cache-Control: max-age=0, must-revalidate` (next/og default). Add explicit `s-maxage=300` so Vercel CDN caches per (username, params). Low priority.
 
 ### 🧹 Deferred housekeeping (do in a calm session, not urgent)
 - Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
