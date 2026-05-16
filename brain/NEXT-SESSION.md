@@ -153,7 +153,29 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 Run SQL in Supabase dashboard (see above). Unlocks full public profile data immediately.
 No code changes needed after running.
 
-### Priority 1 — Social / Profiles / Leaderboard polish
+### Priority 1 — Fix: error al hacer una predicción/apuesta
+
+**Síntoma reportado:** Aparece un error al intentar hacer una predicción.
+**Impacto:** Directo sobre el flujo principal del producto — bloquea la experiencia core.
+
+**Al inicio de la sesión:**
+1. Reproducir el error en producción (predictiontrade.online) con una cuenta real
+2. Revisar logs en Vercel (PT workspace) → Functions → `/api/wallet` y `/api/demo-portfolio`
+3. Revisar consola del browser al hacer una apuesta
+4. Candidatos más probables (por arquitectura actual):
+   - Supabase JWT expirado → falla PUT /api/wallet
+   - RLS policy bloqueando escritura en `wallets` o `trades`
+   - `persistPortfolio()` silenciando un error de red sin surfacearlo en UI
+   - Validación de balance que devuelve error en edge case (balance = 0 o monto > balance)
+
+**Files a revisar:**
+- `app/api/wallet/route.ts`
+- `app/api/demo-portfolio/route.ts`
+- `components/markets-app.tsx` → `confirmBet()` y `persistPortfolio()`
+
+---
+
+### Priority 2 — Social / Profiles / Leaderboard polish
 
 After migration 003 runs, assess which areas feel incomplete. Candidates in order:
 
@@ -175,7 +197,7 @@ instead of empty stats. Reduces friction for new users.
 **1d. Streak leaderboard tab**
 Separate "🔥 Streak" ranking tab in `/leaderboard` sorted by `current_streak` (already in VIEW).
 
-### Priority 2 — Shareability artifacts
+### Priority 3 — Shareability artifacts
 
 - Profile share copy: include top category specialty ("63% accurate in Crypto")
 - Called It modal: pull category from prediction and include in share text

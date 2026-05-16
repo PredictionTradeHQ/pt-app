@@ -232,7 +232,13 @@ Run `supabase/migrations/003_public_leaderboard_predictions.sql` in Supabase das
 URL: https://supabase.com/dashboard/project/dvevwlhshcyvnsubyvzw/sql/new
 Unlocks: category accuracy bars, "Best at X", "Biggest Calls", recent predictions on public profiles.
 
-### Priority 1 — Social / Profiles / Leaderboard polish
+### Priority 1 — Fix: error al hacer una predicción/apuesta
+Reproducir en producción → revisar Vercel logs (Functions: /api/wallet, /api/demo-portfolio)
+y consola del browser. Candidatos: JWT expirado, RLS bloqueando escritura, error silenciado
+en `persistPortfolio()`, edge case de balance.
+Files: `app/api/wallet/route.ts`, `app/api/demo-portfolio/route.ts`, `components/markets-app.tsx`
+
+### Priority 2 — Social / Profiles / Leaderboard polish
 After migration 003 runs, evaluate what still feels incomplete in:
 - Public profiles (`/profile/[username]`) — does it feel like a real identity artifact?
 - Leaderboard (`/leaderboard`) — are forecasters tabs engaging and competitive?
