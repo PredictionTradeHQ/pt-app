@@ -1,6 +1,18 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-16 (bug-fix session) | Read this before touching anything.
+> Last updated: 2026-05-16 (infra-restore session) | Read this before touching anything.
+
+---
+
+## 🎯 PT core social — OFICIALMENTE ESTABLE (2026-05-16)
+
+Operador validó end-to-end en navegador real:
+- ✅ Login sin redirect loop
+- ✅ Bet flow sin crash en tab Positions
+- ✅ Persistencia tras refresh (balance + positions)
+- ✅ Navegación estable, console limpia
+
+**PT core social está oficialmente cerrado.** Próxima fase es social/profile polish + reputation loops, no más bug-fixing del core.
 
 ---
 
@@ -38,7 +50,38 @@ New Supabase project `vkizidrsuwsreepsbbuy` — all 4 migrations applied and ver
 
 ---
 
-## What Was Built — 2026-05-16 Session (COMPLETE)
+## What Was Built — 2026-05-16 Infra Restore Session (COMPLETE)
+
+### Vercel↔GitHub pipeline restored (commits `323f8a6`)
+
+**Problem:** Production at predictiontrade.online was frozen at the "Initial commit" `29e46d75` since 2026-05-15. Every push to `PredictionTradeHQ/pt-app` failed to auto-deploy. The "fixes" (bet crash + login loop) were in GitHub but never reached production.
+
+**Root cause (audit):** The Vercel project `pt-app` (`prj_WyzqTDsMjGaCD8cLifn3Oga9utkq`) in team `predictiontrade1-1298s-projects` was Git-linked to **`PredictionMarketsSolutions/pt-app`** (repoId `1239741806` — user's personal GitHub) instead of the active org repo **`PredictionTradeHQ/pt-app`** (repoId `1239728341`). These are two distinct GitHub repos, not a transfer. Pushes to the org repo had no Vercel webhook listening.
+
+**Steps taken:**
+1. Logged into Vercel CLI as `prediction.trade1@gmail.com` (PT account, separate from PMS account `predictionmarkets.solutions@gmail.com`)
+2. Fixed local `.vercel/project.json` to point at the real PT project (was contaminated to a duplicate `pt-app` accidentally created in the PMS team)
+3. CLI deploy `vercel --prod` from local HEAD `cb33bdc` → `dpl_6zqD4XsxATRX4meJ2YxMeE1RP5qa` (unblocked production immediately)
+4. Operator added GitHub Login Connection to Vercel account + installed Vercel GitHub App on `PredictionTradeHQ` org
+5. API call `POST /v9/projects/{id}/link` → re-linked to `PredictionTradeHQ/pt-app` (repoId `1239728341`)
+6. Test push of commit `323f8a6` → webhook fired → Vercel built `dpl_8FJjSyZjTHbi4miD8ZLhTsDwqJPX` → READY in ~45s
+7. Operator validated in browser: login, bet flow, persistence, console — all clean
+
+**Production state after this session:**
+- ✅ Domain `predictiontrade.online` serves the auto-deploy git build
+- ✅ Every `git push origin main` now auto-deploys via Vercel webhook
+- ✅ Source attribution: deployments show `source: "git"` (not `cli`) — clean pipeline
+- ✅ Aliases (`predictiontrade.online`, `www.predictiontrade.online`, `pt-app-delta.vercel.app`, `pt-app-git-main-*`) all reassign automatically on each git deploy
+
+**Vercel canonical state (do not forget):**
+- Team: `predictiontrade1-1298s-projects` (`team_zshE08lKGriKwvkxgJGOBufS`) — owner `prediction.trade1@gmail.com`
+- Project: `pt-app` (`prj_WyzqTDsMjGaCD8cLifn3Oga9utkq`)
+- Git link: `PredictionTradeHQ/pt-app` branch `main`
+- Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (both sensitive, production+preview)
+
+---
+
+## What Was Built — 2026-05-16 Earlier Sessions
 
 ### Core Loop Stability (commits `e9e675c`, `50e20d9`, `b448e04`)
 
@@ -146,6 +189,16 @@ PT stays a **virtual social forecasting platform**. Zero cost integrations for n
 ---
 
 ## Pending — Priority Order
+
+### 🚀 ACTIVE FOCUS — Next session
+Social/profile polish + reputation loops. Operator explicitly chose this path after PT core stabilization on 2026-05-16. Concrete candidates listed in Priority 2 below — recommended start with **1b (Profile OG image)** for maximum shareability leverage at $0 cost.
+
+### 🧹 Deferred housekeeping (do in a calm session, not urgent)
+- Cleanup duplicate `pt-app` project in PMS team `predictionmarketssolutions-7124s-projects` (`prj_VLlZqHZrs6AY2fqUgBjMU2ZghNEY`) — created accidentally during infra audit, sin git link, sin dominios, completamente aislado. Requires logout PT → login PMS → DELETE.
+- Cleanup old GitHub repo `PredictionMarketsSolutions/pt-app` (repoId `1239741806`) — desconectado de Vercel, posiblemente privado o ya borrado (404 público). Verify no unique history then delete in GitHub UI.
+- Rename `lib/pms` → `lib/polymarket-sample` or similar — internal abbreviation that misleadingly suggests PMS-project contamination (it's not, but the name is confusing).
+- Remove `/api/markets` route if confirmed unused — currently 500 due to missing `FEATURED_MARKETS_JSON` env var, not called by frontend.
+- Update CLAUDE.md reference to `/api/leaderboard/flash-players` — that route was never implemented; real route is `/api/game/leaderboard`.
 
 ### Priority 0 — ✅ COMPLETE: all migrations applied (2026-05-16)
 New Supabase project `vkizidrsuwsreepsbbuy` — all tables live, core loop verified end-to-end.
