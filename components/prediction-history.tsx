@@ -9,12 +9,16 @@ interface PredictionHistoryProps {
   predictions: PredictionRecord[]
   limit?: number
   className?: string
+  /** IDs of predictions that resolved correctly during the current session.
+   * Session-only by design — not persisted; resets on refresh. */
+  newlyCorrectIds?: Set<string>
 }
 
 export function PredictionHistory({
   predictions,
   limit = 10,
   className,
+  newlyCorrectIds,
 }: PredictionHistoryProps) {
   const displayed = predictions.slice(0, limit)
 
@@ -43,6 +47,8 @@ export function PredictionHistory({
             : "incorrect"
           : "pending"
 
+        const isNewlyCorrect = status === "correct" && (newlyCorrectIds?.has(pred.id) ?? false)
+
         const statusIcon =
           status === "correct" ? (
             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -64,7 +70,9 @@ export function PredictionHistory({
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg border text-sm",
               status === "correct"
-                ? "border-emerald-500/20 bg-emerald-500/5"
+                ? isNewlyCorrect
+                  ? "border-emerald-500/40 bg-emerald-500/10 ring-1 ring-emerald-500/30"
+                  : "border-emerald-500/20 bg-emerald-500/5"
                 : status === "incorrect"
                 ? "border-red-500/20 bg-red-500/5"
                 : "border-border bg-muted/20"
@@ -108,7 +116,9 @@ export function PredictionHistory({
                     pred.correct ? "text-emerald-500" : "text-red-500"
                   )}
                 >
-                  {pred.correct ? "✓ Correct" : "✗ Wrong"}
+                  {pred.correct
+                    ? (isNewlyCorrect ? "✓ Just called" : "✓ Correct")
+                    : "✗ Wrong"}
                 </p>
               )}
               {!pred.resolved && (

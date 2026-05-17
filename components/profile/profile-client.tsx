@@ -49,6 +49,10 @@ export function ProfileClient({
   const [shareOpen, setShareOpen] = useState(false);
   const [newBadgesFromResolution, setNewBadgesFromResolution] = useState<string[]>([]);
   const [calledItPrediction, setCalledItPrediction] = useState<PredictionRecord | null>(null);
+  // IDs of predictions that just resolved correctly in the current session.
+  // Drives subtle highlight in PredictionHistory + batch pill in CalledItModal.
+  // Session-only by design — not persisted; resets on refresh.
+  const [newlyCorrectIds, setNewlyCorrectIds] = useState<Set<string>>(new Set());
   const [copiedProfile, setCopiedProfile] = useState(false);
   // Follower count — closes the reputation loop for the owner. Without this,
   // followers grow but the owner never sees it because /profile/[mi-slug]
@@ -160,6 +164,7 @@ export function ProfileClient({
       if (newBadgeIds.length > 0) setNewBadgesFromResolution(newBadgeIds);
       // Show "Called It" modal for the most impressive correct call (contrarian first, then any)
       if (newlyCorrect.length > 0) {
+        setNewlyCorrectIds(new Set(newlyCorrect.map((p) => p.id)));
         const contrarian = newlyCorrect.find(
           (p) =>
             (p.prediction === "YES" && p.probAtTime < 20) ||
@@ -439,7 +444,7 @@ export function ProfileClient({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PredictionHistory predictions={predictions} limit={10} />
+            <PredictionHistory predictions={predictions} limit={10} newlyCorrectIds={newlyCorrectIds} />
           </CardContent>
         </Card>
       )}
@@ -502,6 +507,7 @@ export function ProfileClient({
               : null
           }
           topCategory={topCategoryFromPredictions(predictions)}
+          extraCount={newlyCorrectIds.size > 1 ? newlyCorrectIds.size - 1 : undefined}
           onClose={() => setCalledItPrediction(null)}
         />
       )}

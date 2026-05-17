@@ -34,10 +34,12 @@ interface Props {
   accuracyPct?: number | null
   /** Optional: user's specialty category. Lets share copy say "67% in Crypto 🪙". */
   topCategory?: CategoryRef | null
+  /** Number of OTHER correct calls in the same resolution batch (excludes the one shown). */
+  extraCount?: number
   onClose: () => void
 }
 
-export function CalledItModal({ prediction, username, accuracyPct, topCategory, onClose }: Props) {
+export function CalledItModal({ prediction, username, accuracyPct, topCategory, extraCount, onClose }: Props) {
   const [copied, setCopied] = useState(false)
 
   const profileUrl = `https://predictiontrade.online/profile/${username}`
@@ -82,13 +84,26 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
 
         {/* Icon + headline */}
         <div className="flex flex-col items-center text-center mb-5">
-          <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-3">
-            <CheckCircle2 className="w-7 h-7 text-primary" />
+          <div className="relative mb-3">
+            {/* Arrival ring — 1-shot ping ~700ms, then settles invisible (forwards) */}
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full border-2 border-primary/40"
+              style={{ animation: "ping 700ms cubic-bezier(0, 0, 0.2, 1) 1 forwards" }}
+            />
+            <div className="relative w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center">
+              <CheckCircle2 className="w-7 h-7 text-primary" />
+            </div>
           </div>
           <h2 className="text-xl font-bold">You called it!</h2>
           {isContrarian && (
             <p className="text-xs text-orange-400 font-semibold mt-1">
               Contrarian call 🎲 — less than 20% agreed with you
+            </p>
+          )}
+          {extraCount !== undefined && extraCount > 0 && (
+            <p className="text-[11px] text-muted-foreground mt-1.5 font-medium">
+              +{extraCount} more correct call{extraCount === 1 ? "" : "s"} today
             </p>
           )}
         </div>
