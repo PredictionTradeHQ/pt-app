@@ -66,6 +66,19 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
   const tweetUrl     = `https://x.com/intent/tweet?text=${encodeURIComponent(copy.x)}`
   const whatsappUrl  = `https://wa.me/?text=${encodeURIComponent(copy.whatsapp)}`
 
+  // OG preview — mirrors what gets rendered when someone visits the share URL.
+  // Built with the same identity params that drive share-copy, so the visual
+  // preview the user sees matches the artifact the platform will publish.
+  const ogParams = new URLSearchParams({
+    username,
+    m: prediction.marketTitle,
+    p: prediction.prediction,
+  })
+  if (prediction.category) ogParams.set("c", prediction.category)
+  if (isContrarian) ogParams.set("cont", "1")
+  if (typeof accuracyPct === "number") ogParams.set("a", String(accuracyPct))
+  const ogPreviewUrl = `/api/og/called-it?${ogParams.toString()}`
+
   const handleCopyText = async () => {
     try {
       await navigator.clipboard.writeText(copy.text + "\n" + profileUrl)
@@ -165,6 +178,21 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
                 <span className="text-sm font-bold text-primary">{accuracyPct}%</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* OG share preview — user sees the card before committing to share */}
+        <div className="mb-4 space-y-1.5">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+            {isEs ? "Vista previa al compartir" : "Share preview"}
+          </p>
+          <div className="aspect-[1200/630] overflow-hidden rounded-xl border border-border bg-muted/30">
+            <img
+              src={ogPreviewUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
           </div>
         </div>
 
