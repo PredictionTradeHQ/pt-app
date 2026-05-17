@@ -169,27 +169,36 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 ## CURRENT STATE — checkpoint 2026-05-17 ✅ STABLE (observation phase)
 
-**Git:** `main` clean, synced with `origin/main` (HEAD `e8284f9`)
-**TypeScript:** 0 errors (strict mode) — `pnpm build` ✓ Compiled successfully in 2.6s
-**Vercel:** auto-deploy on push to main, predictiontrade.online (apex → www 307 redirect active)
+**Git:** `main` clean, synced with `origin/main` (HEAD `f38e286`)
+**TypeScript:** 0 errors (strict mode) — `pnpm build` ✓ Compiled successfully in 3.1s
+**Vercel:** auto-deploy on push to main, predictiontrade.online (apex → www 307 redirect active). Brand fix "Prediction Trade" confirmed live in HTML post-CDN propagation.
 **Supabase:** project `vkizidrsuwsreepsbbuy` — all migrations applied (000, 001, 003, 004, 007)
 **Follow System v1:** LIVE end-to-end. `public.follows` table live. Organic follows: 0 (observation phase intact).
 **Active mode:** 🟢 **Observation/polish.** Do NOT open new sprints or expand surface area without operator confirmation.
 
-**Last commits (this session — Profile Identity B1–B5 + Game Feel Sprint #1 Bloque 1):**
+**Last commits (this session — Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel Sprint #1 Bloque 1):**
 ```
+f38e286  docs(brain): log Quality & Identity Audit Pass — 12 commits 2026-05-17
+dca9407  fix(public-profile): stack header actions on mobile to prevent overflow
+afddcf5  fix(app-shell): tighten mobile bottom nav for narrow screens
+fc9b9a8  fix(leaderboard): replace "traders" with "players" in Flash empty state
+3a5c0fa  fix(hero): localize social proof line and CTA for ES users
+b80e765  fix(prediction-history): localize labels and use locale-aware dates
+5040590  fix(follow-button): localize labels, count noun, and error toast
+ece9aad  fix(modals): localize celebration & share surfaces for ES users
+26ca9c4  fix(header): use t() for nav items and reframe primary CTA
+5f06c54  fix(footer): drop redundant link and neutralize trading-app legalese
+8ca05cb  fix(metadata): align page descriptions with PT forecaster identity
+619733d  fix(profile): default display name "Trader" -> "Forecaster"
+4c76d91  fix(auth): align brand to "Prediction Trade" + localize Email label
+c85174c  docs(brain): session close 2026-05-17 — Profile Identity B1-B5 + Game Feel #1 B1 LIVE
 e8284f9  feat(profile): Called It celebration layer v1 (T1+T2+T3)
-5cc94ba  feat(profile): align owner copy with PT identity and prediction vocab
-3315879  feat(profile): Share on X button in owner header
-87293da  feat(profile): share Biggest calls showcase between owner and public surfaces
-26ff281  feat(profile): share 4-cell stats grid between owner and public surfaces
-fc64c2c  feat(profile): share identity headline between owner and public surfaces
-84670b7  docs: remove stale /api/leaderboard/flash-players route reference
 ```
 
 **Sprints shipped this session:**
 - ✅ **Profile Identity Completeness B1–B5** — shared headline + stats grid + biggest calls + share-on-X button + copy alignment (Forecaster identity, prediction vocab, identity-surface subtitle). 5 commits, all `pnpm build` clean, all smoke 8/8.
 - ✅ **Game Feel Sprint #1 — Bloque 1** — Called It celebration layer v1 (T1 arrival ring + T2 "Just called" highlight + T3 batch context pill). 1 commit, 3 files, +37/−6, 0 deps, 0 keyframes, 0 migrations. Reversible with `git revert e8284f9`.
+- ✅ **Quality & Identity Audit Pass** — 12 surface-by-surface commits (brand, profile fallback, page metadata, footer cleanup, header t() consistency + primary CTA reframe "Predict / Predecir", 4 modals localized ES, FollowButton ES, PredictionHistory ES + locale-aware dates, hero social proof ES, Flash empty state, mobile bottom nav, public profile mobile actions overflow). Build clean each, smoke 8/8 green post-push, brand fix verified in production HTML. Every commit is a clean `git revert` if needed.
 
 **🟢 OBSERVATION CRITERIA (do not iterate before these signal):**
 - How resolving multiple predictions actually feels
@@ -198,12 +207,22 @@ fc64c2c  feat(profile): share identity headline between owner and public surface
 - Whether the T3 batch pill adds real clarity
 - Any sign of "too gamified" creeping in
 - (Follow System) any organic follow happening
+- (Audit) any leftover identity inconsistency the operator spots in real use
 
 **DO NOT auto-propose:**
 - Game Feel Sprint #1 Bloque 2 (G4 multi-surface triggers, hot takes, progression rings, rank delta, more animations)
 - Activity Feed (Camino B) — still gated on ≥1 organic follow
 - AI Layer (Phase 4g), Growth (Phase 5), or any new economy/coins/XP/levels
 - Anything resembling sound, haptics, particles, screen-shake
+- Another audit pass — wait for operator request after living with current state
+
+**Audit findings deferred consciously (documented in brain/NEXT-SESSION.md):**
+- Auth dictionary keys (`virtualFundsNotice`, `createAccountNotice`, `benefitBalance`, `benefitPractice`, `verifyEmailHelp`, `signUpDescription`) still say "practice trading" — trivial reword pending operator framing decision
+- Dashboard wallet card trading vocabulary ("Trade" CTA, "Demo P&L", "LONG/SHORT", "Open positions", "Total trades") — needs a separate architectural decision on `/dashboard`'s role
+- `app/auth/error/page.tsx` server-component hardcoded EN strings — architecturally separate localization fix
+- Academy content (legitimately trading-vocabulary educational content)
+- SEO metadata in `app/layout.tsx` (deliberate top-of-funnel keyword targeting)
+- `how-it-works.tsx` landing pillar copy — separate copy rewrite
 
 **Completed phases:**
 - ✅ Phase 0 — Foundation (Next.js, Supabase, Vercel, TypeScript strict)
