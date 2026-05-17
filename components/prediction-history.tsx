@@ -3,6 +3,7 @@
 import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PT_CATEGORIES } from "@/lib/categories"
+import { useLanguage } from "@/contexts/language-context"
 import type { PredictionRecord } from "@/stores/gamification"
 
 interface PredictionHistoryProps {
@@ -20,16 +21,30 @@ export function PredictionHistory({
   className,
   newlyCorrectIds,
 }: PredictionHistoryProps) {
+  const { language } = useLanguage()
+  const isEs = language === "es"
   const displayed = predictions.slice(0, limit)
 
   if (displayed.length === 0) {
     return (
       <p className="text-xs text-muted-foreground text-center py-6">
-        No predictions yet. Make your first prediction in{" "}
-        <a href="/markets" className="text-primary hover:underline">
-          Markets
-        </a>
-        .
+        {isEs ? (
+          <>
+            Aún no tienes predicciones. Haz la primera en{" "}
+            <a href="/markets" className="text-primary hover:underline">
+              Mercados
+            </a>
+            .
+          </>
+        ) : (
+          <>
+            No predictions yet. Make your first prediction in{" "}
+            <a href="/markets" className="text-primary hover:underline">
+              Markets
+            </a>
+            .
+          </>
+        )}
       </p>
     )
   }
@@ -59,7 +74,7 @@ export function PredictionHistory({
           )
 
         const date = new Date(pred.createdAt)
-        const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        const dateStr = date.toLocaleDateString(isEs ? "es-ES" : "en-US", { month: "short", day: "numeric" })
 
         const isContrarianBet =
           (isYes && pred.probAtTime < 20) || (!isYes && 100 - pred.probAtTime < 20)
@@ -117,12 +132,16 @@ export function PredictionHistory({
                   )}
                 >
                   {pred.correct
-                    ? (isNewlyCorrect ? "✓ Just called" : "✓ Correct")
-                    : "✗ Wrong"}
+                    ? (isNewlyCorrect
+                        ? (isEs ? "✓ Recién acertada" : "✓ Just called")
+                        : (isEs ? "✓ Acertada" : "✓ Correct"))
+                    : (isEs ? "✗ Fallida" : "✗ Wrong")}
                 </p>
               )}
               {!pred.resolved && (
-                <p className="text-[10px] text-muted-foreground/60">pending</p>
+                <p className="text-[10px] text-muted-foreground/60">
+                  {isEs ? "pendiente" : "pending"}
+                </p>
               )}
             </div>
           </div>
