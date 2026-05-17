@@ -16,6 +16,7 @@ import { ShareAchievementModal } from "@/components/share-achievement-modal";
 import { CategoryAccuracy } from "@/components/category-accuracy";
 import { CalledItModal } from "@/components/called-it-modal";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
+import { StatCard } from "@/components/profile/stat-card";
 import { getFollowerCount } from "@/lib/follows";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 import { topCategoryFromPredictions } from "@/lib/share-copy";
@@ -41,7 +42,7 @@ export function ProfileClient({
   const {
     currentStreak, bestStreak, totalPredictions,
     predictions, resolvedCount, correctCount, calledItCount,
-    checkResolutions,
+    badges, checkResolutions,
   } = store;
 
   const [shareOpen, setShareOpen] = useState(false);
@@ -255,6 +256,41 @@ export function ProfileClient({
           hero below carries the identity copy. */}
       {totalPredictions > 0 && (
         <p className="text-sm text-muted-foreground mb-6 pl-1">{headline}</p>
+      )}
+
+      {/* Glance stats grid — same 4 cells the public profile shows, so the
+          owner sees the at-a-glance summary visitors see. Detailed
+          breakdowns (StreakWidget, AccuracyStats, BadgesGrid) live below
+          and remain owner-only. Labels stay in EN to mirror the public
+          surface and keep the identity-glance identical for the owner. */}
+      {totalPredictions > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <StatCard
+            icon={<Flame className="w-4 h-4 text-orange-400" />}
+            label="Streak"
+            value={`${currentStreak}d`}
+            sub={`Best: ${bestStreak}d`}
+          />
+          <StatCard
+            icon={<Target className="w-4 h-4 text-primary" />}
+            label="Accuracy"
+            value={accuracyPct !== null ? `${accuracyPct}%` : "—"}
+            sub={accuracyPct !== null ? `${resolvedCount} resolved` : "Need ≥5 resolved"}
+            highlight={accuracyPct !== null && accuracyPct >= 60}
+          />
+          <StatCard
+            icon={<Trophy className="w-4 h-4 text-yellow-400" />}
+            label="Predictions"
+            value={String(totalPredictions)}
+            sub={`${resolvedCount} resolved`}
+          />
+          <StatCard
+            icon={<Medal className="w-4 h-4 text-primary" />}
+            label="Badges"
+            value={String(badges.length)}
+            sub={calledItCount > 0 ? `${calledItCount} Called It 💡` : "Earned"}
+          />
+        </div>
       )}
 
       {/* Empty-state hero — only when the user has zero predictions */}

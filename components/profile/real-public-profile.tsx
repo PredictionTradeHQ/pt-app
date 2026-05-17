@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { BadgeCard } from "@/components/badge-card"
 import { Avatar } from "@/components/avatar"
 import { FollowButton } from "@/components/profile/follow-button"
+import { StatCard } from "@/components/profile/stat-card"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
 import { PT_CATEGORIES } from "@/lib/categories"
 import { buildProfileHeadline } from "@/lib/profile-helpers"
@@ -328,36 +329,6 @@ function PublicPillar({
         {title}
       </p>
       <p className="text-[11px] text-muted-foreground leading-snug">{body}</p>
-    </div>
-  )
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  sub,
-  highlight = false,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  sub: string
-  highlight?: boolean
-}) {
-  return (
-    <div className={cn(
-      "rounded-xl border p-4",
-      highlight ? "border-primary/30 bg-primary/5" : "border-border bg-card/50"
-    )}>
-      <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
-        {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-wider">{label}</span>
-      </div>
-      <p className={cn("text-2xl font-bold", highlight ? "text-primary" : "text-foreground")}>
-        {value}
-      </p>
-      <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>
     </div>
   )
 }
