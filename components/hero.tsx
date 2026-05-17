@@ -12,7 +12,8 @@ interface PlatformStats {
 }
 
 export function Hero() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isEs = language === "es";
   const [stats, setStats] = useState<PlatformStats | null>(null)
 
   useEffect(() => {
@@ -79,10 +80,12 @@ export function Hero() {
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>
-                {stats.totalPredictions.toLocaleString()} predictions made by {stats.forecasters} forecasters
+                {isEs
+                  ? `${stats.totalPredictions.toLocaleString("es-ES")} predicciones hechas por ${stats.forecasters} predictores`
+                  : `${stats.totalPredictions.toLocaleString()} predictions made by ${stats.forecasters} forecasters`}
                 {" · "}
                 <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
-                  Join free →
+                  {isEs ? "Únete gratis →" : "Join free →"}
                 </Link>
               </span>
             </span>
@@ -93,10 +96,12 @@ export function Hero() {
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>
-                Free to join · Build your prediction track record
+                {isEs
+                  ? "Gratis · Construye tu historial como predictor"
+                  : "Free to join · Build your prediction track record"}
                 {" · "}
                 <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
-                  Start now →
+                  {isEs ? "Empieza ya →" : "Start now →"}
                 </Link>
               </span>
             </span>
