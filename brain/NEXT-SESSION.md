@@ -1,6 +1,6 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Observation phase F1 — follower count on /profile owner view) | Read this before touching anything.
+> Last updated: 2026-05-17 (Profile Identity Completeness Blocks 1–5 LIVE + Game Feel Sprint #1 Bloque 1 LIVE — observation phase active) | Read this before touching anything.
 
 ---
 
@@ -8,9 +8,77 @@
 
 Officially in observation mode after Follow System v1 shipped. Disciplined scope: no Activity Feed, no notifications, no recommendations, no following pages, no mutual indicator, no posts/timelines/DMs/stories. Only quirurgical polish that closes existing reputation loops counts. Resolve tech debt only when it blocks observation quality.
 
-**Polish shipped this phase:**
-- **F1 (commit `a1c1060`):** owner now sees their own follower count on `/profile` Account card. `getFollowerCount(userId)` on mount, chip renders only when count > 0 (no zero-noise). Closes a loop that was silently broken (followers grew, owner never saw it because `/profile/[mi-slug]` redirects to `/profile`). 1 file touched, 33 lines added, no schema, no API, no migration.
-- **Tech debt resolved:** stale anon key in `.env.local` refreshed to the new Supabase publishable-key format (`sb_publishable_*`). Now points at the active project (`vkizidrsuwsreepsbbuy`). `pnpm dev` locally will connect to the correct DB. No commit (gitignored), no production change.
+**Follows table signal as of last check:** `*/0` (0 organic rows in `public.follows`). Trigger for graduating from observation phase NOT met. Continue polish only.
+
+### 🆕 Profile Identity Completeness — Blocks 1–5 LIVE (2026-05-17)
+
+Camino A elegido conscientemente over Lightweight Activity Feed (Camino B deferred until ≥1 organic follow). Goal: close identity-glance parity gaps between `/profile` (owner) and `/profile/[username]` (public real-user view) without opening new social surfaces.
+
+| Block | Commit | What shipped |
+|---|---|---|
+| **B1 — Shared headline** | `fc64c2c` | Extracted `buildHeadline()` from `real-public-profile.tsx` to `lib/profile-helpers.ts` as `buildProfileHeadline(stats: ProfileHeadlineStats, categoryStats)`. Owner `/profile` now renders the same one-liner visitors see (and that ships in OG cards + share copy). Single source of truth. |
+| **B2 — Shared stats grid** | `26ff281` | Extracted `<StatCard />` from `real-public-profile.tsx` to `components/profile/stat-card.tsx`. Owner now shows the same 4-cell glance grid (Streak / Accuracy / Predictions / Badges) the visitor sees, placed between headline and the existing detailed cards (AccuracyStats / StreakWidget / BadgesGrid stay below as deep-dive). Labels hardcoded EN — paritarian identity vocabulary across surfaces. |
+| **B3 — Shared "Biggest calls"** | `87293da` | Extracted `<TopCallRow />` from `real-public-profile.tsx` to `components/profile/top-call-row.tsx`. Owner now sees identity-gold contrarian-correct showcase Card between Streak and Badges (only when `computeTopCalls()` ≥ 1). CardTitle localized per owner pattern; row content shared verbatim with public surface. |
+| **B4 — Share on X in owner header** | `3315879` | New `shareOnX()` handler in `profile-client.tsx`. Owner's Account-card header now offers a dedicated X-glyph Share button alongside the existing Copy-link button. Tweet text reuses `headline` from B1 so self-share == visitor-share. Copy-link button label tightened to "Copy link / Copiar enlace" (was "Share profile / Compartir perfil") to disambiguate. |
+| **B5 — Copy alignment** | `5cc94ba` | 3 strings in `profile-client.tsx` (O1+O2+O3 complete, operator chose A). Owner ES tagline `Miembro de PredictionTrade` → `Forecaster de PredictionTrade` (cross-language PT identity vocab). Activity Overview body rewritten from stale "trading stats / game results / academy progress" to prediction/streak/accuracy. Subtitle reframed from settings page to identity surface ("Your public profile and account settings"). 1 file · +5 / −5 strings · 0 migrations · 0 API. |
+
+**Build status across all 5 pushes:** `pnpm build` clean (TS strict, 0 errors). Smoke green on each push (`/`, `/markets`, `/leaderboard`, `/play`, `/academy`, `/help`, `/auth/login`, `/profile` 307 → login on www). X-Vercel-Id rotates per deploy. Operator visually verified Blocks 1–3 in production; Blocks 4 + 5 visually verified in same session.
+
+**New shared profile components (single source of truth):**
+- `components/profile/stat-card.tsx` (B2)
+- `components/profile/top-call-row.tsx` (B3)
+- `lib/profile-helpers.ts`: `buildProfileHeadline` + `ProfileHeadlineStats` type (B1)
+
+**Owner-only detail surfaces UNCHANGED and still rendered below the glance layer:** AccuracyStats, CategoryAccuracy, StreakWidget (with its own Share button), BadgesGrid (earned + locked), PredictionHistory, Activity Overview card, Session card.
+
+### 🆕 Game Feel Sprint #1 — Bloque 1 LIVE (2026-05-17)
+
+Operator opened a new mini sprint after Profile Identity B1–B5 closed. Goal: amplify the emotional satisfaction of correct predictions WITHOUT new systems, economies, sound, confetti, or progression engines. Philosophy: smart/social/status, not casino. Commit `e8284f9`. 3 files · +37 / −6 · 0 deps · 0 keyframes · 0 migrations · reversible with `git revert e8284f9`.
+
+| Touch | What shipped |
+|---|---|
+| **T1 — Arrival ring** | 1-shot ping ring (700ms, `forwards`) around `CheckCircle2` in `CalledItModal`. Inline `animation-iteration-count: 1` so it never loops. Subtle arrival moment, not a casino reward. Reuses Tailwind `ping` keyframe — no new CSS. |
+| **T2 — Recent-correct highlight** | New optional prop `newlyCorrectIds?: Set<string>` on `PredictionHistory`. Matching items get `border-emerald-500/40 bg-emerald-500/10 ring-1 ring-emerald-500/30` and label `"✓ Just called"`. Session-only by design (no localStorage, resets on refresh). Backwards-compatible: without the prop, behavior identical to pre-sprint. |
+| **T3 — Batch context pill** | New optional prop `extraCount?: number` on `CalledItModal`. When the resolution batch had >1 correct call, shows `"+N more correct call(s) today"` under the headline. Info-only, no animation, no CTA. |
+
+**Wire in `profile-client.tsx`:** new state `newlyCorrectIds: Set<string>` populated from `checkResolutions().newlyCorrect`, propagated to both consumers. State lives in component only — refresh resets, matches the "session-only" design of the highlight.
+
+**Loop emocional cubierto post-Bloque 1:**
+
+prediction resolves → CalledItModal (with arrival ring + optional batch pill) → close modal → PredictionHistory rows highlighted as "Just called" → reputation record visibly identifies the new wins.
+
+**Philosophy compliance (verified post-impl):**
+- ✅ NO confetti in CalledItModal — only the arrival ring
+- ✅ NO sound, NO haptics
+- ✅ NO notifications, NO toast added
+- ✅ NO triggers on /dashboard or /activity (G4 deferred)
+- ✅ NO new architectures, NO new components, NO new deps
+- ✅ NO backend, NO API, NO migrations, NO keyframes added
+- ✅ NO touch to `lib/share-copy.ts` or `TopCallRow`
+- ✅ Backwards-compatible (props are optional)
+
+**🟢 OBSERVATION MODE — do NOT iterate without real-usage signal.** Operator explicit instruction: hold before opening Bloque 2 of the Game Feel sprint. Wait for:
+- Real "feel" of resolving multiple predictions
+- Whether `"Just called"` really improves continuity
+- Whether the pulse is subtle enough (not too visible)
+- Whether the batch pill adds real clarity
+- Any sign of "too gamified" creeping in
+
+**DEFERRED — do not start without operator confirmation (mirrors Follow System v1 discipline):**
+- G4: multi-surface triggers (modal on /dashboard or /activity entry)
+- Hot take systems / contrarian signals beyond modal-time
+- Progression rings on streak widget
+- Rank delta indicators in leaderboard
+- More animations of any kind
+- Anything resembling XP, coins, levels, progression engines, economies
+- Sound, haptics, screen-shake, particle systems
+
+Backlog for future Game Feel blocks is stored in memory `project_pt_game_feel_sprint.md` — do NOT auto-propose those items.
+
+### Other polish shipped earlier this phase
+
+- **F1 (commit `a1c1060`):** owner sees own follower count on `/profile` Account card. 1 file, 33 lines, no schema.
+- **Tech debt resolved earlier:** stale anon key in `.env.local` refreshed to `sb_publishable_*` format. No commit (gitignored).
 
 **Active frictions deferred (do not touch without operator confirmation):**
 - F2 — Mobile header on RealPublicProfile (3 inline buttons) — defer until real mobile signal.

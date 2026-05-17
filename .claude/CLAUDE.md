@@ -167,25 +167,43 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 ---
 
-## CURRENT STATE — checkpoint 2026-05-16 ✅ STABLE (post bug-fix)
+## CURRENT STATE — checkpoint 2026-05-17 ✅ STABLE (observation phase)
 
-**Git:** `main` clean, synced with `origin/main`
-**TypeScript:** 0 errors (strict mode)
-**Vercel:** ● Deploying — predictiontrade.online (commit `ffa1de2`)
-**Supabase:** New clean project `vkizidrsuwsreepsbbuy` — all migrations applied
+**Git:** `main` clean, synced with `origin/main` (HEAD `e8284f9`)
+**TypeScript:** 0 errors (strict mode) — `pnpm build` ✓ Compiled successfully in 2.6s
+**Vercel:** auto-deploy on push to main, predictiontrade.online (apex → www 307 redirect active)
+**Supabase:** project `vkizidrsuwsreepsbbuy` — all migrations applied (000, 001, 003, 004, 007)
+**Follow System v1:** LIVE end-to-end. `public.follows` table live. Organic follows: 0 (observation phase intact).
+**Active mode:** 🟢 **Observation/polish.** Do NOT open new sprints or expand surface area without operator confirmation.
 
-**Last commits:**
+**Last commits (this session — Profile Identity B1–B5 + Game Feel Sprint #1 Bloque 1):**
 ```
-ffa1de2  fix(core): resolve bet crash and login redirect loop
-9f9ee9b  docs(brain): session close — all migrations complete, production verified, PT stable
-27e9942  chore(supabase): migrate to new clean project — replace all old project ID refs, add 000_wallets
-8aa44bd  docs(brain): session close — core loop stability, true Supabase schema state
-b448e04  fix(api): force-dynamic on stats/platform — prevents ISR caching broken build 404
+e8284f9  feat(profile): Called It celebration layer v1 (T1+T2+T3)
+5cc94ba  feat(profile): align owner copy with PT identity and prediction vocab
+3315879  feat(profile): Share on X button in owner header
+87293da  feat(profile): share Biggest calls showcase between owner and public surfaces
+26ff281  feat(profile): share 4-cell stats grid between owner and public surfaces
+fc64c2c  feat(profile): share identity headline between owner and public surfaces
+84670b7  docs: remove stale /api/leaderboard/flash-players route reference
 ```
 
-**Bugs fixed in this session:**
-- ✅ Bet/positions crash: `formatTimeAgo` TypeError on string timestamp from Supabase JSON
-- ✅ Login redirect loop: login page used separate Supabase instance from AuthProvider
+**Sprints shipped this session:**
+- ✅ **Profile Identity Completeness B1–B5** — shared headline + stats grid + biggest calls + share-on-X button + copy alignment (Forecaster identity, prediction vocab, identity-surface subtitle). 5 commits, all `pnpm build` clean, all smoke 8/8.
+- ✅ **Game Feel Sprint #1 — Bloque 1** — Called It celebration layer v1 (T1 arrival ring + T2 "Just called" highlight + T3 batch context pill). 1 commit, 3 files, +37/−6, 0 deps, 0 keyframes, 0 migrations. Reversible with `git revert e8284f9`.
+
+**🟢 OBSERVATION CRITERIA (do not iterate before these signal):**
+- How resolving multiple predictions actually feels
+- Whether `"Just called"` improves continuity
+- Whether the T1 pulse is subtle enough (not too visible)
+- Whether the T3 batch pill adds real clarity
+- Any sign of "too gamified" creeping in
+- (Follow System) any organic follow happening
+
+**DO NOT auto-propose:**
+- Game Feel Sprint #1 Bloque 2 (G4 multi-surface triggers, hot takes, progression rings, rank delta, more animations)
+- Activity Feed (Camino B) — still gated on ≥1 organic follow
+- AI Layer (Phase 4g), Growth (Phase 5), or any new economy/coins/XP/levels
+- Anything resembling sound, haptics, particles, screen-shake
 
 **Completed phases:**
 - ✅ Phase 0 — Foundation (Next.js, Supabase, Vercel, TypeScript strict)
