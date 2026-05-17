@@ -6,7 +6,7 @@ import { ActivityClient } from "@/components/activity/activity-client";
 
 export const metadata: Metadata = {
   title: "Activity — PredictionTrade",
-  description: "Your full prediction and game history on PredictionTrade.",
+  description: "Your full prediction history on PredictionTrade.",
 };
 
 export default async function ActivityPage() {
@@ -17,26 +17,17 @@ export default async function ActivityPage() {
     redirect("/auth/login?next=/activity");
   }
 
-  const [gamesRes, demoRes] = await Promise.all([
-    supabase
-      .from("game_results")
-      .select("id, profit_pct, position, won, duration, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50),
-    supabase
-      .from("demo_portfolios")
-      .select("activity")
-      .eq("user_id", user.id)
-      .single(),
-  ]);
+  const { data: demoRow } = await supabase
+    .from("demo_portfolios")
+    .select("activity")
+    .eq("user_id", user.id)
+    .single();
 
-  const games = gamesRes.data ?? [];
-  const trades = (demoRes.data?.activity as any[] | null) ?? [];
+  const trades = (demoRow?.activity as any[] | null) ?? [];
 
   return (
     <AppShell>
-      <ActivityClient games={games} trades={trades} />
+      <ActivityClient trades={trades} />
     </AppShell>
   );
 }
