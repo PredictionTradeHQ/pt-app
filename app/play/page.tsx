@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Ultra-fast ranked prediction game. 7 seconds. One tap. Rise from Bronze to Master.",
   openGraph: {
     title: "Prediction Flash | PredictionTrade",
-    description: "Solo, Ranked, 1v1. The fastest trading game on the internet.",
+    description: "Solo, Ranked, 1v1. The fastest prediction game on the internet.",
     images: [{ url: "/images/logo.png" }],
   },
 };

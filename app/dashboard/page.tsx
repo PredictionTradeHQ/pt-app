@@ -6,7 +6,7 @@ import { DashboardHome } from "@/components/dashboard/dashboard-home";
 
 export const metadata: Metadata = {
   title: "Dashboard — PredictionTrade",
-  description: "Your personal trading dashboard.",
+  description: "Your forecaster dashboard.",
 };
 
 export default async function DashboardPage() {

@@ -4,7 +4,7 @@ import { LeaderboardPageClient } from "@/components/leaderboard/leaderboard-page
 
 export const metadata: Metadata = {
   title: "Leaderboard — PredictionTrade",
-  description: "Top traders ranked by performance.",
+  description: "Top forecasters ranked by streak, accuracy, and badges.",
 };
 
 export default function LeaderboardPage() {

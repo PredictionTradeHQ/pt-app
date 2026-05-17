@@ -6,7 +6,7 @@ import { ActivityClient } from "@/components/activity/activity-client";
 
 export const metadata: Metadata = {
   title: "Activity — PredictionTrade",
-  description: "Your full trading and game history on PredictionTrade.",
+  description: "Your full prediction and game history on PredictionTrade.",
 };
 
 export default async function ActivityPage() {
