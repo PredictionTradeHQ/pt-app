@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { UserPlus, UserCheck, Loader2, Users } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 import { cn } from "@/lib/utils"
 import {
   followUser,
@@ -32,6 +33,8 @@ interface Props {
 
 export function FollowButton({ followeeId, initialCount, className }: Props) {
   const { user, isLoading: authLoading } = useAuth()
+  const { language } = useLanguage()
+  const isEs = language === "es"
   const [following, setFollowing] = useState(false)
   const [count, setCount] = useState(initialCount)
   const [pending, setPending] = useState(false)
@@ -59,7 +62,7 @@ export function FollowButton({ followeeId, initialCount, className }: Props) {
 
   // Self → simple count chip. No follow control on own profile.
   if (isSelf) {
-    return <FollowerCountChip count={count} className={className} />
+    return <FollowerCountChip count={count} isEs={isEs} className={className} />
   }
 
   const toggle = async () => {
@@ -85,7 +88,8 @@ export function FollowButton({ followeeId, initialCount, className }: Props) {
       // Rollback on failure
       setFollowing(prevFollowing)
       setCount(prevCount)
-      toast.error(e instanceof Error ? e.message : "Action failed.")
+      const fallback = isEs ? "Acción fallida." : "Action failed."
+      toast.error(e instanceof Error ? e.message : fallback)
     } finally {
       setPending(false)
     }
@@ -103,13 +107,17 @@ export function FollowButton({ followeeId, initialCount, className }: Props) {
     )
   }
 
+  const followingLabel = isEs ? "Siguiendo" : "Following"
+  const followLabel = isEs ? "Seguir" : "Follow"
+  const unfollowTitle = isEs ? "Dejar de seguir" : "Unfollow"
+
   return (
     <button
       type="button"
       onClick={toggle}
       disabled={pending}
       aria-pressed={following}
-      title={following ? "Unfollow" : "Follow"}
+      title={following ? unfollowTitle : followLabel}
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border",
         following
@@ -127,7 +135,7 @@ export function FollowButton({ followeeId, initialCount, className }: Props) {
         <UserPlus className="w-3.5 h-3.5" />
       )}
       <span>
-        {following ? "Following" : "Follow"}
+        {following ? followingLabel : followLabel}
         <span className="ml-1 opacity-70 tabular-nums">· {count}</span>
       </span>
     </button>
@@ -136,22 +144,27 @@ export function FollowButton({ followeeId, initialCount, className }: Props) {
 
 function FollowerCountChip({
   count,
+  isEs,
   className,
 }: {
   count: number
+  isEs: boolean
   className?: string
 }) {
+  const noun = isEs
+    ? count === 1 ? "seguidor" : "seguidores"
+    : count === 1 ? "follower" : "followers"
   return (
     <div
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-border bg-card text-muted-foreground",
         className,
       )}
-      title="Your follower count"
+      title={isEs ? "Tu número de seguidores" : "Your follower count"}
     >
       <Users className="w-3.5 h-3.5" />
       <span className="tabular-nums">
-        {count} {count === 1 ? "follower" : "followers"}
+        {count} {noun}
       </span>
     </div>
   )
