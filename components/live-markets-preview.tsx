@@ -279,8 +279,8 @@ export function LiveMarketsPreview() {
             </h2>
             <p className="text-muted-foreground mt-2">
               {isEs
-                ? "Datos de mercados de predicción en tiempo real. Haz clic en cualquier mercado para empezar a operar."
-                : "Real-time prediction market data. Click any market to start trading."}
+                ? "Datos de mercados de predicción en tiempo real. Haz clic en cualquier mercado para hacer tu predicción."
+                : "Real-time prediction market data. Click any market to make your call."}
             </p>
           </div>
           <Button asChild className="gap-2 w-fit">
@@ -303,7 +303,7 @@ export function LiveMarketsPreview() {
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
                 </span>
                 <span className="text-green-400 font-semibold">{stats.totalTraders.toLocaleString()}</span>
-                <span>{isEs ? "traders activos" : "traders active"}</span>
+                <span>{isEs ? "predictores activos" : "forecasters active"}</span>
               </span>
               <span className="text-border hidden sm:inline">·</span>
               <span className="shrink-0">{markets.length} {isEs ? "mercados en vivo" : "markets live"}</span>
