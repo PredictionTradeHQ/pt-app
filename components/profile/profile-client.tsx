@@ -67,6 +67,17 @@ export function ProfileClient({
     } catch { /* ignore */ }
   };
 
+  // Share own profile on X. Same tweet format as the public profile so the
+  // owner self-share and a visitor share read identically. Headline is the
+  // single source of truth from buildProfileHeadline().
+  const shareOnX = () => {
+    const text = `${displayName} on @PredictionTrade — ${headline}`;
+    window.open(
+      `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(profileUrl)}`,
+      "_blank",
+    );
+  };
+
   const joinedDate = createdAt
     ? new Date(createdAt).toLocaleDateString(isEs ? "es-ES" : "en-US", {
         year: "numeric",
@@ -219,17 +230,29 @@ export function ProfileClient({
                 </p>
               )}
             </div>
-            <button
-              onClick={handleCopyProfile}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
-              title={isEs ? "Copiar enlace de perfil" : "Copy profile link"}
-            >
-              {copiedProfile ? (
-                <><Check className="w-3 h-3 text-primary" /><span className="text-primary">{isEs ? "Copiado" : "Copied!"}</span></>
-              ) : (
-                <><Link2 className="w-3 h-3" /><span>{isEs ? "Compartir perfil" : "Share profile"}</span></>
-              )}
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={shareOnX}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-muted/40 transition-colors text-xs font-semibold"
+                title={isEs ? "Compartir en X" : "Share on X"}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.859L1.254 2.25H8.08l4.259 5.632L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                {isEs ? "Compartir" : "Share"}
+              </button>
+              <button
+                onClick={handleCopyProfile}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+                title={isEs ? "Copiar enlace de perfil" : "Copy profile link"}
+              >
+                {copiedProfile ? (
+                  <><Check className="w-3 h-3 text-primary" /><span className="text-primary">{isEs ? "Copiado" : "Copied!"}</span></>
+                ) : (
+                  <><Link2 className="w-3 h-3" /><span>{isEs ? "Copiar enlace" : "Copy link"}</span></>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
