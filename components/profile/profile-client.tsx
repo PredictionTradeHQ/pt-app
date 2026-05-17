@@ -19,6 +19,7 @@ import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { getFollowerCount } from "@/lib/follows";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 import { topCategoryFromPredictions } from "@/lib/share-copy";
+import { buildProfileHeadline, computeCategoryStats } from "@/lib/profile-helpers";
 import type { PredictionRecord } from "@/stores/gamification";
 
 export function ProfileClient({
@@ -71,6 +72,19 @@ export function ProfileClient({
         day: "numeric",
       })
     : "—";
+
+  // Identity headline — same one-liner the public profile, share copy, and OG
+  // card show. Owner sees the exact phrase visitors do so /profile reads as
+  // "this is who I am" rather than a settings page.
+  const accuracyPct =
+    resolvedCount >= 5 ? Math.round((correctCount / resolvedCount) * 100) : null;
+  const ownerCategoryStats = computeCategoryStats(predictions);
+  const headline = buildProfileHeadline(
+    totalPredictions > 0
+      ? { totalPredictions, accuracyPct, currentStreak, calledItCount }
+      : null,
+    ownerCategoryStats,
+  );
 
   // On mount: fetch follower count from Supabase. Single indexed count(*).
   // Fire-and-forget — failure leaves followerCount as null and the chip
@@ -235,6 +249,13 @@ export function ProfileClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* Identity headline — shared with public profile + share copy. Only
+          renders once the owner has any predictions; before that, the empty
+          hero below carries the identity copy. */}
+      {totalPredictions > 0 && (
+        <p className="text-sm text-muted-foreground mb-6 pl-1">{headline}</p>
+      )}
 
       {/* Empty-state hero — only when the user has zero predictions */}
       {totalPredictions === 0 && (

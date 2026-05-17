@@ -7,6 +7,7 @@
  *  - app/profile/[username]/page.tsx      (server component)
  */
 
+import { PT_CATEGORIES } from "@/lib/categories"
 import type {
   PublicPredictionRecord,
   CategoryStat,
@@ -74,6 +75,47 @@ export function computeTopCalls(rawPreds: RawPred[]): TopCall[] {
       outcome: p.outcome === "YES" ? "YES" as const : "NO" as const,
       createdAt: p.createdAt,
     }))
+}
+
+// ─── Profile headline — single source of truth ────────────────────────────────
+//
+// Rendered on /profile (owner), /profile/[username] (public), and used by the
+// share copy + OG card surfaces. Identity must read identically across all
+// three so the owner sees the same one-liner that visitors do.
+
+export type ProfileHeadlineStats = {
+  totalPredictions: number
+  accuracyPct: number | null
+  currentStreak: number
+  calledItCount: number
+}
+
+export function buildProfileHeadline(
+  stats: ProfileHeadlineStats | null,
+  categoryStats: CategoryStat[],
+): string {
+  // Empty profile reads aspirational, not abandoned — same 🎯 emoji used by
+  // the private EmptyProfileHero so a brand-new forecaster's headline still
+  // says "identity in progress" instead of "dead account".
+  if (!stats || stats.totalPredictions === 0) return "🎯 New forecaster"
+
+  const parts: string[] = []
+
+  if (stats.accuracyPct !== null) parts.push(`${stats.accuracyPct}% accurate`)
+  if (stats.currentStreak >= 2) parts.push(`🔥 ${stats.currentStreak}-day streak`)
+  if (stats.calledItCount > 0) {
+    parts.push(
+      `${stats.calledItCount} ${stats.calledItCount === 1 ? "Called It" : "Called Its"} 💡`,
+    )
+  }
+
+  const best = categoryStats[0]
+  if (best && best.pct >= 50) {
+    const cat = PT_CATEGORIES.find((c) => c.id === best.catId)
+    if (cat) parts.push(`Best at ${cat.label} ${cat.emoji}`)
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : `${stats.totalPredictions} predictions made`
 }
 
 export function normalizeRecentPredictions(rawPreds: RawPred[]): PublicPredictionRecord[] {

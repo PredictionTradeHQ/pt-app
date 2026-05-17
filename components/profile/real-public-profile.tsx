@@ -12,6 +12,7 @@ import { Avatar } from "@/components/avatar"
 import { FollowButton } from "@/components/profile/follow-button"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
 import { PT_CATEGORIES } from "@/lib/categories"
+import { buildProfileHeadline } from "@/lib/profile-helpers"
 import { cn } from "@/lib/utils"
 import type {
   RealProfileData,
@@ -22,32 +23,6 @@ import type {
 
 interface Props {
   data: RealProfileData
-}
-
-// ─── Profile headline — one-line shareable summary ────────────────────────────
-
-function buildHeadline(
-  gam: RealProfileData["gamification"],
-  categoryStats: CategoryStat[]
-): string {
-  // Empty profile: aspirational, not "abandoned". Same 🎯 emoji used by the
-  // private EmptyProfileHero so share previews of brand-new forecasters
-  // still read as identity-in-progress, not dead account.
-  if (!gam || gam.totalPredictions === 0) return "🎯 New forecaster"
-
-  const parts: string[] = []
-
-  if (gam.accuracyPct !== null) parts.push(`${gam.accuracyPct}% accurate`)
-  if (gam.currentStreak >= 2) parts.push(`🔥 ${gam.currentStreak}-day streak`)
-  if (gam.calledItCount > 0) parts.push(`${gam.calledItCount} ${gam.calledItCount === 1 ? "Called It" : "Called Its"} 💡`)
-
-  const best = categoryStats[0]
-  if (best && best.pct >= 50) {
-    const cat = PT_CATEGORIES.find((c) => c.id === best.catId)
-    if (cat) parts.push(`Best at ${cat.label} ${cat.emoji}`)
-  }
-
-  return parts.length > 0 ? parts.join(" · ") : `${gam.totalPredictions} predictions made`
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -61,7 +36,7 @@ export function RealPublicProfile({ data }: Props) {
   const earnedMap = new Map(earnedBadges.map((b) => [b.id, b.earnedAt]))
 
   const hasStats = gam !== null && gam.totalPredictions > 0
-  const headline = buildHeadline(gam, categoryStats)
+  const headline = buildProfileHeadline(gam, categoryStats)
 
   const shareText = `${displayName} on @PredictionTrade — ${headline}`
   const profileUrl = typeof window !== "undefined"
