@@ -10,24 +10,24 @@ export function WhyUs() {
   const features = [
     {
       icon: BookOpen,
-      title: isEs ? "Aprende sin riesgo" : "Learn Risk-Free",
+      title: isEs ? "Predice sin riesgo" : "Predict Risk-Free",
       description: isEs
-        ? "Practica con fondos virtuales. Comete errores, aprende estrategias, todo sin perder dinero real."
-        : "Practice with virtual funds. Make mistakes, learn strategies, all without losing real money.",
+        ? "Construye tu historial con un saldo virtual. Sin depósitos, sin dinero real — solo predicciones."
+        : "Build your track record with a virtual balance. No deposits, no real money — just predictions.",
     },
     {
       icon: Zap,
       title: isEs ? "Datos reales del mercado" : "Real Market Data",
       description: isEs
-        ? "Precios y volúmenes en vivo de Polymarket. Entrénate con condiciones reales de mercado."
-        : "Live prices and volumes from Polymarket. Train with real-world market conditions.",
+        ? "Precios y volúmenes en vivo de Polymarket. Predice sobre mercados que existen de verdad."
+        : "Live prices and volumes from Polymarket. Call markets that actually exist.",
     },
     {
       icon: BarChart3,
       title: isEs ? "Sigue tu precisión" : "Track Your Accuracy",
       description: isEs
-        ? "Consulta tu historial de predicciones y tu tasa de aciertos. Identifica qué funciona antes de operar en real."
-        : "See your prediction history and win rate. Identify what works before going live.",
+        ? "Consulta tu historial completo y tu precisión por categoría. Descubre dónde tu instinto le gana al consenso."
+        : "See your full prediction history and per-category accuracy. Find out where your instinct beats the crowd.",
     },
     {
       icon: Sparkles,
@@ -38,17 +38,17 @@ export function WhyUs() {
     },
     {
       icon: Users,
-      title: isEs ? "Comunidad activa" : "Active Community",
+      title: isEs ? "Comunidad de predictores" : "Forecaster Community",
       description: isEs
-        ? "Únete a miles de aprendices que comparten análisis y estrategias de predicción."
-        : "Join thousands of learners who share analysis and prediction strategies.",
+        ? "Compara tu precisión con miles de predictores. Sube en el ranking, comparte tus aciertos."
+        : "Compare your accuracy with thousands of other forecasters. Climb the leaderboard, share your calls.",
     },
     {
       icon: Target,
-      title: isEs ? "¿Listo para operar de verdad?" : "Ready for Real Trading?",
+      title: isEs ? "Perfil público" : "Public Profile",
       description: isEs
-        ? "Cuando te sientas seguro, da el salto a Polymarket y opera con fondos reales."
-        : "When you feel confident, transition to Polymarket to trade with real funds.",
+        ? "Tu precisión, tu racha y tus mejores predicciones viven en un perfil público. Compártelo, enlázalo, construye tu reputación."
+        : "Your accuracy, streak, and best calls live on a public profile. Share it, link to it, build your reputation.",
     },
   ];
 
@@ -57,15 +57,15 @@ export function WhyUs() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
-            {isEs ? "Por qué practicar aquí" : "Why Practice Here"}
+            {isEs ? "Por qué Prediction Trade" : "Why Prediction Trade"}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-            {isEs ? "La forma más inteligente de aprender" : "The Smartest Way to Learn"}
+            {isEs ? "La forma más inteligente de empezar a predecir" : "The Smartest Way to Start Forecasting"}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
             {isEs
-              ? "La mayoría de traders pierde dinero al empezar. Nuestro simulador te permite desarrollar tus habilidades de predicción con datos reales antes de arriesgar capital."
-              : "Most traders lose money when they start. Our simulator lets you develop your prediction skills with real data before risking actual capital."}
+              ? "Construye tu reputación como predictor a la vista de todos. Mercados reales, precisión pública y un ranking que registra quién acierta de verdad."
+              : "Build your forecasting reputation in the open. Real markets, public accuracy, and a leaderboard that tracks who actually calls it right."}
           </p>
         </div>
 
