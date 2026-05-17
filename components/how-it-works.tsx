@@ -13,24 +13,24 @@ export function HowItWorks() {
       step: "01",
       title: isEs ? "Recibe $100.000 virtuales" : "Get $100,000 Virtual",
       description: isEs
-        ? "Empieza al instante con $100.000 en fondos de práctica. Sin cartera, sin depósitos, sin riesgo."
-        : "Start instantly with $100,000 in paper trading funds. No wallet needed, no deposits, no risk.",
+        ? "Empieza al instante con un saldo virtual de $100.000. Sin cartera, sin depósitos, sin riesgo."
+        : "Start instantly with a $100,000 virtual balance. No wallet, no deposits, no risk.",
     },
     {
       icon: Target,
       step: "02",
-      title: isEs ? "Opera en mercados reales" : "Trade Real Markets",
+      title: isEs ? "Predice en mercados en vivo" : "Call Live Markets",
       description: isEs
-        ? "Coloca operaciones de práctica sobre eventos en vivo de Polymarket. Mismos precios, mismas probabilidades, cero consecuencias."
-        : "Place paper trades on live Polymarket events. Same prices, same odds, zero consequences.",
+        ? "Haz predicciones sobre eventos reales de Polymarket. Mismos precios, mismas probabilidades, cero riesgo financiero."
+        : "Make predictions on real Polymarket events. Same prices, same odds, zero financial risk.",
     },
     {
       icon: BarChart3,
       step: "03",
-      title: isEs ? "Domina el juego" : "Master the Game",
+      title: isEs ? "Construye tu reputación" : "Build Your Reputation",
       description: isEs
-        ? "Sigue tu P&L y tu tasa de aciertos. Cuando aquí seas rentable, estarás listo para operar de verdad."
-        : "Track your P&L and win rate. When you're profitable here, you're ready for the real thing.",
+        ? "Sigue tu precisión y tu racha. Cada predicción acertada queda en tu perfil público como predictor."
+        : "Track your accuracy and streak. Every correct call goes on your public forecaster profile.",
     },
   ];
 
@@ -39,15 +39,15 @@ export function HowItWorks() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <p className="text-primary text-sm font-medium tracking-wider uppercase mb-4">
-            {isEs ? "Trading de práctica" : "Paper Trading"}
+            {isEs ? "Cómo funciona" : "How it works"}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-            {isEs ? "Aprende antes de ganar" : "Learn Before You Earn"}
+            {isEs ? "Tres pasos hasta tu primera predicción" : "Three steps to your first call"}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
             {isEs
-              ? "La mayoría de traders pierde dinero al empezar. El trading de práctica te permite cometer errores gratis y desarrollar estrategias ganadoras con datos reales de Polymarket."
-              : "Most traders lose money when they start. Paper trading lets you make mistakes for free and develop winning strategies with real Polymarket data."}
+              ? "Haz predicciones en mercados reales, sigue tu precisión y construye una reputación pública como predictor. Sin dinero involucrado."
+              : "Make predictions on real markets, track your accuracy, and build a public reputation as a forecaster. No money involved."}
           </p>
         </div>
 
