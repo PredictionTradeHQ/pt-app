@@ -1,10 +1,57 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Identity Cohesion Pass II LIVE + prior Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity Completeness Blocks 1–5 + Game Feel Sprint #1 Bloque 1 — observation phase active) | Read this before touching anything.
+> Last updated: 2026-05-17 (Observation mode locked post Identity Cohesion Pass II + deep observation report; prior Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel #1 B1) | Read this before touching anything.
 
 ---
 
-## 🆕 Identity Cohesion Pass II — LIVE 2026-05-17 (this session)
+## 🔒 Observation mode locked — 2026-05-17 (post Identity Cohesion Pass II)
+
+After shipping Identity Cohesion Pass II (5 commits) and producing a deep end-to-end observation report on dashboard tone, leaderboard semantics, profile pride, Biggest Calls impact, density desktop/mobile, and P&L-centric metric residuals, the operator made an explicit lock decision. Identity passes are done for now; the product needs to breathe.
+
+### Five "no touch" rules (active until repeated organic signal)
+
+1. **NO open T1** — Dashboard identity conversion (`/dashboard` reframe from wallet/Flash to forecaster cockpit, pulling from gamification store).
+2. **NO new sprint**.
+3. **NO touch on dashboard** (`components/dashboard/dashboard-home.tsx`).
+4. **NO touch on bet flow** (`components/markets-app.tsx` — "Buy Yes/No", `wagered`, "My Bets", portfolio summary).
+5. **NO touch on sidebar architecture** (Trading Control Panel desktop sidebar on `/markets`).
+
+### Deferred candidates from observation report (DO NOT auto-propose)
+
+- **T1 — Dashboard identity conversion** — thesis-grade. The deepest residual: Layer 3 (`/dashboard` data sources) still serves wallet + Flash game leaderboard under a "Forecaster" header, while `/profile` already serves forecaster identity data. Decision-gated, not copy-gated.
+- **T2 — Markets desktop sidebar reframe** — Trading Control Panel is the most casino-feeling surface. Mobile hides it by responsive breakpoint, desktop is the delta. Depends on T1.
+- **T3 — Bet flow vocabulary** ("Buy Yes/No", wagered, My Bets, Portfolio). Operator declined twice. Depends on T1.
+
+### Polish backlog (NO actionable without explicit go)
+
+- P1: Dashboard "Top forecasters" card label↔data mismatch (currently pulls `/api/game/leaderboard?sort=profit`).
+- P2: "Biggest calls" naming doesn't capture contrarian-ness — "Called against the crowd" or similar would communicate the actual filter.
+- P3: `/profile` "Activity Overview" card dilutes identity surface (just a link to /dashboard wrapped in card chrome).
+- P4: `/profile` "Sign out" card anchors the bottom as settings page (could move to header overflow).
+- P5: `/profile` desktop `max-w-3xl` → `max-w-4xl` or 2-col on xl: for less whitespace on wide screens.
+- P6: Biggest Calls rarity microcopy ("Called at X% probability") to amplify the "I saw what others missed" signal.
+
+### Trigger for re-opening T1 (the only path forward)
+
+T1 re-opens **only when repeated organic signals appear** during natural product use:
+- The dashboard feels emotionally contradictory with the rest of PT.
+- `/profile` starts feeling like "the real product" relative to `/dashboard`.
+- P&L weight starts eroding the forecaster identity narrative.
+
+One-off feelings do not justify T1. Repeated signals across sessions do. Until then, restraint is the discipline.
+
+### What active polish IS still allowed (unchanged from prior memory)
+
+- Bug fixes localized (1–2 files, zero refactor).
+- Doc cleanup / drift resolution.
+- Quirurgical polish that closes existing reputation loops (e.g., F1-style: owner sees own follower count).
+- Tech debt resolution only if it blocks observation quality.
+
+The Activity Feed gate (`>=1-2 organic follow` in `public.follows`) remains the separate trigger for the social primitive layer. Currently `*/0`. Two gates active in parallel; neither met.
+
+---
+
+## Identity Cohesion Pass II — LIVE 2026-05-17 (this session)
 
 Operator-requested deep cohesion review pass after living with the previous identity work. Goal: eliminate residual "simulator / paper trading / trader / fake brokerage / market utility" framing while keeping the absolute restraint discipline of observation phase. Surfaces audited end-to-end (homepage, landing sections, navigation, onboarding, auth, dashboard, profile, prediction cards, empty states, CTA hierarchy, EN/ES consistency, residual terminology). **No new features, no architecture rewrites, no UI restructure, no new components, no migrations, no API.** 5 small reversible commits, `pnpm build` clean each, 8/8 smoke green post-push, all new copy verified live in production HTML and chunks.
 
