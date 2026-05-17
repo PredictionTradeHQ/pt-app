@@ -20,18 +20,17 @@ import {
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isLoading, signOut } = useAuth();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const pathname = usePathname();
-  const isEs = language === "es";
 
   const baseLinks = [
     { name: t("navMarkets"), href: "/markets" },
-    { name: isEs ? "Juego" : "Game", href: "/play" },
+    { name: t("navGame"), href: "/play" },
     { name: t("navAcademy"), href: "/academy" },
-    { name: isEs ? "Ranking" : "Leaderboard", href: "/leaderboard" },
+    { name: t("navLeaderboard"), href: "/leaderboard" },
   ];
   const navLinks = user
-    ? [...baseLinks, { name: isEs ? "Panel" : "Dashboard", href: "/dashboard" }]
+    ? [...baseLinks, { name: t("navDashboard"), href: "/dashboard" }]
     : baseLinks;
 
   const isActive = (href: string) =>
@@ -111,7 +110,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard" className="cursor-pointer gap-2 flex items-center">
                         <LayoutDashboard className="w-4 h-4" />
-                        {isEs ? "Mi Dashboard" : "My Dashboard"}
+                        {t("navMyDashboard")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -122,13 +121,13 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link href="/activity" className="cursor-pointer gap-2 flex items-center">
                         <Activity className="w-4 h-4" />
-                        {isEs ? "Actividad" : "Activity"}
+                        {t("navActivity")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="cursor-pointer gap-2 flex items-center">
                         <User className="w-4 h-4" />
-                        {isEs ? "Perfil" : "Profile"}
+                        {t("navProfile")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -197,7 +196,7 @@ export function Header() {
                     <Button asChild variant="outline" className="justify-start gap-2">
                       <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                         <LayoutDashboard className="w-4 h-4" />
-                        {isEs ? "Mi Dashboard" : "My Dashboard"}
+                        {t("navMyDashboard")}
                       </Link>
                     </Button>
                     <Button asChild className="justify-start">
