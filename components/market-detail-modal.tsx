@@ -67,7 +67,7 @@ export function MarketDetailModal({ market, open, onClose, onBet, balance }: Mar
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <DialogTitle className="sr-only">{market.title}</DialogTitle>
         <DialogDescription className="sr-only">
-          Prediction market details and trading interface for {market.title}
+          Prediction market details and prediction interface for {market.title}
         </DialogDescription>
         {/* Header */}
         <div className="p-6 border-b border-border">
