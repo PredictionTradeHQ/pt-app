@@ -5,7 +5,7 @@ import { HelpClient } from "@/components/help/help-client";
 export const metadata: Metadata = {
   title: "Help — PredictionTrade",
   description:
-    "Get started with PredictionTrade. Learn how to use the simulator, paper trade with $100,000 virtual funds, and master prediction markets.",
+    "Get started with PredictionTrade. Make public predictions on real Polymarket events, build your forecaster track record, and learn how the platform works.",
 };
 
 export default function HelpPage() {

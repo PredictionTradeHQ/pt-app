@@ -19,27 +19,23 @@ const faqs = {
   en: [
     {
       q: "What is PredictionTrade?",
-      a: "PredictionTrade is a free risk-free simulator for prediction markets. You get $100,000 in virtual funds to practice trading with real-time market data from Polymarket — no real money involved.",
+      a: "PredictionTrade is a free platform for making public predictions on real-world events. You get $100,000 in virtual funds to call live Polymarket markets, build your forecaster track record, and climb the leaderboard — no real money involved.",
     },
     {
       q: "Do I need to pay to use it?",
-      a: "No. The platform is 100% free. Sign up with an email and you instantly get $100,000 virtual to start practicing.",
+      a: "No. The platform is 100% free. Sign up with an email and you instantly get $100,000 virtual to start making predictions.",
     },
     {
       q: "Where does the market data come from?",
-      a: "All prices and odds come live from the Polymarket Gamma API. The data you see in the simulator is the same as the real market.",
+      a: "All prices and odds come live from the Polymarket Gamma API. The data you see on PredictionTrade is the same as the real market.",
     },
     {
       q: "Can I lose real money?",
-      a: "No. All trades are simulated using virtual funds. Nothing on this platform involves real money or real trading.",
-    },
-    {
-      q: "How do I reset my virtual balance?",
-      a: "Go to your Demo Trading dashboard. There's a reset option that returns your balance to $100,000 and clears all positions.",
+      a: "No. All predictions are made with virtual funds. Nothing on this platform involves real money or real trading.",
     },
     {
       q: "What is the Academy?",
-      a: "The Academy is our free trading education system. Lessons cover risk management, market psychology, position sizing, and more — designed for beginners.",
+      a: "The Academy is our free education system on prediction markets. Lessons cover probabilities, signals, risk management, and how to read community consensus — designed for beginners.",
     },
     {
       q: "What is the Game (Prediction Flash)?",
@@ -53,27 +49,23 @@ const faqs = {
   es: [
     {
       q: "¿Qué es PredictionTrade?",
-      a: "PredictionTrade es un simulador gratuito y sin riesgo para mercados de predicción. Recibes $100.000 en fondos virtuales para practicar trading con datos en tiempo real de Polymarket — sin dinero real.",
+      a: "PredictionTrade es una plataforma gratuita para hacer predicciones públicas sobre eventos reales. Recibes $100.000 en fondos virtuales para predecir mercados de Polymarket en vivo, construir tu historial como predictor y escalar el ranking — sin dinero real.",
     },
     {
       q: "¿Tengo que pagar para usarlo?",
-      a: "No. La plataforma es 100% gratuita. Regístrate con un correo y al instante recibes $100.000 virtuales para empezar a practicar.",
+      a: "No. La plataforma es 100% gratuita. Regístrate con un correo y al instante recibes $100.000 virtuales para empezar a predecir.",
     },
     {
       q: "¿De dónde vienen los datos del mercado?",
-      a: "Todos los precios y probabilidades vienen en directo de la API Gamma de Polymarket. Los datos que ves en el simulador son los mismos que en el mercado real.",
+      a: "Todos los precios y probabilidades vienen en directo de la API Gamma de Polymarket. Los datos que ves en PredictionTrade son los mismos que en el mercado real.",
     },
     {
       q: "¿Puedo perder dinero real?",
-      a: "No. Todas las operaciones se simulan con fondos virtuales. Nada en esta plataforma involucra dinero real ni trading real.",
-    },
-    {
-      q: "¿Cómo reinicio mi balance virtual?",
-      a: "Ve a tu panel de Trading demo. Hay una opción de reinicio que devuelve tu balance a $100.000 y borra todas las posiciones.",
+      a: "No. Todas las predicciones se hacen con fondos virtuales. Nada en esta plataforma involucra dinero real ni trading real.",
     },
     {
       q: "¿Qué es la Academia?",
-      a: "La Academia es nuestro sistema gratuito de educación en trading. Las lecciones cubren gestión de riesgo, psicología del mercado, dimensionamiento de posiciones y más — diseñadas para principiantes.",
+      a: "La Academia es nuestro sistema gratuito de educación sobre mercados de predicción. Las lecciones cubren probabilidades, señales, gestión de riesgo y cómo leer el consenso de la comunidad — diseñadas para principiantes.",
     },
     {
       q: "¿Qué es el Juego (Prediction Flash)?",
