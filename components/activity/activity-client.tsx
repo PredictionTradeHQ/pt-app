@@ -108,8 +108,8 @@ export function ActivityClient({
             <ActivityIcon className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
               {isEs
-                ? "Aún sin actividad. Empieza a operar o juega una partida para construir tu historial."
-                : "No activity yet. Start trading or play a game to build your history."}
+                ? "Aún sin actividad. Haz tu primera predicción o juega una partida para construir tu historial."
+                : "No activity yet. Make your first call or play a game to build your history."}
             </p>
           </CardContent>
         </Card>
