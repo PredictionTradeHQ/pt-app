@@ -9,6 +9,7 @@ import {
 import { PredictionCard } from "@/components/prediction-card"
 import { detectPTCategory } from "@/lib/categories"
 import { Share2, ExternalLink, Link2, Download, Check, X } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 interface SharePredictionModalProps {
   open: boolean
@@ -28,6 +29,8 @@ export function SharePredictionModal({
   prediction,
 }: SharePredictionModalProps) {
   const [copied, setCopied] = useState(false)
+  const { language } = useLanguage()
+  const isEs = language === "es"
 
   const category = detectPTCategory(marketTitle, marketCategory)
 
@@ -66,13 +69,13 @@ export function SharePredictionModal({
             <div className="flex items-center gap-2">
               <Share2 className="h-4 w-4 text-primary" />
               <DialogTitle className="text-[15px] font-bold">
-                Share this prediction
+                {isEs ? "Compartir esta predicción" : "Share this prediction"}
               </DialogTitle>
             </div>
             <button
               onClick={onClose}
               className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Close"
+              aria-label={isEs ? "Cerrar" : "Close"}
             >
               <X className="h-4 w-4" />
             </button>
@@ -99,7 +102,7 @@ export function SharePredictionModal({
             >
               <ExternalLink className="h-5 w-5 text-sky-400 transition-transform group-hover:scale-110" />
               <span className="text-[11px] font-semibold text-muted-foreground">
-                Post on X
+                {isEs ? "Publicar en X" : "Post on X"}
               </span>
             </a>
 
@@ -114,7 +117,9 @@ export function SharePredictionModal({
                 <Link2 className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
               )}
               <span className="text-[11px] font-semibold text-muted-foreground">
-                {copied ? "Copied!" : "Copy Link"}
+                {copied
+                  ? (isEs ? "¡Copiado!" : "Copied!")
+                  : (isEs ? "Copiar enlace" : "Copy Link")}
               </span>
             </button>
 
@@ -127,13 +132,15 @@ export function SharePredictionModal({
             >
               <Download className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
               <span className="text-[11px] font-semibold text-muted-foreground">
-                Download
+                {isEs ? "Descargar" : "Download"}
               </span>
             </a>
           </div>
 
           <p className="mt-4 text-center text-[10px] text-muted-foreground/50">
-            Virtual demo platform · Not financial advice
+            {isEs
+              ? "Plataforma virtual gratuita · Fondos no reales"
+              : "Free virtual platform · No real funds"}
           </p>
         </div>
       </DialogContent>

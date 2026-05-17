@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { getBadge, RARITY_COLORS } from "@/lib/badges"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/contexts/language-context"
 
 interface BadgeEarnedToastProps {
   badgeIds: string[]
@@ -12,6 +13,8 @@ interface BadgeEarnedToastProps {
 export function BadgeEarnedToast({ badgeIds, onDismiss }: BadgeEarnedToastProps) {
   const [visible, setVisible] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
+  const { language } = useLanguage()
+  const isEs = language === "es"
 
   useEffect(() => {
     if (badgeIds.length === 0) return
@@ -70,7 +73,7 @@ export function BadgeEarnedToast({ badgeIds, onDismiss }: BadgeEarnedToastProps)
 
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color }}>
-            Badge Earned
+            {isEs ? "Insignia ganada" : "Badge Earned"}
           </p>
           <p className="text-sm font-bold text-foreground leading-tight">{badge.name}</p>
           <p className="text-[11px] text-muted-foreground">{badge.description}</p>

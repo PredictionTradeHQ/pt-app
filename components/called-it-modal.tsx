@@ -8,6 +8,7 @@ import {
   categoryRefById,
   type CategoryRef,
 } from "@/lib/share-copy"
+import { useLanguage } from "@/contexts/language-context"
 import type { PredictionRecord } from "@/stores/gamification"
 
 // X bird icon (inline SVG — no external dep)
@@ -41,6 +42,8 @@ interface Props {
 
 export function CalledItModal({ prediction, username, accuracyPct, topCategory, extraCount, onClose }: Props) {
   const [copied, setCopied] = useState(false)
+  const { language } = useLanguage()
+  const isEs = language === "es"
 
   const profileUrl = `https://predictiontrade.online/profile/${username}`
 
@@ -95,15 +98,21 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
               <CheckCircle2 className="w-7 h-7 text-primary" />
             </div>
           </div>
-          <h2 className="text-xl font-bold">You called it!</h2>
+          <h2 className="text-xl font-bold">
+            {isEs ? "¡Lo predijiste!" : "You called it!"}
+          </h2>
           {isContrarian && (
             <p className="text-xs text-orange-400 font-semibold mt-1">
-              Contrarian call 🎲 — less than 20% agreed with you
+              {isEs
+                ? "Predicción contrarian 🎲 — menos del 20% estuvo de acuerdo"
+                : "Contrarian call 🎲 — less than 20% agreed with you"}
             </p>
           )}
           {extraCount !== undefined && extraCount > 0 && (
             <p className="text-[11px] text-muted-foreground mt-1.5 font-medium">
-              +{extraCount} more correct call{extraCount === 1 ? "" : "s"} today
+              {isEs
+                ? `+${extraCount} ${extraCount === 1 ? "predicción más acertada" : "predicciones más acertadas"} hoy`
+                : `+${extraCount} more correct call${extraCount === 1 ? "" : "s"} today`}
             </p>
           )}
         </div>
@@ -111,14 +120,16 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
         {/* Market card */}
         <div className="rounded-xl border border-border bg-muted/30 p-4 mb-5">
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider font-semibold">
-            Market
+            {isEs ? "Mercado" : "Market"}
           </p>
           <p className="text-sm font-semibold leading-snug line-clamp-3 mb-3">
             {prediction.marketTitle}
           </p>
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Your prediction</p>
+              <p className="text-[10px] text-muted-foreground mb-0.5">
+                {isEs ? "Tu predicción" : "Your prediction"}
+              </p>
               <span
                 className={cn(
                   "inline-flex text-xs font-bold px-2 py-0.5 rounded",
@@ -132,7 +143,9 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
             </div>
             <div className="text-muted-foreground/40 text-lg">→</div>
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Resolved</p>
+              <p className="text-[10px] text-muted-foreground mb-0.5">
+                {isEs ? "Resuelto" : "Resolved"}
+              </p>
               <span
                 className={cn(
                   "inline-flex text-xs font-bold px-2 py-0.5 rounded",
@@ -146,7 +159,9 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
             </div>
             {accuracyPct !== null && accuracyPct !== undefined && (
               <div className="flex-1">
-                <p className="text-[10px] text-muted-foreground mb-0.5">Accuracy</p>
+                <p className="text-[10px] text-muted-foreground mb-0.5">
+                  {isEs ? "Precisión" : "Accuracy"}
+                </p>
                 <span className="text-sm font-bold text-primary">{accuracyPct}%</span>
               </div>
             )}
@@ -162,7 +177,7 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-foreground text-background text-sm font-bold hover:opacity-90 transition-opacity"
           >
             <XIcon className="w-4 h-4" />
-            Share on X
+            {isEs ? "Compartir en X" : "Share on X"}
           </a>
 
           <div className="flex gap-2">
@@ -181,16 +196,16 @@ export function CalledItModal({ prediction, username, accuracyPct, topCategory, 
               className="flex items-center justify-center gap-2 flex-1 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-muted/50 transition-colors"
             >
               {copied ? (
-                <><Check className="w-4 h-4 text-primary" /><span className="text-primary">Copied!</span></>
+                <><Check className="w-4 h-4 text-primary" /><span className="text-primary">{isEs ? "¡Copiado!" : "Copied!"}</span></>
               ) : (
-                <><Copy className="w-4 h-4" />Copy text</>
+                <><Copy className="w-4 h-4" />{isEs ? "Copiar texto" : "Copy text"}</>
               )}
             </button>
           </div>
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center mt-3">
-          Your record lives at predictiontrade.online/profile/{username}
+          {isEs ? "Tu historial vive en" : "Your record lives at"} predictiontrade.online/profile/{username}
         </p>
       </div>
     </div>

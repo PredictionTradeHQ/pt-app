@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Share2, ExternalLink, Link2, Download, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RARITY_COLORS } from "@/lib/badges"
+import { useLanguage } from "@/contexts/language-context"
 
 export type AchievementType = "streak" | "badge"
 
@@ -36,6 +37,8 @@ interface ShareAchievementModalProps {
 
 export function ShareAchievementModal({ open, onClose, achievement, profileUrl }: ShareAchievementModalProps) {
   const [copied, setCopied] = useState(false)
+  const { language } = useLanguage()
+  const isEs = language === "es"
 
   if (!achievement) return null
 
@@ -74,7 +77,7 @@ export function ShareAchievementModal({ open, onClose, achievement, profileUrl }
             <div className="flex items-center gap-2">
               <Share2 className="h-4 w-4 text-primary" />
               <DialogTitle className="text-[15px] font-bold">
-                Share achievement
+                {isEs ? "Compartir logro" : "Share achievement"}
               </DialogTitle>
             </div>
             <button
@@ -103,10 +106,12 @@ export function ShareAchievementModal({ open, onClose, achievement, profileUrl }
                   >
                     {(achievement as StreakAchievement).streak}
                   </p>
-                  <p className="text-lg font-bold text-foreground">day streak</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {isEs ? "días de racha" : "day streak"}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Best: {(achievement as StreakAchievement).bestStreak}d ·{" "}
-                    {(achievement as StreakAchievement).totalPredictions} predictions
+                    {isEs ? "Mejor" : "Best"}: {(achievement as StreakAchievement).bestStreak}d ·{" "}
+                    {(achievement as StreakAchievement).totalPredictions} {isEs ? "predicciones" : "predictions"}
                   </p>
                 </>
               ) : (
@@ -116,7 +121,7 @@ export function ShareAchievementModal({ open, onClose, achievement, profileUrl }
                     className="text-xs font-bold uppercase tracking-widest mb-1"
                     style={{ color }}
                   >
-                    Badge Earned
+                    {isEs ? "Insignia ganada" : "Badge Earned"}
                   </p>
                   <p className="text-xl font-bold text-foreground">
                     {(achievement as BadgeAchievement).badgeName}
@@ -151,7 +156,9 @@ export function ShareAchievementModal({ open, onClose, achievement, profileUrl }
               className="group flex flex-col items-center gap-2 rounded-xl bg-muted/50 py-3.5 hover:bg-muted transition-all"
             >
               <ExternalLink className="h-5 w-5 text-sky-400 group-hover:scale-110 transition-transform" />
-              <span className="text-[11px] font-semibold text-muted-foreground">Post on X</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                {isEs ? "Publicar en X" : "Post on X"}
+              </span>
             </a>
 
             <button
@@ -164,7 +171,9 @@ export function ShareAchievementModal({ open, onClose, achievement, profileUrl }
                 <Link2 className="h-5 w-5 text-muted-foreground group-hover:scale-110 transition-transform" />
               )}
               <span className="text-[11px] font-semibold text-muted-foreground">
-                {copied ? "Copied!" : "Copy Link"}
+                {copied
+                  ? (isEs ? "¡Copiado!" : "Copied!")
+                  : (isEs ? "Copiar enlace" : "Copy Link")}
               </span>
             </button>
 
@@ -175,12 +184,16 @@ export function ShareAchievementModal({ open, onClose, achievement, profileUrl }
               className="group flex flex-col items-center gap-2 rounded-xl bg-muted/50 py-3.5 hover:bg-muted transition-all"
             >
               <Download className="h-5 w-5 text-muted-foreground group-hover:scale-110 transition-transform" />
-              <span className="text-[11px] font-semibold text-muted-foreground">Download</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                {isEs ? "Descargar" : "Download"}
+              </span>
             </a>
           </div>
 
           <p className="mt-4 text-center text-[10px] text-muted-foreground/40">
-            Virtual demo platform · Not financial advice
+            {isEs
+              ? "Plataforma virtual gratuita · Fondos no reales"
+              : "Free virtual platform · No real funds"}
           </p>
         </div>
       </DialogContent>
