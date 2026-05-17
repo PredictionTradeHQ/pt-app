@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2, ArrowRight, Trophy, Users } from "lucide-react";
+import { User, Mail, Calendar, LayoutDashboard, Flame, Medal, Share2, Target, History, Check, Link2, ArrowRight, Trophy, Users, Zap } from "lucide-react";
 import { ProfileSignOutButton } from "@/components/profile/sign-out-button";
 import { useLanguage } from "@/contexts/language-context";
 import { StreakWidget } from "@/components/streak-widget";
@@ -17,10 +17,11 @@ import { CategoryAccuracy } from "@/components/category-accuracy";
 import { CalledItModal } from "@/components/called-it-modal";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { StatCard } from "@/components/profile/stat-card";
+import { TopCallRow } from "@/components/profile/top-call-row";
 import { getFollowerCount } from "@/lib/follows";
 import { pushGamification, pullGamification, mergeSnapshots } from "@/lib/supabase-sync";
 import { topCategoryFromPredictions } from "@/lib/share-copy";
-import { buildProfileHeadline, computeCategoryStats } from "@/lib/profile-helpers";
+import { buildProfileHeadline, computeCategoryStats, computeTopCalls } from "@/lib/profile-helpers";
 import type { PredictionRecord } from "@/stores/gamification";
 
 export function ProfileClient({
@@ -86,6 +87,9 @@ export function ProfileClient({
       : null,
     ownerCategoryStats,
   );
+  // Identity gold — biggest contrarian calls. Same helper the public profile
+  // uses so the owner sees their own showcase, not just the visitor's view.
+  const ownerTopCalls = computeTopCalls(predictions);
 
   // On mount: fetch follower count from Supabase. Single indexed count(*).
   // Fire-and-forget — failure leaves followerCount as null and the chip
@@ -356,6 +360,33 @@ export function ProfileClient({
           </CardHeader>
           <CardContent>
             <StreakWidget variant="profile" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Biggest calls — owner-side mirror of the public profile's identity
+          showcase. Hidden until the owner has at least one contrarian correct
+          call (computeTopCalls returns []). Same TopCallRow + same yellow
+          treatment as the public surface. */}
+      {ownerTopCalls.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-400" />
+              {isEs ? "Mejores predicciones" : "Biggest calls"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">
+              {isEs
+                ? "Predicciones acertadas contra la mayoría."
+                : "Correct predictions against the crowd."}
+            </p>
+            <div className="space-y-3">
+              {ownerTopCalls.map((call, i) => (
+                <TopCallRow key={i} call={call} />
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

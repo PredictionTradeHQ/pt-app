@@ -11,6 +11,7 @@ import { BadgeCard } from "@/components/badge-card"
 import { Avatar } from "@/components/avatar"
 import { FollowButton } from "@/components/profile/follow-button"
 import { StatCard } from "@/components/profile/stat-card"
+import { TopCallRow } from "@/components/profile/top-call-row"
 import { BADGE_DEFINITIONS, BADGE_DISPLAY_ORDER } from "@/lib/badges"
 import { PT_CATEGORIES } from "@/lib/categories"
 import { buildProfileHeadline } from "@/lib/profile-helpers"
@@ -392,33 +393,6 @@ function CategoryAccuracySection({ stats }: { stats: CategoryStat[] }) {
             </div>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-function TopCallRow({ call }: { call: TopCall }) {
-  const crowd = call.prediction === "YES" ? call.probAtTime : 100 - call.probAtTime
-  const cat = call.marketTitle // no category in TopCall — just title
-
-  return (
-    <div className="flex items-start gap-3 rounded-lg bg-yellow-500/5 border border-yellow-500/15 px-3 py-2.5">
-      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium leading-snug text-foreground line-clamp-2">{cat}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <span className={cn(
-            "text-[10px] font-bold px-1.5 py-0.5 rounded",
-            call.prediction === "YES"
-              ? "bg-primary/15 text-primary"
-              : "bg-destructive/15 text-destructive"
-          )}>
-            {call.prediction}
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {crowd}% crowd · Called It 💡
-          </span>
-        </div>
       </div>
     </div>
   )
