@@ -1,6 +1,40 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Quality & Identity Audit Pass LIVE + Profile Identity Completeness Blocks 1–5 LIVE + Game Feel Sprint #1 Bloque 1 LIVE — observation phase active) | Read this before touching anything.
+> Last updated: 2026-05-17 (Forecaster Identity Alignment Pass A+B+C LIVE + Quality & Identity Audit Pass + Profile Identity Completeness Blocks 1–5 + Game Feel Sprint #1 Bloque 1 — observation phase active) | Read this before touching anything.
+
+---
+
+## 🆕 Forecaster Identity Alignment Pass — A+B+C LIVE 2026-05-17
+
+Operator-approved micro-pass after observation revealed PT's logged-out funnel still told a "trading simulator → graduate to Polymarket" story while the logged-in product already delivered "forecaster identity / prediction reputation". Goal: close the perception gap end-to-end without opening architecture or new systems. **Copy/semantics only, 4 small reversible commits, `pnpm build` clean each, no migrations, no API, no UI restructure, no new components.** HEAD: `54d3109`.
+
+| # | Commit | Surface | What shipped |
+|---|---|---|---|
+| 1 | `787dbb9` (A1) | `components/how-it-works.tsx` | Landing pillar reframed. Eyebrow "Paper Trading / Trading de práctica" → "How it works / Cómo funciona". Title "Learn Before You Earn / Aprende antes de ganar" → "Three steps to your first call / Tres pasos hasta tu primera predicción". Intro rewritten (no more "Most traders lose money…"). Step 1 "paper trading funds" → "virtual balance". Step 2 "Trade Real Markets" → "Call Live Markets". Step 3 "Master the Game / P&L / win rate / ready for the real thing" → "Build Your Reputation / accuracy / streak / public forecaster profile". |
+| 2 | `74fbdcd` (A2) | `components/why-us.tsx` | Advantages section reframed. Eyebrow "Why Practice Here / Por qué practicar aquí" → "Why Prediction Trade / Por qué Prediction Trade". Title "The Smartest Way to Learn / La forma más inteligente de aprender" → "The Smartest Way to Start Forecasting / La forma más inteligente de empezar a predecir". Intro replaced ("Most traders lose money / Our simulator…" → "Build your forecasting reputation in the open…"). Features: "Learn Risk-Free" → "Predict Risk-Free"; "Active Community" → "Forecaster Community". **"Ready for Real Trading?" card replaced entirely by "Public Profile"** (drops the "transition to Polymarket" graduation framing). Real Market Data + Track Your Accuracy + Intuitive Interface cards retained with descriptions tightened. |
+| 3 | `a521d0e` (B) | `contexts/language-context.tsx` | Auth dictionary aligned. 13 strings reworded across EN + ES (the ES `benefitBalance` was already clean, skipped): `loginDescription`, `virtualFundsNotice`, `signUpDescription`, `benefitBalance`, `benefitPractice`, `createAccountNotice`, `verifyEmailHelp`. Dropped phrasing: "prediction markets demo", "practice trading", "simulador", "operar", "virtual trading balance". New phrasing: "make predictions", "virtual balance", "make your first call", "make your first prediction". |
+| 4 | `54d3109` (C) | `components/dashboard/dashboard-home.tsx` | Active dashboard greeting/CTAs aligned. `displayName` fallback "Trader" → "Forecaster" (mirrors `/profile` fix from `619733d`). Primary CTA "Start trading / Operar ahora" → "Make a prediction / Predecir". Card header "Top traders" → "Top forecasters / Top predictores". Recent-activity empty state "place your first trade / haz tu primera operación" → "make your first call / haz tu primera predicción". |
+
+**Build:** `pnpm build` ✓ clean on every commit (TS strict, 0 errors).
+**Smoke (post-push):** 6/6 public routes HTTP 200. New copy verified live in production HTML for A1 (`Three steps to your first call`, `Build Your Reputation`, `Call Live Markets`), A2 (`The Smartest Way to Start Forecasting`, `Public Profile`, `Forecaster Community`, `Predict Risk-Free`), and B on `/auth/login`, `/auth/sign-up`, `/auth/sign-up-success` (all serving new strings). Old strings confirmed absent for 12 critical phrases. C surface is auth-required (not curl-testable) but build clean.
+**Sync:** main ↔ origin/main `0/0`. HEAD `54d3109`. CDN edge propagated within 20s of first poll.
+
+**Perception shift achieved:**
+The landing→sign-up→email-verify→product narrative is now one story end-to-end. Hero ("Predict the Future. Prove You're Right.") + FeaturesGrid ("Build your forecasting reputation") + HowItWorks ("Three steps to your first call") + WhyUs ("The Smartest Way to Start Forecasting") + auth pages ("make predictions and build your track record") + dashboard ("Good morning, Forecaster") all reinforce the same fantasy: forecaster identity / prediction reputation platform. The "graduate to Polymarket" framing is gone from user-facing copy.
+
+**Out of scope this pass — preserved deliberately (operator-confirmed):**
+- SEO metadata `app/layout.tsx` — deliberate top-of-funnel keyword targeting around "paper trading prediction markets"
+- `components/academy.tsx` — legitimate trading-vocabulary educational content (Polymarket, paper trading as concept)
+- `app/auth/error/page.tsx` — server component, hardcoded EN strings, architecturally separate localization fix
+- Dashboard rethink profundo — operator declined; deferred until role of `/dashboard` is decided
+- Dead code with trading vocabulary — 4 components confirmed never rendered: `components/trading-panel.tsx`, `components/dashboard/dashboard-client.tsx`, `components/demo-dashboard.tsx`, `components/rise-in-leaderboard.tsx` (the last one discovered during post-pass verification). All in deferred D bucket.
+
+**Taste-level risks worth observing (NOT proposing action):**
+- "How it works" eyebrow is more generic than the previous "Paper Trading". Coherent but slightly less distinctive — observe.
+- "Make a prediction / Predecir" CTA is less action-bait than "Start trading / Operar ahora". Deliberate (identity > action) but operator should sense whether it converts equivalently.
+- ES "Predictor" as noun is less culturally established than "Trader". Observe for any ES user feedback.
+
+**🟢 Observation mode resumes immediately.** No further alignment pushes proposed automatically. Live in the product as it is now; decide next moves only on real-usage friction signals.
 
 ---
 
@@ -35,10 +69,12 @@ Surface-by-surface consistency + bilingual + mobile polish pass requested by ope
 - Username slug duplicate (`displayName.toLowerCase()...` vs `slugify()`) — known tech debt, no user impact.
 - URL hardcode `predictiontrade.online` vs `www.` — apex redirects; cosmetic.
 
-**Audit findings still observable (not blocking; deferred consciously):**
-- Auth dictionary keys `virtualFundsNotice`, `createAccountNotice`, `benefitBalance`, `benefitPractice`, `verifyEmailHelp`, `signUpDescription` still phrase things as "practice trading" / "virtual trading balance". Trivial to reword without schema/architectural change — left for a future targeted pass once operator decides whether `/markets` is "Markets" or "Predict" branded.
-- Dashboard heavy trading vocabulary — deferred until operator decides whether `/dashboard` becomes a forecasting dashboard or stays as wallet/trading style.
-- `app/auth/error/page.tsx` strings ("Something went wrong", "Try again", "Back to home", "An unexpected error occurred...") hardcoded EN — page is a server component and doesn't use the client-side language context. Architecturally separate fix.
+**Audit findings update (post Alignment Pass A+B+C 2026-05-17):**
+- ✅ RESOLVED — Auth dictionary keys reworded in commit `a521d0e`. The 6 flagged keys + `loginDescription` (7 keys × 2 langs = 13 strings) now use prediction vocabulary.
+- ✅ PARTIAL — Dashboard greeting + 4 high-visibility strings on `dashboard-home.tsx` aligned in commit `54d3109`. Dashboard-level architectural rework (whether `/dashboard` becomes a forecasting dashboard or stays wallet-style) still deferred consciously.
+- ⏸ DEFERRED still — `app/auth/error/page.tsx` strings hardcoded EN. Server component, architecturally separate fix.
+- ⏸ DEFERRED still — SEO metadata in `app/layout.tsx` ("paper trading prediction markets" keyword targeting).
+- ⏸ DEFERRED still — Academy content (legitimate trading-vocabulary educational content).
 
 ---
 

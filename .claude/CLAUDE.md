@@ -169,15 +169,20 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 ## CURRENT STATE — checkpoint 2026-05-17 ✅ STABLE (observation phase)
 
-**Git:** `main` clean, synced with `origin/main` (HEAD `f38e286`)
+**Git:** `main` clean, synced with `origin/main` (HEAD `54d3109`)
 **TypeScript:** 0 errors (strict mode) — `pnpm build` ✓ Compiled successfully in 3.1s
 **Vercel:** auto-deploy on push to main, predictiontrade.online (apex → www 307 redirect active). Brand fix "Prediction Trade" confirmed live in HTML post-CDN propagation.
 **Supabase:** project `vkizidrsuwsreepsbbuy` — all migrations applied (000, 001, 003, 004, 007)
 **Follow System v1:** LIVE end-to-end. `public.follows` table live. Organic follows: 0 (observation phase intact).
 **Active mode:** 🟢 **Observation/polish.** Do NOT open new sprints or expand surface area without operator confirmation.
 
-**Last commits (this session — Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel Sprint #1 Bloque 1):**
+**Last commits (this session — Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel Sprint #1 Bloque 1):**
 ```
+54d3109  fix(dashboard): align home greeting and CTAs to forecaster identity
+a521d0e  fix(auth): align signup/login dictionary to prediction vocabulary
+74fbdcd  fix(why-us): reframe advantages section to forecaster identity
+787dbb9  fix(how-it-works): reframe landing pillar to forecaster identity narrative
+3cf2ac4  docs(claude): session close 2026-05-17 — Quality & Identity Audit Pass LIVE
 f38e286  docs(brain): log Quality & Identity Audit Pass — 12 commits 2026-05-17
 dca9407  fix(public-profile): stack header actions on mobile to prevent overflow
 afddcf5  fix(app-shell): tighten mobile bottom nav for narrow screens
@@ -199,6 +204,7 @@ e8284f9  feat(profile): Called It celebration layer v1 (T1+T2+T3)
 - ✅ **Profile Identity Completeness B1–B5** — shared headline + stats grid + biggest calls + share-on-X button + copy alignment (Forecaster identity, prediction vocab, identity-surface subtitle). 5 commits, all `pnpm build` clean, all smoke 8/8.
 - ✅ **Game Feel Sprint #1 — Bloque 1** — Called It celebration layer v1 (T1 arrival ring + T2 "Just called" highlight + T3 batch context pill). 1 commit, 3 files, +37/−6, 0 deps, 0 keyframes, 0 migrations. Reversible with `git revert e8284f9`.
 - ✅ **Quality & Identity Audit Pass** — 12 surface-by-surface commits (brand, profile fallback, page metadata, footer cleanup, header t() consistency + primary CTA reframe "Predict / Predecir", 4 modals localized ES, FollowButton ES, PredictionHistory ES + locale-aware dates, hero social proof ES, Flash empty state, mobile bottom nav, public profile mobile actions overflow). Build clean each, smoke 8/8 green post-push, brand fix verified in production HTML. Every commit is a clean `git revert` if needed.
+- ✅ **Forecaster Identity Alignment Pass — A+B+C** — 4 commits closing the perception gap between logged-out funnel (was still selling "trading simulator → graduate to Polymarket") and logged-in product (already delivering forecaster identity). A1 reframes `how-it-works` landing pillar (eyebrow, title, intro, 3 steps). A2 reframes `why-us` advantages (eyebrow, title, intro, 5 of 6 features incl. replacing "Ready for Real Trading?" with "Public Profile"). B reworks 13 strings in the auth dictionary (EN+ES, 7 keys × 2 langs minus already-clean `benefitBalance` ES). C polishes 4 strings in active `dashboard-home.tsx` (Trader→Forecaster fallback, CTA "Predict", "Top forecasters" header, empty state "make your first call"). Build clean each, smoke 6/6 green post-push, new copy verified live in production HTML, old copy confirmed absent. Reversible with 4 clean `git revert`s.
 
 **🟢 OBSERVATION CRITERIA (do not iterate before these signal):**
 - How resolving multiple predictions actually feels
@@ -216,13 +222,14 @@ e8284f9  feat(profile): Called It celebration layer v1 (T1+T2+T3)
 - Anything resembling sound, haptics, particles, screen-shake
 - Another audit pass — wait for operator request after living with current state
 
-**Audit findings deferred consciously (documented in brain/NEXT-SESSION.md):**
-- Auth dictionary keys (`virtualFundsNotice`, `createAccountNotice`, `benefitBalance`, `benefitPractice`, `verifyEmailHelp`, `signUpDescription`) still say "practice trading" — trivial reword pending operator framing decision
-- Dashboard wallet card trading vocabulary ("Trade" CTA, "Demo P&L", "LONG/SHORT", "Open positions", "Total trades") — needs a separate architectural decision on `/dashboard`'s role
-- `app/auth/error/page.tsx` server-component hardcoded EN strings — architecturally separate localization fix
-- Academy content (legitimately trading-vocabulary educational content)
-- SEO metadata in `app/layout.tsx` (deliberate top-of-funnel keyword targeting)
-- `how-it-works.tsx` landing pillar copy — separate copy rewrite
+**Audit findings status (post Alignment Pass A+B+C 2026-05-17 — documented in brain/NEXT-SESSION.md):**
+- ✅ RESOLVED — Auth dictionary keys (`virtualFundsNotice`, `createAccountNotice`, `benefitBalance`, `benefitPractice`, `verifyEmailHelp`, `signUpDescription` + `loginDescription`) aligned to prediction vocabulary in commit `a521d0e`.
+- ✅ RESOLVED — `how-it-works.tsx` landing pillar copy reframed in commit `787dbb9`. `why-us.tsx` advantages reframed in `74fbdcd`.
+- ✅ PARTIAL — Dashboard `dashboard-home.tsx` greeting + 4 high-visibility strings aligned in commit `54d3109`. The deeper `/dashboard` architectural rework (whether it's a forecasting dashboard or wallet style) is still deferred.
+- ⏸ DEFERRED — `app/auth/error/page.tsx` server-component hardcoded EN strings (architecturally separate localization fix)
+- ⏸ DEFERRED — Academy content (legitimate trading-vocabulary educational content)
+- ⏸ DEFERRED — SEO metadata in `app/layout.tsx` (deliberate top-of-funnel keyword targeting)
+- ⏸ DEFERRED — Dead-code purge (4 components confirmed never rendered: `trading-panel.tsx`, `dashboard/dashboard-client.tsx`, `demo-dashboard.tsx`, `rise-in-leaderboard.tsx`)
 
 **Completed phases:**
 - ✅ Phase 0 — Foundation (Next.js, Supabase, Vercel, TypeScript strict)
