@@ -1,6 +1,77 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Observation mode locked post Identity Cohesion Pass II + deep observation report; prior Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel #1 B1) | Read this before touching anything.
+> Last updated: 2026-05-17 (Shareability Polish Pass LIVE + Arcade audit findings documented; prior Observation mode locked post Identity Cohesion Pass II + deep observation report; prior Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel #1 B1) | Read this before touching anything.
+
+---
+
+## 🆕 Shareability Polish Pass — LIVE 2026-05-17 (this session)
+
+Operator-directed session focused on visual / emotional / shareability polish, with an explicit reframe: "no new systems, no gamification layers, no feature creep — better feeling, better presentation, more identity, more pride, more emotional coherence." Two parallel audits ran first (visual polish + shareability surfaces; arcade `/play` conceptual fit) before any code moved. The visual audit landed a single high-leverage gap: **PT had no canonical OG image route for its flagship share moment ("Called It")** — every share emitted plain text + a domain link with no rich preview on X/WhatsApp. This pass closed that gap and added a self-preview so users see the artifact before committing.
+
+3 small reversible commits, `pnpm build` clean, additive only — zero deletions, zero migrations, zero new deps.
+
+| # | Commit | Surface | What shipped |
+|---|---|---|---|
+| 1 | `46c2332` | `app/api/og/called-it/route.tsx` (new) | Edge runtime, 1200×630 PNG share card. Mirrors `/api/og/streak` + `/api/og/profile/[username]` patterns: dark canvas, category-tinted radial glow, PT brand top-left, optional "🎲 Against the crowd" contrarian pill top-right, big CALLED IT eyebrow in accent, market title (truncates above 80 chars), "I said YES/NO" pill colored by call, identity stats row (accuracy in specialty + streak), footer with `@username` + `predictiontrade.online`. All params optional; renders meaningful states for any subset. |
+| 2 | `b25e133` | `components/called-it-modal.tsx` | Builds an `ogPreviewUrl` from the same identity params already driving share-copy (marketTitle, prediction, isContrarian, accuracyPct, category) and renders the upcoming `/api/og/called-it` card inline as a 1200/630-aspect thumbnail above the X / WhatsApp / Copy buttons. Users now see exactly what the share will look like before they click. No props added — fully additive at the call site. |
+| 3 | `e06c5cd` | `components/live-markets-preview.tsx` | Cosmetic consistency: post-hero social-proof strip used hardcoded `bg-green-400` / `text-green-400` (one-off bright green vs the brand emerald `--primary`). Switched to `bg-primary` / `text-primary` so the live indicator + count read in the same color system as the rest of the page. Pure visual, no logic change. |
+
+**Build:** `pnpm build` ✓ clean (TS strict, 0 errors) on every commit. `/api/og/called-it` confirmed registered in route map alongside `/api/og/profile/[username]` and `/api/og/streak`.
+
+**Sync:** main ↔ origin/main `0/0`. HEAD `e06c5cd` (was `6857ba2`).
+
+**What this gives the product:**
+- The most emotional share moment in PT (Called It) now has a canonical share card. Even though the tweet body still routes to `predictiontrade.online` (the canonical per-call URL is a separate sprint — see deferred below), the OG route is now in place and reusable.
+- Users see the share artifact pre-flight. Confidence-builder for the share decision.
+- The brand-emerald palette is one tighter across the homepage.
+
+**What it does NOT do (explicit scope discipline):**
+- Does NOT create a canonical per-call URL (e.g. `/calls/[username]/[predId]`). That's the bigger leverage move and is sprint-sized (page + metadata + Supabase data shape + visit-time auth/RLS). Documented below as deferred.
+- Does NOT touch `share-achievement-modal.tsx`. That modal already hand-renders an in-modal preview (lines 92-148); duplicating with the OG image would be a regression. Confirmed already premium per audit.
+- Does NOT touch the OG image used by Twitter card on a shared profile URL (`generateMetadata` in `app/profile/[username]/page.tsx` already wires `/api/og/profile/[username]` correctly — verified during audit).
+- Does NOT touch hero, leaderboard rows, accuracy display, prediction card, OG streak, badge colors, or any other surface flagged as already-premium by the visual audit.
+
+**Taste-level risks to observe (NOT acting on):**
+- The new in-modal preview adds a 1200×630 image render on every Called It modal open. Edge runtime is fast (~200-400ms) but it's a network round-trip the modal didn't have before. Observe whether the modal feels less snappy. If yes, add `loading="lazy"` (currently `eager` because the modal is just-opened) or pre-decode.
+- The OG card's "I said YES/NO" pill is colored by call (YES → accent emerald, NO → red `#EF4444`). Red on a celebration card may read fintech. Observe in real shared artifacts.
+- The contrarian "🎲 Against the crowd" pill uses `#FB923C` orange. New color in PT's OG palette. Observe if it lands as rarity-signal or as random color noise.
+
+---
+
+## 🟡 Arcade `/play` conceptual audit — findings documented, NO action this session
+
+Operator opened the session with a second explicit priority: **rework the "jueguito"** because it still drags PT toward "simulator / flash game / casino / disconnected side-mode" energy. A deep audit ran in parallel with the visual audit. Findings below — **NO code changed for the arcade this session**. Operator declined to choose between containment vs. rework vs. kill paths, so this section is purely the documented audit + the three forward paths, ready to resume when operator confirms direction.
+
+### What `/play` actually is today
+
+- Page `app/play/page.tsx` mounts `components/arcade/arcade-screen.tsx` (not `components/game/*` — that directory is **dead code**, no importers anywhere in the codebase; safe to delete in a future cleanup).
+- Store `stores/arcade-game.ts` drives a Brownian-motion price ticker game. Modes: Solo / Ranked / 1v1. Bronze→Master rank system with `RP` (rank points). XP + Level system. Daily challenges. `vsOpponent` matchmaking.
+- Vocabulary: "BUY UP / SELL DOWN" buttons, "📈 LONG / 📉 SHORT" position chips, "🚀 / 💀" win/loss emojis, hardcoded esports palette (`#00ff88`, `#00ccff`, `#ff00ff`, `#ffb800` — all hex, none from design tokens).
+- Mechanic: random Brownian price (no signal, pure noise). 50/50 outcome by design.
+- Persistence: results write to Supabase `game_results` table with `profit_pct`, `won`, `position`, `entry_price`, `exit_price`, `duration`.
+
+### How it contaminates identity surfaces
+
+1. **`/leaderboard`** — `leaderboard-page-client.tsx:27-33` shows "Flash Players" tab co-equal with "Forecasters" tab. Visually legitimizes Flash as parallel reputation.
+2. **`/activity`** — `activity-client.tsx:151-189` renders game rows (`Prediction Flash WIN/LOSS +X.XX%`) mixed with real prediction trades in the same feed. Users may mistake game results for prediction results.
+3. **`/dashboard`** — `dashboard-home.tsx` "Top forecasters" card pulls from `/api/game/leaderboard?sort=profit` (already in polish backlog as P1). Label says forecasters, data is arcade-game profit. Semantic mismatch.
+
+### Three forward paths (operator-pending)
+
+- **B1 — Surgical containment.** /play stays accessible but stops bleeding into identity surfaces. ~4 commits:
+  - Drop the "Flash Players" tab from `/leaderboard` (only Forecasters remains).
+  - Drop the "Games" filter tab + game rows from `/activity` (only predictions / trades remain).
+  - Re-label or remove the dashboard "Top forecasters" card (the P1 polish item resolves here too).
+  - Soften `/play` metadata away from "Solo, Ranked, 1v1. Fastest prediction game on the internet" toward sidequest-neutral copy.
+  Result: `/play` becomes a disconnected sidequest accessible via direct nav. Identity surfaces stop legitimizing it. Each commit is a clean `git revert`.
+
+- **B2 — Rework `/play` to "Forecaster Instinct"** (sprint-sized, do not start without B1 shipped first and observation period). Convert from Brownian-motion arcade to actual forecasting puzzles: pre-resolved Polymarket markets with hidden outcome, user predicts YES/NO before reveal, scored on calibration + contrarian-correctness vs the crowd. Drops: Bronze→Master, RP, XP, Daily Challenges, 1v1, LONG/SHORT, casino palette. Requires: historical resolved-markets dataset, calibration scoring (Brier-score lite), full UX redesign. ~1-2 sprints.
+
+- **B3 — Kill `/play` entirely.** Redirect `/play` → `/markets`, drop the `game_results` table, drop `stores/arcade-game.ts`, drop `app/api/game/*`. Cleanest narrative move. Most destructive.
+
+### Why no action this session
+
+Operator's session brief was crystal clear on restraint discipline. The shareability frontend (Frente A) was additive, cero-destructive, and high leverage — easy decision. The arcade decision is destructive (B1 deletes visible features, B3 deletes infrastructure) and operator hasn't selected which path. Documented here so the resume point is exact.
 
 ---
 
