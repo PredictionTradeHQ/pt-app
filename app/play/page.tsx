@@ -4,10 +4,10 @@ import { ArcadeScreen } from "@/components/arcade/arcade-screen";
 
 export const metadata: Metadata = {
   title: "Prediction Flash — PredictionTrade",
-  description: "Ultra-fast ranked prediction game. 7 seconds. One tap. Rise from Bronze to Master.",
+  description: "A quick-tap reaction sidequest. Real forecasting lives on /markets.",
   openGraph: {
     title: "Prediction Flash | PredictionTrade",
-    description: "Solo, Ranked, 1v1. The fastest prediction game on the internet.",
+    description: "Quick reaction sidequest on PredictionTrade. Real forecasting lives on /markets.",
     images: [{ url: "/images/logo.png" }],
   },
 };
