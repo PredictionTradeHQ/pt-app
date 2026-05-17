@@ -93,8 +93,8 @@ export function LeaderboardClient() {
             <Trophy className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
               {isEs
-                ? "Aún no hay traders en este periodo. Sé el primero en escalar el ranking."
-                : "No traders yet for this period. Be the first to climb the ranks."}
+                ? "Aún no hay jugadores en este periodo. Sé el primero en escalar el ranking."
+                : "No players yet for this period. Be the first to climb the ranks."}
             </p>
           </CardContent>
         </Card>
