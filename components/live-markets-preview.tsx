@@ -299,10 +299,10 @@ export function LiveMarketsPreview() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted-foreground mb-6">
               <span className="flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-60" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
                 </span>
-                <span className="text-green-400 font-semibold">{stats.totalTraders.toLocaleString()}</span>
+                <span className="text-primary font-semibold">{stats.totalTraders.toLocaleString()}</span>
                 <span>{isEs ? "predictores activos" : "forecasters active"}</span>
               </span>
               <span className="text-border hidden sm:inline">·</span>
