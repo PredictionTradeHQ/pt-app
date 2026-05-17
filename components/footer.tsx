@@ -9,8 +9,7 @@ export function Footer() {
     product: [
       { name: t("navMarkets"), href: "/markets" },
       { name: t("navHowItWorks"), href: "/#how-it-works" },
-      { name: "Demo Trading", href: "/markets" },
-      { name: "Academy", href: "/academy" },
+      { name: t("navAcademy"), href: "/academy" },
     ],
     resources: [
       { name: t("helpCenter"), href: "/help" },
