@@ -190,8 +190,8 @@ export function ProfileClient({
         <h1 className="text-3xl font-bold mb-2">{isEs ? "Perfil" : "Profile"}</h1>
         <p className="text-muted-foreground">
           {isEs
-            ? "Gestiona tu cuenta y preferencias."
-            : "Manage your account and preferences."}
+            ? "Tu perfil público y ajustes de cuenta."
+            : "Your public profile and account settings."}
         </p>
       </div>
 
@@ -214,7 +214,7 @@ export function ProfileClient({
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-lg truncate">{displayName}</p>
               <p className="text-sm text-muted-foreground">
-                @{username} · {isEs ? "Miembro de PredictionTrade" : "PredictionTrade Forecaster"}
+                @{username} · {isEs ? "Forecaster de PredictionTrade" : "PredictionTrade Forecaster"}
               </p>
               {followerCount !== null && followerCount > 0 && (
                 <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
@@ -452,8 +452,8 @@ export function ProfileClient({
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
             {isEs
-              ? "Consulta tus estadísticas de trading, resultados de juego y progreso en la academia."
-              : "View your full trading stats, game results, and academy progress."}
+              ? "Consulta tu historial completo de predicciones, racha y precisión."
+              : "View your full prediction history, streak, and accuracy."}
           </p>
           <Button asChild>
             <Link href="/dashboard" className="gap-2">
