@@ -89,7 +89,7 @@ export function DashboardHome() {
     return "Good evening";
   })();
 
-  const displayName = user?.display_name || stats?.profile?.display_name || "Trader";
+  const displayName = user?.display_name || stats?.profile?.display_name || "Forecaster";
 
   return (
     <div className="container mx-auto px-4 md:px-8 py-8 max-w-6xl">
@@ -146,7 +146,7 @@ export function DashboardHome() {
               <Button asChild size="sm" className="gap-2">
                 <Link href="/markets">
                   <TrendingUp className="w-4 h-4" />
-                  {isEs ? "Operar ahora" : "Start trading"}
+                  {isEs ? "Predecir" : "Make a prediction"}
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline" className="gap-2">
@@ -240,8 +240,8 @@ export function DashboardHome() {
             {recentGames.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 {isEs
-                  ? "Juega tu primera partida o haz tu primera operación."
-                  : "Play your first game or place your first trade."}
+                  ? "Juega tu primera partida o haz tu primera predicción."
+                  : "Play your first game or make your first call."}
               </div>
             ) : (
               <ul className="space-y-2">
@@ -300,7 +300,7 @@ export function DashboardHome() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-primary" />
-                {isEs ? "Top traders" : "Top traders"}
+                {isEs ? "Top predictores" : "Top forecasters"}
               </h2>
               <Link
                 href="/leaderboard"
