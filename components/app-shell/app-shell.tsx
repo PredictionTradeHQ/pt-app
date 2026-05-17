@@ -26,6 +26,10 @@ type NavItem = {
   href: string;
   labelEn: string;
   labelEs: string;
+  /** Optional shorter label used by the mobile bottom nav (grid-cols-6 at
+   *  10px font). Only set when the desktop label overflows narrow phones. */
+  labelMobileEn?: string;
+  labelMobileEs?: string;
   icon: typeof LayoutDashboard;
 };
 
@@ -34,7 +38,7 @@ const NAV: NavItem[] = [
   { href: "/markets", labelEn: "Markets", labelEs: "Mercados", icon: TrendingUp },
   { href: "/play", labelEn: "Game", labelEs: "Juego", icon: Zap },
   { href: "/academy", labelEn: "Academy", labelEs: "Academia", icon: GraduationCap },
-  { href: "/leaderboard", labelEn: "Leaderboard", labelEs: "Ranking", icon: Trophy },
+  { href: "/leaderboard", labelEn: "Leaderboard", labelEs: "Ranking", labelMobileEn: "Ranks", icon: Trophy },
   { href: "/profile", labelEn: "Profile", labelEs: "Perfil", icon: User },
 ];
 
@@ -190,19 +194,21 @@ export function AppShell({
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-md">
         <ul className="grid grid-cols-6">
           {NAV.map((item) => (
-            <li key={item.href}>
+            <li key={item.href} className="min-w-0">
               <Link
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 py-2 text-[10px] transition-colors",
+                  "flex flex-col items-center justify-center gap-1 py-2 px-0.5 text-[10px] leading-tight transition-colors",
                   isActive(item.href)
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <item.icon className="w-5 h-5" />
-                <span className="truncate px-1">
-                  {isEs ? item.labelEs : item.labelEn}
+                <span className="truncate w-full text-center">
+                  {isEs
+                    ? (item.labelMobileEs ?? item.labelEs)
+                    : (item.labelMobileEn ?? item.labelEn)}
                 </span>
               </Link>
             </li>
