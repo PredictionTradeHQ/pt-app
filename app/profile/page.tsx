@@ -18,7 +18,7 @@ export default async function ProfilePage() {
   }
 
   const displayName =
-    user.user_metadata?.display_name || user.email?.split("@")[0] || "Trader";
+    user.user_metadata?.display_name || user.email?.split("@")[0] || "Forecaster";
   const createdAt = user.created_at ?? null;
 
   // Fetch avatar from profiles. Wrapped because migration 005 may not be
