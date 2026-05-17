@@ -1,6 +1,71 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Shareability Polish Pass LIVE + Arcade audit findings documented; prior Observation mode locked post Identity Cohesion Pass II + deep observation report; prior Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel #1 B1) | Read this before touching anything.
+> Last updated: 2026-05-17 (Arcade Containment B1 LIVE — D1 strict, dashboard lock preserved; prior Shareability Polish Pass LIVE + Arcade audit; prior Observation mode locked post Identity Cohesion Pass II) | Read this before touching anything.
+
+---
+
+## 🆕 Arcade Containment B1 — LIVE 2026-05-17 (this session, D1 strict scope)
+
+Operator-confirmed direction after reading the Shareability + Arcade audit: ship B1 surgical containment with the D1 strict variant — **dashboard lock preserved, no P1 chip-painting, no T1 indirect open**. Goal: isolate `/play` from PT's identity surfaces without touching the arcade gameplay, stores, APIs, or Supabase tables. Preserves optionality for B2 (Forecaster Instinct rework) or B3 (kill `/play`) as future thesis-grade moves.
+
+3 small reversible commits, `pnpm build` clean, pure cleanup (~30 lines added, ~204 lines removed). No new files, no new dependencies, no migrations, no API changes.
+
+| # | Commit | Surface | What shipped |
+|---|---|---|---|
+| 1 | `5ade016` | `components/leaderboard/leaderboard-page-client.tsx` | Drops the dual-tab switcher ("Forecasters" + "Flash Players") on `/leaderboard`. Page now renders `<ForecastersLeaderboard />` directly under the existing forecaster-aligned title + subtitle. The `LeaderboardClient` component (Flash leaderboard renderer) is **preserved as a dead-import** — file stays on disk, no consumers, but optionality intact if `/play` later wants to embed it. 1 line added / 65 dropped. |
+| 2 | `8d6855a` | `app/activity/page.tsx` + `components/activity/activity-client.tsx` | Drops the `game_results` server fetch (only `demo_portfolios.activity` is now queried). Drops the `games` prop, the 3-tab switcher (All / Games / Trades), the cross-source flatten, the game `ActivityRow` branch with WIN/LOSS chrome, and the "or play a game" wording in the empty state (EN + ES). Feed is now trade-only. `game_results` table itself is **preserved** — `/play` still writes to it on each round. 26 lines added / 137 dropped. |
+| 3 | `e881038` | `app/play/page.tsx` | Softens metadata away from esports framing. Description: "Ultra-fast ranked prediction game. 7 seconds. One tap. Rise from Bronze to Master." → "A quick-tap reaction sidequest. Real forecasting lives on /markets." OG description similarly reframed. **Title kept as `Prediction Flash — PredictionTrade`** (brand-correct). 2 lines added / 2 dropped. |
+
+**Build:** `pnpm build` ✓ clean (TS strict, 0 errors). Compiled in 2.9s, 33/33 static pages.
+**Sync:** main ↔ origin/main `0/0`. HEAD `e881038` (was `5ac5616` after Shareability + brain doc).
+
+### Identity surface state post-B1
+
+| Surface | Before | After |
+|---|---|---|
+| `/leaderboard` | 2 tabs (Forecasters + Flash Players co-equal) | Single forecaster ranking, no arcade legitimization |
+| `/activity` | Mixed feed (game WIN/LOSS rows + trades) | Trade-only feed |
+| `/play` metadata | "Ultra-fast ranked prediction game… Bronze to Master… Solo, Ranked, 1v1" | "Quick-tap reaction sidequest. Real forecasting lives on /markets." |
+
+The arcade is now **structurally isolated** from PT's identity layer. A visitor moving through `/`, `/markets`, `/leaderboard`, `/profile`, `/activity` no longer encounters the casino-esports skin in any of those surfaces. `/play` remains accessible (via header nav, dashboard quick-action, footer) but is framed as a sidequest, not as parallel reputation.
+
+### What B1 deliberately did NOT touch (D1 strict)
+
+| Surface | Reason |
+|---|---|
+| `components/dashboard/dashboard-home.tsx` | **T1 lock active.** Dashboard still serves wallet+Flash (Win rate card, Recent activity card with WIN/LOSS rows, Top forecasters↔Flash data mismatch card P1, "Play Flash" quick-action button, "Game" quick-action tile). Operator chose D1 explicitly: chip-painting the P1 label would not resolve the real mismatch, only mask it. Dashboard waits for T1 re-open trigger (repeated organic signals during real use). |
+| `components/arcade/arcade-screen.tsx` | Gameplay UI untouched. Bronze→Master ranks, RP, XP, Daily Challenges, "BUY UP / SELL DOWN", "LONG / SHORT", `#00ff88` / `#ff3366` / `#ff00ff` esports palette — all stay. B2 (Forecaster Instinct rework) is the path that would replace this. |
+| `stores/arcade-game.ts` | Game mechanic intact (Brownian-motion price ticker, modes, matchmaking shell). |
+| `app/api/game/leaderboard/route.ts` + `app/api/game/save/route.ts` | APIs alive. Still serve internal `/play` reads (and the dashboard "Top forecasters" mismatch card, which we deliberately did not touch). |
+| `game_results` Supabase table | Not dropped. Preserves user data + optionality for B2/B3. |
+| `components/leaderboard/leaderboard-client.tsx` | Dead-import after this pass (no consumers). NOT deleted — optionality preservation. |
+| `components/game/*` (5 archivos dead code from before) | Still dead, still not deleted. Separate cleanup pass. |
+| `components/markets-app.tsx` (bet flow) | T3 lock active. |
+| `/markets` desktop sidebar (Trading Control Panel) | T2 lock active. |
+| `lib/share-copy.ts`, `/api/og/*`, called-it modal | Premium per audit. Just shipped Shareability Pass. |
+| home / hero / landing surfaces | No Flash references to clean. |
+| Supabase schema | Zero DB ops in B1. |
+
+### Forward paths (NO action without explicit operator go)
+
+- **B2 — Rework `/play` to "Forecaster Instinct"** (sprint-sized). Convert from Brownian-motion arcade to pre-resolved Polymarket prediction puzzles, scored on calibration + contrarian-correctness vs the crowd. Drops Bronze→Master / RP / XP / Daily Challenges / 1v1 / LONG-SHORT / casino palette. Requires: historical resolved-markets dataset, calibration scoring (Brier-score lite), full UX redesign. **~1-2 sessions.** Now framed as future thesis, not immediate sprint.
+- **B3 — Kill `/play` entirely.** Redirect to `/markets`, drop `game_results` table, drop `stores/arcade-game.ts`, drop `app/api/game/*`. Cleanest move. Most destructive. Operator declined this path explicitly this session.
+- **P1 polish — Dashboard "Top forecasters" mismatch** — operator declined relabel ("chip-painting that does not resolve the real problem"). Will resolve naturally when T1 reopens.
+
+### Why B1 D1 was the correct move (operator's framing)
+
+Operator: "El problema no es que exista un game layer, sino que todavía transmite demasiada energía: flash game, trading simulator, disconnected side-mode. Así que la dirección correcta por ahora probablemente es B1 containment quirúrgico. Objetivo: aislar /play del núcleo identitario de PT, sin destruir optionality futura."
+
+B1 D1 = containment, not pseudo-resolution. Dashboard remains a legacy hybrid temporal. T1 stays clean as a thesis trigger.
+
+### Taste-level risks to observe (NO action)
+
+- `/leaderboard` now single-render — feels lighter, less product surface. Observe if it reads as "less product" rather than "more focused".
+- `/activity` empty-state may dominate for users without trades yet. Empty state copy now says "Make your first call to build your history" — observe if it lands as motivating or empty.
+- `/play` metadata softer than before. Observe if it changes any session entry behavior (sessions starting from /play instead of /markets).
+- Dashboard remains uncovered — observe if the contradiction sharpens or stays flat. This is the T1 signal trigger.
+
+**🟢 Observation mode resumes immediately post-B1.** No further moves on the arcade frontier without explicit operator direction.
 
 ---
 
