@@ -1,10 +1,53 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Forecaster Identity Alignment Pass A+B+C LIVE + Quality & Identity Audit Pass + Profile Identity Completeness Blocks 1–5 + Game Feel Sprint #1 Bloque 1 — observation phase active) | Read this before touching anything.
+> Last updated: 2026-05-17 (Identity Cohesion Pass II LIVE + prior Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity Completeness Blocks 1–5 + Game Feel Sprint #1 Bloque 1 — observation phase active) | Read this before touching anything.
 
 ---
 
-## 🆕 Forecaster Identity Alignment Pass — A+B+C LIVE 2026-05-17
+## 🆕 Identity Cohesion Pass II — LIVE 2026-05-17 (this session)
+
+Operator-requested deep cohesion review pass after living with the previous identity work. Goal: eliminate residual "simulator / paper trading / trader / fake brokerage / market utility" framing while keeping the absolute restraint discipline of observation phase. Surfaces audited end-to-end (homepage, landing sections, navigation, onboarding, auth, dashboard, profile, prediction cards, empty states, CTA hierarchy, EN/ES consistency, residual terminology). **No new features, no architecture rewrites, no UI restructure, no new components, no migrations, no API.** 5 small reversible commits, `pnpm build` clean each, 8/8 smoke green post-push, all new copy verified live in production HTML and chunks.
+
+| # | Commit | Surface | What shipped |
+|---|---|---|---|
+| 1 | `e49c199` | `contexts/language-context.tsx` (`footerBrandDesc`) | The last residual "simulator" framing in user-facing copy. The string renders on EVERY page footer. EN: "Free prediction market simulator with real Polymarket data." → "Build a public forecasting track record on real Polymarket events. Virtual funds, real reputation." ES symmetric. |
+| 2 | `fb07d72` | `components/live-markets-preview.tsx` (homepage post-hero) | Section subtitle "Click any market to start trading" → "...to make your call" (EN+ES). Social-proof strip "{N} traders active" → "forecasters active" (EN+ES). Internal variable `totalTraders` preserved (computed heuristic, not user-visible). |
+| 3 | `f630cec` | `components/activity/activity-client.tsx` | Auth-gated empty state on /activity: "No activity yet. Start trading or play a game..." → "...Make your first call or play a game..." (EN+ES). |
+| 4 | `c875910` | `components/market-detail-modal.tsx` | DialogDescription `sr-only` for screen readers: "trading interface for {market}" → "prediction interface for {market}". Pure accessibility, zero visual impact. |
+| 5 | `8775f7d` | `app/help/page.tsx` + `components/help/help-client.tsx` | Help page metadata description (the only `<meta description>` not touched in the prior audit) + FAQ Q1 brand self-description ("free risk-free simulator… practice trading" → "free platform for making public predictions on real-world events… build your forecaster track record") + FAQ Q3/Q4 minor swaps + Q6 Academy reframe + **dropped Q5** entirely because it referenced a non-existent "Demo Trading dashboard" route and a reset feature that the current UI does not expose. EN + ES symmetric. |
+
+**Build:** `pnpm build` ✓ clean (TS strict, 0 errors) on every commit.
+**Smoke (post-push):** 8/8 endpoints 200 with fresh `cdg1` X-Vercel-Ids (`/`, `/markets`, `/leaderboard`, `/play`, `/help`, `/academy`, `/auth/login`, `/api/leaderboard/forecasters`). All 8 new strings verified live in production HTML for SSR surfaces; chunk-marker scan confirms "forecasters active" present and "traders active" gone in shipped chunks.
+**Sync:** main ↔ origin/main `0/0`. HEAD `8775f7d` (was `54d3109`). 5 commits ahead of prior session.
+**Follows orgánicos:** `*/0` sin cambios. Observation phase intact post-pass.
+
+**Cohesion gain:**
+- Footer no longer contradicts the rest of the funnel on every render.
+- Homepage post-hero strip no longer counts "traders".
+- All four `<meta description>` for public/auth pages now read forecaster-identity (last leak was `/help`).
+- Help FAQ self-description no longer pitches "trading simulator" to users opening the help page.
+- The factually-wrong "Demo Trading dashboard" reset answer is gone.
+- One screen-reader announcement aligned with the visual identity.
+
+**Out of scope this pass — preserved deliberately (operator-confirmed, prior memory):**
+- `app/layout.tsx` root metadata + keywords ("Free Polymarket Simulator & Paper Trading Platform" + `paper trading prediction markets` keyword list + Twitter card title). Deliberate top-of-funnel SEO targeting per multiple prior memos.
+- `components/academy.tsx` — legitimate educational content on Polymarket / paper trading concept. ~30 trading-vocabulary occurrences are inside lesson bodies; reframing would break educational scope.
+- `components/dashboard/dashboard-home.tsx` — wallet card with P&L visualization (`balance - 100000`, ± green/red), "Win rate" card, "WIN" / "LOSS" badges on game rows, leaderboard sorted by `profit%`. **Sprint-sized identity conversion declined twice by operator.** Note: the "Top forecasters" card on the dashboard pulls from `/api/game/leaderboard?sort=profit` — semantic mismatch between label (forecasters) and data source (Prediction Flash game profit), but resolving it requires either re-labeling or swapping data sources, both deferred to a future dashboard rethink.
+- `components/markets-app.tsx` bet flow ("Buy Yes/No" buttons via `buyYes`/`buyNo` dict keys, `wagered`/`yesWagered`/`noWagered` stats, "My Bets" tab via `myBets`, portfolio summary, "Trading Control Panel" code comment). Same sprint-sized rework deferred.
+- `app/auth/error/page.tsx` — server component, hardcoded EN strings. Architecturally separate localization fix.
+- Dead components (`contact.tsx`, `market-card.tsx`, `rise-in-leaderboard.tsx`, `demo-dashboard.tsx`, `trading-panel.tsx`, `dashboard/dashboard-client.tsx`) — confirmed never rendered, on deferred dead-code purge bucket.
+- Orphan dictionary keys in `language-context.tsx` (`tradeRealWorldEvents`, `goDemo`, `authPanelTitle`, `authPanelDescription`, `startDemoTrading`, `startsWithFunds`) — unused, low priority cleanup.
+
+**Taste-level risks to observe (NOT proposing action):**
+- New footer line is slightly longer than the old one — should still wrap cleanly on mobile (Tailwind `leading-relaxed`, no width constraint).
+- "forecasters active" / "predictores activos" reads less casino than "traders active" — desired, but observe whether the live-data strip still communicates urgency.
+- The single-line "Build a public forecasting track record on real Polymarket events. Virtual funds, real reputation." doubles as a brand mini-pitch — used in OG tooling later if needed.
+
+**🟢 Observation mode resumes immediately.** No further alignment passes proposed automatically. The 5 commits above are exhaustive for the residual identity drift visible on user-facing surfaces. Future identity work would have to touch deferred-sprint territory (dashboard / bet flow) — only on explicit operator request.
+
+---
+
+## Forecaster Identity Alignment Pass — A+B+C LIVE 2026-05-17 (prior, kept for context)
 
 Operator-approved micro-pass after observation revealed PT's logged-out funnel still told a "trading simulator → graduate to Polymarket" story while the logged-in product already delivered "forecaster identity / prediction reputation". Goal: close the perception gap end-to-end without opening architecture or new systems. **Copy/semantics only, 4 small reversible commits, `pnpm build` clean each, no migrations, no API, no UI restructure, no new components.** HEAD: `54d3109`.
 
