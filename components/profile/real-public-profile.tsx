@@ -73,14 +73,16 @@ export function RealPublicProfile({ data }: Props) {
     <main className="container mx-auto px-4 md:px-8 py-8 max-w-3xl">
 
       {/* ── Header ── */}
-      <div className="flex items-start gap-4 mb-3">
-        <Avatar size="lg" url={avatarUrl} displayName={displayName} />
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold truncate">{displayName}</h1>
-          <p className="text-sm text-muted-foreground">@{username}</p>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">PredictionTrade Forecaster</p>
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 mb-3">
+        <div className="flex items-start gap-4 min-w-0">
+          <Avatar size="lg" url={avatarUrl} displayName={displayName} />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold truncate">{displayName}</h1>
+            <p className="text-sm text-muted-foreground truncate">@{username}</p>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">PredictionTrade Forecaster</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <FollowButton followeeId={userId} initialCount={followerCount} />
           <button
             onClick={shareOnX}
