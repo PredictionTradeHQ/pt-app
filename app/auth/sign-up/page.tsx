@@ -75,7 +75,7 @@ export default function SignUpPage() {
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
             <TrendingUp className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="text-2xl font-bold">PredictTrade</span>
+          <span className="text-2xl font-bold">Prediction Trade</span>
         </div>
 
         <Card className="border-border/50 shadow-xl">
@@ -106,7 +106,7 @@ export default function SignUpPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  {t("emailLabel")}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
