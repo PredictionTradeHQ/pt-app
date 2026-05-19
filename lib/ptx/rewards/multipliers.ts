@@ -21,7 +21,9 @@ export const DEFAULT_MULTIPLIERS: PtxMultiplierBundle = {
 
 export function combineMultipliers(bundle: PtxMultiplierBundle): number {
   const raw = bundle.base * bundle.og * bundle.cascade * bundle.seasonal;
-  return Math.min(raw, PTX_MAX_COMBINED_MULTIPLIER);
+  // Floor at 0 prevents a malformed (negative) bundle component from producing
+  // a negative factor that would silently emit negative PTX downstream.
+  return Math.min(Math.max(raw, 0), PTX_MAX_COMBINED_MULTIPLIER);
 }
 
 export function applyMultiplier(baseAmount: bigint, bundle: PtxMultiplierBundle): bigint {
