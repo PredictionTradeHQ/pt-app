@@ -56,6 +56,27 @@ interface ReferralCascadePayload {
   descendant_amount: string; // serialized bigint
 }
 
+/**
+ * KNOWN ISSUE (deferred to Phase 1 wiring) — referralCascadeV1 is currently
+ * unreachable.
+ *
+ * Current behavior: the engine dispatches via `PTX_RULES.find(r => r.source_types
+ * .includes(ctx.source_type))` (first match). Because `referralActivatedV1`
+ * above also declares `source_types: ["referral_activation"]` and appears
+ * first in the registry, it always wins the dispatch. The cascade rule is
+ * never evaluated.
+ *
+ * Reason kept as-is in Phase 0: fixing this requires an architectural decision
+ * about source_types — either (a) extend the closed `PtxSourceType` union with
+ * a dedicated `"referral_cascade"` member (touching `events/source-types.ts`,
+ * `constants.ts` cap tables, and the v1 quantum table), or (b) change the
+ * engine dispatch semantics. Both are out of scope for the inert scaffolding
+ * phase and require explicit sign-off.
+ *
+ * Phase 1 wire-up MUST address this before referral cascade rewards can be
+ * granted. The rule remains defined here to preserve the design intent and
+ * keep the event taxonomy stable.
+ */
 export const referralCascadeV1: PtxEarningRule = {
   id: "referral.cascade.v1",
   source_types: ["referral_activation"],
