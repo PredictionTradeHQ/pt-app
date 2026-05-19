@@ -11,22 +11,7 @@
  * decision; do not modify without an ADR.
  */
 
-// TEMPORARY local type — replaced by import from ./events/source-types in Task 6 Step 5.
-type PtxSourceType =
-  | "referral_activation"
-  | "publication"
-  | "milestone"
-  | "lesson_complete"
-  | "season_event"
-  | "moderation_action"
-  | "engagement_quality"
-  | "og_window"
-  | "sink_consumption"
-  | "tip_received"
-  | "sponsor_action"
-  | "fraud_audit"
-  | "reconcile_job"
-  | "migration_op";
+import type { PtxSourceType } from "./events/source-types";
 
 export const PTX_VERSION = 1;
 export const PTX_DECIMALS = 18;
