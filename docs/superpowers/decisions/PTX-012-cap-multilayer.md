@@ -28,7 +28,7 @@ All cap values live in `lib/ptx/constants.ts` and are referenced declaratively b
 
 **Negative / accepted tradeoffs:**
 - A reward computation must aggregate prior-period totals across up to four scopes. In practice this is approximately four indexed queries — acceptable.
-- The L4 soft threshold is a flag, not a block. Operators must review flagged users; this is review surface that did not exist before.
+- The L4 soft threshold is a flag, not a block. Operators must act on flagged users manually; this is operational overhead that did not exist before.
 
 ## Alternatives considered
 

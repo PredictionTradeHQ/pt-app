@@ -15,7 +15,7 @@ The split is triggered when any of the following becomes true:
 - `lib/ptx/` exceeds ~5,000 lines of code.
 - Solidity (or other smart-contract) development begins.
 - The number of standalone cron workers serving PTX exceeds 3.
-- The operator review surface (UI for OG window control, fraud appeals, etc.) becomes substantial enough to warrant its own deployment.
+- The operator review surface (UI for OG window management, reward reviews, etc.) becomes substantial enough to warrant its own deployment.
 
 Until one of these triggers fires, the single-repo arrangement plus the module boundary contract (ADR-PTX-001) suffices.
 
