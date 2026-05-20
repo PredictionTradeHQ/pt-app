@@ -3,6 +3,7 @@
  * Phase 0: stub.
  */
 
+import { createHash } from "node:crypto";
 import type { PtxUserId } from "../identity/types";
 
 export interface ReconcileResult {
@@ -44,12 +45,10 @@ export function computeEventHash(input: {
   return sha256Hex(parts.join("|"));
 }
 
+// Real SHA-256. Server-runtime only (node:crypto). computeEventHash is pure and
+// deterministic, so the chain root it produces is meaningful and stable from
+// day one — it will match the same SHA-256 chain recomputed at verification or
+// anchored on-chain later (ADR-PTX-009).
 function sha256Hex(input: string): string {
-  // Phase 0: deterministic stub using a simple hash. Node crypto wired in Phase 1.
-  // The format (64 lowercase hex chars) matches sha256 for downstream compatibility.
-  let hash = 0n;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash * 31n + BigInt(input.charCodeAt(i))) & ((1n << 256n) - 1n);
-  }
-  return hash.toString(16).padStart(64, "0");
+  return createHash("sha256").update(input, "utf8").digest("hex");
 }
