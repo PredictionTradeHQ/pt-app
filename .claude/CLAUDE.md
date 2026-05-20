@@ -167,14 +167,24 @@ brain/MARKET-CATEGORIES.md   ← category architecture
 
 ---
 
-## CURRENT STATE — checkpoint 2026-05-17 ✅ STABLE (observation phase)
+## CURRENT STATE — updated 2026-05-20 (PTX Foundation Integrity) · web product STABLE (observation)
 
-**Git:** `main` clean, synced with `origin/main` (HEAD `54d3109`)
+> Authoritative HEAD is here. This supersedes the `54d3109` checkpoint; the 2026-05-17 detail below remains valid for the **web product** only. The PTX native-currency module is a separate, inert track — see "PTX Native Social Currency" below and `brain/NEXT-SESSION.md`.
+
+**Git:** local `main` HEAD `3853e90` — clean, **ahead 21 of `origin/main` (NOT pushed)**. All PTX work (module scaffold `bd69a1c`→`d1e412b` + this session's 4 Foundation Integrity commits) is local-only; **production has no PTX code**.
 **TypeScript:** 0 errors (strict mode) — `pnpm build` ✓ Compiled successfully in 3.1s
 **Vercel:** auto-deploy on push to main, predictiontrade.online (apex → www 307 redirect active). Brand fix "Prediction Trade" confirmed live in HTML post-CDN propagation.
 **Supabase:** project `vkizidrsuwsreepsbbuy` — all migrations applied (000, 001, 003, 004, 007)
 **Follow System v1:** LIVE end-to-end. `public.follows` table live. Organic follows: 0 (observation phase intact).
 **Active mode:** 🟢 **Observation/polish.** Do NOT open new sprints or expand surface area without operator confirmation.
+
+### PTX Native Social Currency — Phase 0 (inert) — added 2026-05-19, de-risked 2026-05-20
+
+A native social-currency module lives at `lib/ptx/` (off-chain-first, currency-agnostic). It is **completely inert**: zero callers, all flags default `false`, no DB migrations exist, every DB-touching function is a stub that throws. It does **not** contradict observation mode — nothing is activated, no UI, no economy is live. It is architectural groundwork; **Phase 0 → Phase 1 requires explicit operator sign-off** (migrations + decision), and any on-chain future (Base / Privy / ERC-20) is deferred to Phase 8–9 + a business/legal decision.
+
+- Authoritative docs: `lib/ptx/README.md`, spec + plan + 21 ADRs under `docs/superpowers/`.
+- 2026-05-20 Foundation Integrity (operator-approved, module stays inert): added vitest (`pnpm test`, 8/8); fixed the reward-engine dispatch bug (`0e49cdb`); replaced a fake event hash with real SHA-256 (`d681e17`); reconciled the boundary contract (`3853e90`).
+- Phase 1 prerequisites / known debt: ESLint boundary rule (ADR-021) is **unimplemented — no eslint config, ESLint not installed, `pnpm lint` vestigial**; bigint→Number precision in `multipliers.ts` (R4, fine for v1); migrations not yet authored. See `brain/NEXT-SESSION.md`.
 
 **Last commits (this session — Forecaster Identity Alignment Pass A+B+C + Quality & Identity Audit Pass + Profile Identity B1–B5 + Game Feel Sprint #1 Bloque 1):**
 ```

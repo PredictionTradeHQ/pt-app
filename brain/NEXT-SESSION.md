@@ -1,6 +1,28 @@
 # NEXT SESSION START HERE
 
-> Last updated: 2026-05-17 (Arcade Containment B1 LIVE — D1 strict, dashboard lock preserved; prior Shareability Polish Pass LIVE + Arcade audit; prior Observation mode locked post Identity Cohesion Pass II) | Read this before touching anything.
+> Last updated: 2026-05-20 (PTX Foundation Integrity pass — see top section) | Read this before touching anything.
+
+---
+
+## 🆕 PTX Foundation Integrity — 2026-05-20 (this session)
+
+**Current truth.** `main` HEAD `3853e90`, `pnpm build` clean, vitest 8/8 green. This supersedes every earlier "HEAD ____" claim in this file and in `.claude/CLAUDE.md` — both were stale (NEXT-SESSION said `e881038`, CLAUDE.md said `54d3109`) and disagreed with each other. They predated all PTX work.
+
+**What PTX is.** A **native social currency module** (`lib/ptx/`) was architected + scaffolded on 2026-05-19 (commits `bd69a1c`→`d1e412b`): 21 ADRs, a design spec, and an implementation plan under `docs/superpowers/`. It is **inert Phase 0** — zero wiring, zero callers, all flags default `false`, no DB migrations exist, every DB-touching function is a stub that throws. Off-chain-first, currency-agnostic; any on-chain future (Base / Privy wallet / ERC-20) is deferred to Phase 8–9 and gated on an explicit operator + business/legal decision.
+
+**Reconciling the contradiction.** The observation-mode rule below ("Anything resembling XP, coins, levels, progression engines, economies" — do not build) governs the **live web product surface**. PTX does not violate it: nothing is activated, there is no UI, no migration, no user-facing economy. PTX is **inert architectural groundwork**, built cost-free during observation, and **Phase 0 → Phase 1 requires explicit operator sign-off** (migrations applied + decision). Treat the two as separate tracks.
+
+**This session (Foundation Integrity, operator-approved) — 4 commits, module stays inert:**
+- `59c707e` chore: added vitest (PT had no test framework). `pnpm test` runs `lib/ptx/**`.
+- `0e49cdb` fix: **reward engine dispatch bug**. `engine.ts` used `.find()` (first-match), making the 2nd rule of every shared `source_type` unreachable (seasonal completion, creator audience_milestone, referral cascade). Restored spec §12 (eligibility-aware selection). 6 tests.
+- `d681e17` fix: **real SHA-256** for the ledger event hash. `sha256Hex` was a fake rolling hash producing meaningless-but-valid-looking chain roots. Now `node:crypto`. 2 tests.
+- `3853e90` docs: reconciled the module boundary contract — README claimed migrations + ESLint enforcement that don't exist.
+
+**PTX Phase 1 prerequisites / known debt (do NOT activate without these + operator go):**
+- Implement ADR-PTX-021 ESLint `no-restricted-imports` boundary rule — **no `eslint.config.mjs` exists and ESLint isn't installed; `pnpm lint` is vestigial.**
+- R4: `multipliers.ts` / `referral.ts` / `creator.ts` cast `bigint`→`Number` — silent precision loss above 2^53. Fine for v1 whole-unit amounts; must fix before 18-decimal scaling (ADR-PTX-007). Tracked in `lib/ptx/README.md`.
+- Author the `01[0-7]_ptx_*.sql` migrations (none exist yet).
+- Introduce a test framework gate in CI.
 
 ---
 

@@ -35,3 +35,12 @@ See spec §25 (Phased Visibility Plan). Phase 0 → 1 transition requires migrat
 ## Reversibility
 
 `rm -rf lib/ptx` restores pt-app to its pre-PTX state — the module has zero external importers and adds no runtime dependencies (the ledger hash uses the `node:crypto` builtin). No PTX migrations exist yet, so there is nothing to drop. `vitest` was added as a general dev dependency for module tests.
+
+## Known limitations & Phase 1 prerequisites
+
+Must be addressed before/at Phase 1 wire-up (none block Phase 0 — the module is inert):
+
+- **Boundary not yet enforced (ADR-PTX-021).** No `eslint.config.mjs` exists and ESLint is not installed — `pnpm lint` is vestigial. The import boundary above is currently a convention. Stand up the `no-restricted-imports` rule + a CI lint step.
+- **bigint→Number precision (R4).** `rewards/multipliers.ts` (and `referral.ts` / `creator.ts`) compute via `Number(bigint)`. Safe for v1 whole-unit amounts, but loses precision above 2^53. Must move to integer/basis-points math before the 18-decimal scaling reserved by ADR-PTX-007.
+- **No migrations authored.** The `supabase/migrations/01[0-7]_ptx_*.sql` files referenced by the spec/plan do not exist yet; they are written during Phase 1.
+- **DB-touching functions are stubs** that `throw`: identity `resolver`/`exportIdentity`/`bindWallet`, `emitPtxEvent`, ledger `getPtxBalance`/`getPtxHistory`/aggregate readers, `verifyChainForUser`. Wiring them (with the Merkle chain + idempotency in `emitPtxEvent`) is the core of Phase 1.

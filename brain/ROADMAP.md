@@ -220,6 +220,8 @@ Supabase middleware `getUser()`. If JWT was near expiry, token refresh + `Set-Co
 - Complex analytics / BI dashboards
 - Native mobile app (web-first, then PWA)
 
+> **PTX native social currency (added 2026-05-19).** A separate, inert module (`lib/ptx/`) tracked outside this web-product roadmap — see `lib/ptx/README.md` + `docs/superpowers/`. v1 is consistent with the bans above: off-chain, no real money, no wallet/DeFi (the Privy wallet + Base ERC-20 future is deferred to Phase 8–9 and would require revisiting this list + a business/legal decision). Phase 0 is inert; Phase 0 → 1 needs explicit operator sign-off.
+
 ---
 
 ## Known Friction Points (as of 2026-05-14)
